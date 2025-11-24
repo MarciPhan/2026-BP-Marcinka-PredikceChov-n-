@@ -213,19 +213,6 @@ redis-cli ping
 - Ověřte konfiguraci proxy
 - Monitorujte konzoli prohlížeče pro chyby
 
-## 📝 Licence
-
-Tento projekt je poskytován tak jak je pro vzdělávací a monitorovací účely.
-
-## 🤝 Přispívání
-
-Příspěvky jsou vítány! Prosím:
-1. Forkněte repozitář
-2. Vytvořte feature branch
-3. Commitněte své změny
-4. Pushněte do branche
-5. Otevřete Pull Request
-
 ## ⚠️ Důležité Poznámky
 
 - **Nikdy necommitujte `config.yaml`** - Obsahuje citlivé přihlašovací údaje
