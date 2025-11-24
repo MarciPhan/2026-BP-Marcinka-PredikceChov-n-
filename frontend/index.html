@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analytics Dashboard – Full</title>
+
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #151b3d;
+            --bg-card: #1a2142;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-orange: #f59e0b;
+            --accent-cyan: #06b6d4;
+            --accent-pink: #ec4899;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: rgba(148, 163, 184, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary), #0f1420);
+            color: var(--text-primary);
+            padding: 15px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1850px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            background: var(--bg-card);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            gap: 8px;
+        }
+
+        .chart-card canvas {
+            width: 100% !important;
+            height: 260px !important;
+            max-height: 260px !important;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-red);
+        }
+
+        .status-dot.online {
+            background: var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .4; }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 15px;
+            position: relative;
+        }
+
+        .stat-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+        }
+
+        .stat-card.blue::before { background: var(--accent-blue); }
+        .stat-card.green::before { background: var(--accent-green); }
+        .stat-card.red::before { background: var(--accent-red); }
+        .stat-card.orange::before { background: var(--accent-orange); }
+        .stat-card.purple::before { background: var(--accent-purple); }
+        .stat-card.pink::before { background: var(--accent-pink); }
+        .stat-card.cyan::before { background: var(--accent-cyan); }
+
+        .stat-label {
+            font-size: .75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .chart-title {
+            font-size: 1.05rem;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 1400px) {
+            .charts-grid > div {
+                grid-column: span 12 !important;
+            }
+        }
+
+        .messages-container {
+            margin-top: 25px;
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .messages-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .messages-box {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 10px;
+            height: 400px;
+            overflow-y: auto;
+        }
+
+        .message-item {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 3px solid var(--accent-blue);
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+        }
+
+        .message-item.discord {
+            border-left-color: var(--accent-purple);
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .message-item.discourse {
+            border-left-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+        }
+
+        .message-author {
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        .message-time {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+
+        .message-content {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .message-meta {
+            margin-top: 6px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 10px;
+        }
+
+        .log-container {
+            margin-top: 25px;
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .log-box {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: .75rem;
+        }
+
+        .log-entry {
+            padding: 6px;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .log-entry.live {
+            background: rgba(16, 185, 129, .15);
+            border-left: 3px solid var(--accent-green);
+        }
+
+        .log-entry.history {
+            background: rgba(148, 163, 184, .05);
+            border-left: 3px solid var(--text-secondary);
+        }
+
+        .log-entry.ws {
+            background: rgba(59, 130, 246, .15);
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .log-entry.error {
+            background: rgba(239, 68, 68, .15);
+            border-left: 3px solid var(--accent-red);
+        }
+
+        .log-time {
+            color: var(--text-secondary);
+            min-width: 60px;
+        }
+
+        .clear-btn {
+            background: var(--accent-red);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .clear-btn:hover {
+            opacity: 0.8;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-btn {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .filter-btn.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Analytics Dashboard</h1>
+            <p class="subtitle">Realtime Monitoring & Full Metrics Suite</p>
+
+            <div class="status-bar">
+                <div class="status-indicator">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="statusText">Connecting...</span>
+                </div>
+
+                <div class="status-indicator">
+                    <span>⚡</span>
+                    <span id="updateTime">—</span>
+                </div>
+
+                <div class="status-indicator">
+                    <span>🟢</span>
+                    <span id="liveCounter">0 LIVE</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card blue">
+                <div class="stat-label">Celkem zpráv</div>
+                <div class="stat-value" id="stat-total">0</div>
+            </div>
+
+            <div class="stat-card orange">
+                <div class="stat-label">Poslední hodina</div>
+                <div class="stat-value" id="stat-lastHour">0</div>
+            </div>
+
+            <div class="stat-card green">
+                <div class="stat-label">DAU</div>
+                <div class="stat-value" id="stat-dau">0</div>
+            </div>
+
+            <div class="stat-card purple">
+                <div class="stat-label">WAU</div>
+                <div class="stat-value" id="stat-wau">0</div>
+            </div>
+
+            <div class="stat-card pink">
+                <div class="stat-label">MAU</div>
+                <div class="stat-value" id="stat-mau">0</div>
+            </div>
+
+            <div class="stat-card cyan">
+                <div class="stat-label">Discord</div>
+                <div class="stat-value" id="stat-discord">0</div>
+            </div>
+
+            <div class="stat-card red">
+                <div class="stat-label">Discourse</div>
+                <div class="stat-value" id="stat-discourse">0</div>
+            </div>
+
+            <div class="stat-card orange">
+                <div class="stat-label">LIVE zpráv</div>
+                <div class="stat-value" id="stat-liveTotal">0</div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <!-- Chart 1: LIVE messages time series -->
+            <div class="chart-card" style="grid-column: span 8;">
+                <div class="chart-title">📈 Zprávy v čase (LIVE) - Sledování live zpráv v reálném čase</div>
+                <canvas id="chart_live"></canvas>
+            </div>
+
+            <!-- Chart 2: Zdrojové rozdělení -->
+            <div class="chart-card" style="grid-column: span 4;">
+                <div class="chart-title">💬 Rozdělení zdrojů - Poměr Discord/Discourse zpráv</div>
+                <canvas id="chart_sources"></canvas>
+            </div>
+
+            <!-- Chart 3: Hodinová aktivita -->
+            <div class="chart-card" style="grid-column: span 6;">
+                <div class="chart-title">🕐 Hodinová aktivita - Zprávy podle hodin dne (0-23h)</div>
+                <canvas id="chart_hourly"></canvas>
+            </div>
+
+            <!-- Chart 4: Aktivita podle dnů v týdnu -->
+            <div class="chart-card" style="grid-column: span 6;">
+                <div class="chart-title">📅 Aktivita podle dnů - Zprávy Po-Ne</div>
+                <canvas id="chart_weekdays"></canvas>
+            </div>
+
+            <!-- Chart 5: Průměrná délka zpráv podle hodin -->
+            <div class="chart-card" style="grid-column: span 6;">
+                <div class="chart-title">✏️ Délka zpráv - Průměr znaků podle hodin</div>
+                <canvas id="chart_avglen_hour"></canvas>
+            </div>
+
+            <!-- Chart 6: Rychlost zpráv -->
+            <div class="chart-card" style="grid-column: span 6;">
+                <div class="chart-title">⚡ Rychlost zpráv - Zpráv za minutu (live)</div>
+                <canvas id="chart_rate"></canvas>
+            </div>
+
+            <!-- Chart 7: Noví uživatelé podle dnů -->
+            <div class="chart-card" style="grid-column: span 6;">
+                <div class="chart-title">🆕 Noví uživatelé - Denní nárůst (posledních 30 dní)</div>
+                <canvas id="chart_new_daily"></canvas>
+            </div>
+
+            <!-- Chart 8: Noví uživatelé podle měsíců -->
+            <div class="chart-card" style="grid-column: span 6;">
+                <div class="chart-title">📅 Noví uživatelé - Měsíční nárůst</div>
+                <canvas id="chart_new_monthly"></canvas>
+            </div>
+
+            <!-- Chart 9: Počet zpráv podle měsíců -->
+            <div class="chart-card" style="grid-column: span 6;">
+                <div class="chart-title">📊 Zprávy měsíčně - Celkový objem zpráv</div>
+                <canvas id="chart_messages_monthly"></canvas>
+            </div>
+
+            <!-- Chart 10: DAU -->
+            <div class="chart-card" style="grid-column: span 6;">
+                <div class="chart-title">👥 DAU - Daily Active Users (denní aktivita)</div>
+                <canvas id="chart_dau"></canvas>
+            </div>
+
+            <!-- Chart 11: WAU -->
+            <div class="chart-card" style="grid-column: span 6;">
+                <div class="chart-title">📆 WAU - Weekly Active Users (týdenní aktivita)</div>
+                <canvas id="chart_wau"></canvas>
+            </div>
+
+            <!-- Chart 12: MAU -->
+            <div class="chart-card" style="grid-column: span 6;">
+                <div class="chart-title">📆 MAU - Monthly Active Users (měsíční aktivita)</div>
+                <canvas id="chart_mau"></canvas>
+            </div>
+
+            <!-- Chart 13: DAU/WAU ratio -->
+            <div class="chart-card" style="grid-column: span 6;">
+                <div class="chart-title">📈 DAU/WAU Ratio - Míra denní vs týdenní aktivity</div>
+                <canvas id="chart_ratio_dau_wau"></canvas>
+            </div>
+
+            <!-- Chart 14: DAU/MAU ratio -->
+            <div class="chart-card" style="grid-column: span 6;">
+                <div class="chart-title">📈 DAU/MAU Ratio - Míra denní vs měsíční aktivity</div>
+                <canvas id="chart_ratio_dau_mau"></canvas>
+            </div>
+
+            <!-- Chart 15: Histogram délek zpráv -->
+            <div class="chart-card" style="grid-column: span 6;">
+                <div class="chart-title">📊 Histogram - Distribuce délek zpráv (znaky)</div>
+                <canvas id="chart_histogram"></canvas>
+            </div>
+
+            <!-- Chart 16: Kumulativní růst -->
+            <div class="chart-card" style="grid-column: span 6;">
+                <div class="chart-title">📈 Kumulativní růst - Celkový počet zpráv v čase</div>
+                <canvas id="chart_cumulative"></canvas>
+            </div>
+
+            <!-- Chart 17: Heatmapa aktivity -->
+            <div class="chart-card" style="grid-column: span 12;">
+                <div class="chart-title">🔥 Heatmapa - Aktivita podle hodin a dní (tmavší = více zpráv)</div>
+                <canvas id="chart_heatmap" style="height: 200px !important;"></canvas>
+            </div>
+        </div>
+
+        <!-- Messages Display -->
+        <div class="messages-container">
+            <div class="messages-header">
+                <h3>💬 Nedávné zprávy</h3>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" onclick="filterMessages('all')">Vše</button>
+                    <button class="filter-btn" onclick="filterMessages('discord')">Discord</button>
+                    <button class="filter-btn" onclick="filterMessages('discourse')">Discourse</button>
+                </div>
+            </div>
+            <div class="messages-box" id="messagesBox"></div>
+        </div>
+
+        <!-- Live Log -->
+        <div class="log-container">
+            <div class="log-header">
+                <h3>🟢 Live Log</h3>
+                <button class="clear-btn" onclick="clearLog()">Vymazat</button>
+            </div>
+            <div class="log-box" id="logBox"></div>
+        </div>
+
+    </div>
+
+    <script>
+        let ws = null;
+        let liveTotal = 0;
+        let messagesByHour = new Array(24).fill(0);
+        let messagesByWeekday = new Array(7).fill(0);
+        let messagesByHourDiscord = new Array(24).fill(0);
+        let messagesByHourDiscourse = new Array(24).fill(0);
+        let messagesByWeekdayDiscord = new Array(7).fill(0);
+        let messagesByWeekdayDiscourse = new Array(7).fill(0);
+        let avgLengthByHour = new Array(24).fill(0);
+        let lengthCountByHour = new Array(24).fill(0);
+        let histogramBins = new Array(20).fill(0);
+        let heatmap = Array(24).fill(0).map(() => Array(7).fill(0));
+        let cumulativeCount = 0;
+        let reconnectAttempts = 0;
+        let allMessages = [];
+        let currentFilter = 'all';
+
+        // User tracking
+        let userFirstSeen = new Map();
+        let dailyActiveUsers = new Map();
+        let weeklyActiveUsers = new Map();
+        let monthlyActiveUsers = new Map();
+
+        const statusDot = document.getElementById("statusDot");
+        const statusText = document.getElementById("statusText");
+        const updateTime = document.getElementById("updateTime");
+        const liveCounter = document.getElementById("liveCounter");
+        const logBox = document.getElementById("logBox");
+        const messagesBox = document.getElementById("messagesBox");
+
+        Chart.defaults.color = "#94a3b8";
+        Chart.defaults.borderColor = "rgba(148,163,184,0.15)";
+
+        function formatTime() {
+            return new Date().toLocaleTimeString("cs-CZ", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit"
+            });
+        }
+
+        function addLog(text, type = "info") {
+            const div = document.createElement("div");
+            div.className = `log-entry ${type}`;
+
+            const time = document.createElement("span");
+            time.className = "log-time";
+            time.textContent = formatTime();
+
+            const content = document.createElement("span");
+            content.textContent = text;
+
+            div.appendChild(time);
+            div.appendChild(content);
+            logBox.appendChild(div);
+            logBox.scrollTop = logBox.scrollHeight;
+
+            if (logBox.children.length > 500) {
+                logBox.removeChild(logBox.firstChild);
+            }
+        }
+
+        function clearLog() {
+            logBox.innerHTML = "";
+            addLog("🧹 Log vymazán", "info");
+        }
+
+        function addMessageToDisplay(msg) {
+            allMessages.unshift(msg);
+            if (allMessages.length > 100) allMessages.pop();
+            
+            if (currentFilter !== 'all' && msg.source !== currentFilter) return;
+
+            const div = document.createElement("div");
+            div.className = `message-item ${msg.source}`;
+
+            const header = document.createElement("div");
+            header.className = "message-header";
+
+            const author = document.createElement("span");
+            author.className = "message-author";
+            author.textContent = `${msg.source === 'discord' ? '💬' : '💭'} ${msg.author_name || msg.author_hash.substring(0, 8)}`;
+
+
+            const time = document.createElement("span");
+            time.className = "message-time";
+            time.textContent = new Date(msg.timestamp).toLocaleString("cs-CZ");
+
+            header.appendChild(author);
+            header.appendChild(time);
+
+            const content = document.createElement("div");
+            content.className = "message-content";
+            content.textContent = msg.content_preview || "(žádný obsah)";
+
+            const meta = document.createElement("div");
+            meta.className = "message-meta";
+            meta.innerHTML = `
+                <span>📢 ${msg.channel_name}</span>
+                ${msg.has_attachments ? '<span>📎 příloha</span>' : ''}
+                ${msg.reaction_count > 0 ? `<span>❤️ ${msg.reaction_count}</span>` : ''}
+                ${msg.reply_count > 0 ? `<span>💬 ${msg.reply_count}</span>` : ''}
+            `;
+
+            div.appendChild(header);
+            div.appendChild(content);
+            div.appendChild(meta);
+
+            messagesBox.insertBefore(div, messagesBox.firstChild);
+
+            if (messagesBox.children.length > 50) {
+                messagesBox.removeChild(messagesBox.lastChild);
+            }
+        }
+
+        function filterMessages(filter) {
+            currentFilter = filter;
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            messagesBox.innerHTML = '';
+            
+            const filtered = filter === 'all' 
+                ? allMessages 
+                : allMessages.filter(m => m.source === filter);
+            
+            filtered.slice(0, 50).forEach(msg => {
+                addMessageToDisplay(msg);
+            });
+        }
+
+        // Initialize charts
+        const chart_live = new Chart(document.getElementById("chart_live"), {
+            type: "line",
+            data: {
+                labels: [],
+                datasets: [{
+                    label: "Celkem LIVE",
+                    data: [],
+                    borderColor: "#3b82f6",
+                    backgroundColor: "rgba(59,130,246,.15)",
+                    tension: 0.35,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        const chart_sources = new Chart(document.getElementById("chart_sources"), {
+            type: "doughnut",
+            data: {
+                labels: ["Discord", "Discourse"],
+                datasets: [{
+                    data: [0, 0],
+                    backgroundColor: [
+                        "rgba(139,92,246,.8)",
+                        "rgba(16,185,129,.8)"
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        const chart_hourly = new Chart(document.getElementById("chart_hourly"), {
+            type: "bar",
+            data: {
+                labels: Array.from({ length: 24 }, (_, i) => i + ":00"),
+                datasets: [
+                    {
+                        label: "Discord",
+                        data: new Array(24).fill(0),
+                        backgroundColor: "rgba(139,92,246,.7)"
+                    },
+                    {
+                        label: "Discourse",
+                        data: new Array(24).fill(0),
+                        backgroundColor: "rgba(16,185,129,.7)"
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: true },
+                    y: { stacked: true }
+                }
+            }
+        });
+
+        const chart_weekdays = new Chart(document.getElementById("chart_weekdays"), {
+            type: "bar",
+            data: {
+                labels: ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"],
+                datasets: [
+                    {
+                        label: "Discord",
+                        data: new Array(7).fill(0),
+                        backgroundColor: "rgba(139,92,246,.7)"
+                    },
+                    {
+                        label: "Discourse",
+                        data: new Array(7).fill(0),
+                        backgroundColor: "rgba(16,185,129,.7)"
+                    }
+                ]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: true },
+                    y: { stacked: true }
+                }
+            }
+        });
+
+        const chart_avglen_hour = new Chart(document.getElementById("chart_avglen_hour"), {
+            type: "line",
+            data: {
+                labels: Array.from({ length: 24 }, (_, i) => i + ":00"),
+                datasets: [{
+                    label: "Délka (znaky)",
+                    data: avgLengthByHour,
+                    borderColor: "#ec4899",
+                    backgroundColor: "rgba(236,72,153,.2)",
+                    tension: 0.35,
+                    fill: true
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        const chart_rate = new Chart(document.getElementById("chart_rate"), {
+            type: "line",
+            data: {
+                labels: [],
+                datasets: [{
+                    label: "Zpráv/min",
+                    data: [],
+                    borderColor: "#10b981",
+                    backgroundColor: "rgba(16,185,129,.15)",
+                    tension: 0.35,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        const chart_new_daily = new Chart(document.getElementById("chart_new_daily"), {
+            type: "bar",
+            data: {
+                labels: [],
+                datasets: [{
+                    label: "Noví uživatelé",
+                    data: [],
+                    backgroundColor: "rgba(59,130,246,.7)"
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        const chart_new_monthly = new Chart(document.getElementById("chart_new_monthly"), {
+            type: "bar",
+            data: {
+                labels: [],
+                datasets: [{
+                    label: "Noví uživatelé",
+                    data: [],
+                    backgroundColor: "rgba(59,130,246,.7)"
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        const chart_messages_monthly = new Chart(document.getElementById("chart_messages_monthly"), {
+            type: "bar",
+            data: {
+                labels: [],
+                datasets: [{
+                    label: "Zprávy",
+                    data: [],
+                    backgroundColor: "rgba(139,92,246,.7)"
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        const chart_dau = new Chart(document.getElementById("chart_dau"), {
+            type: "line",
+            data: {
+                labels: [],
+                datasets: [{
+                    label: "DAU",
+                    data: [],
+                    borderColor: "#3b82f6",
+                    backgroundColor: "rgba(59,130,246,.15)",
+                    tension: 0.35,
+                    fill: true
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        const chart_wau = new Chart(document.getElementById("chart_wau"), {
+            type: "line",
+            data: {
+                labels: [],
+                datasets: [{
+                    label: "WAU",
+                    data: [],
+                    borderColor: "#f59e0b",
+                    backgroundColor: "rgba(245,158,11,.15)",
+                    tension: 0.35,
+                    fill: true
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        const chart_mau = new Chart(document.getElementById("chart_mau"), {
+            type: "line",
+            data: {
+                labels: [],
+                datasets: [{
+                    label: "MAU",
+                    data: [],
+                    borderColor: "#8b5cf6",
+                    backgroundColor: "rgba(139,92,246,.15)",
+                    tension: 0.35,
+                    fill: true
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        const chart_ratio_dau_wau = new Chart(document.getElementById("chart_ratio_dau_wau"), {
+            type: "line",
+            data: {
+                labels: [],
+                datasets: [{
+                    label: "DAU/WAU",
+                    data: [],
+                    borderColor: "#06b6d4",
+                    backgroundColor: "rgba(6,182,212,.15)",
+                    tension: 0.35,
+                    fill: true
+                }]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: { y: { min: 0, max: 1 } }
+            }
+        });
+
+        const chart_ratio_dau_mau = new Chart(document.getElementById("chart_ratio_dau_mau"), {
+            type: "line",
+            data: {
+                labels: [],
+                datasets: [{
+                    label: "DAU/MAU",
+                    data: [],
+                    borderColor: "#ec4899",
+                    backgroundColor: "rgba(236,72,153,.15)",
+                    tension: 0.35,
+                    fill: true
+                }]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: { y: { min: 0, max: 1 } }
+            }
+        });
+
+        const chart_histogram = new Chart(document.getElementById("chart_histogram"), {
+            type: "bar",
+            data: {
+                labels: Array.from({ length: 20 }, (_, i) => `${i * 10}-${i * 10 + 9}`),
+                datasets: [{
+                    label: "Počet",
+                    data: histogramBins,
+                    backgroundColor: "rgba(245,158,11,.6)"
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        const chart_cumulative = new Chart(document.getElementById("chart_cumulative"), {
+            type: "line",
+            data: {
+                labels: [],
+                datasets: [{
+                    label: "Kumulativní růst",
+                    data: [],
+                    borderColor: "#3b82f6",
+                    backgroundColor: "rgba(59,130,246,.2)",
+                    tension: 0.35,
+                    fill: true
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        const chart_heatmap = new Chart(document.getElementById("chart_heatmap"), {
+            type: "bar",
+            data: {
+                labels: ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"],
+                datasets: Array.from({ length: 24 }, (_, hour) => ({
+                    label: `${hour}:00`,
+                    data: Array(7).fill(0),
+                    backgroundColor: `rgba(139, 92, 246, ${0.3 + (hour / 24) * 0.5})`
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: true },
+                    y: { stacked: true }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        function updateHeatmap() {
+            for (let hour = 0; hour < 24; hour++) {
+                for (let day = 0; day < 7; day++) {
+                    chart_heatmap.data.datasets[hour].data[day] = heatmap[hour][day];
+                }
+            }
+            chart_heatmap.update();
+        }
+
+        function processMessage(msg, isHistorical = false) {
+            const timestamp = new Date(msg.timestamp);
+            const hour = timestamp.getHours();
+            const weekday = timestamp.getDay();
+            const wdIndex = weekday === 0 ? 6 : weekday - 1;
+            const length = msg.content_preview ? msg.content_preview.length : 0;
+            const source = msg.source;
+
+            messagesByHour[hour]++;
+            messagesByWeekday[wdIndex]++;
+            heatmap[hour][wdIndex]++;
+
+            // Track by source
+            if (source === 'discord') {
+                messagesByHourDiscord[hour]++;
+                messagesByWeekdayDiscord[wdIndex]++;
+            } else if (source === 'discourse') {
+                messagesByHourDiscourse[hour]++;
+                messagesByWeekdayDiscourse[wdIndex]++;
+            }
+
+            if (length > 0) {
+                lengthCountByHour[hour]++;
+                avgLengthByHour[hour] = 
+                    ((avgLengthByHour[hour] * (lengthCountByHour[hour] - 1)) + length) / lengthCountByHour[hour];
+            }
+
+            const bin = Math.min(19, Math.floor(length / 10));
+            histogramBins[bin]++;
+
+            cumulativeCount++;
+
+            // Track users
+            const dateKey = timestamp.toISOString().split('T')[0];
+            const weekKey = getWeekKey(timestamp);
+            const monthKey = timestamp.toISOString().substring(0, 7);
+            const userHash = msg.author_hash;
+
+            if (!userFirstSeen.has(userHash)) {
+                userFirstSeen.set(userHash, timestamp);
+            }
+
+            if (!dailyActiveUsers.has(dateKey)) {
+                dailyActiveUsers.set(dateKey, new Set());
+            }
+            dailyActiveUsers.get(dateKey).add(userHash);
+
+            if (!weeklyActiveUsers.has(weekKey)) {
+                weeklyActiveUsers.set(weekKey, new Set());
+            }
+            weeklyActiveUsers.get(weekKey).add(userHash);
+
+            if (!monthlyActiveUsers.has(monthKey)) {
+                monthlyActiveUsers.set(monthKey, new Set());
+            }
+            monthlyActiveUsers.get(monthKey).add(userHash);
+
+            if (!isHistorical) {
+                const timeStr = timestamp.toLocaleTimeString("cs-CZ");
+                
+                chart_live.data.labels.push(timeStr);
+                chart_live.data.datasets[0].data.push(liveTotal);
+                
+                if (chart_live.data.labels.length > 50) {
+                    chart_live.data.labels.shift();
+                    chart_live.data.datasets[0].data.shift();
+                }
+
+                chart_cumulative.data.labels.push(timeStr);
+                chart_cumulative.data.datasets[0].data.push(cumulativeCount);
+                
+                if (chart_cumulative.data.labels.length > 100) {
+                    chart_cumulative.data.labels.shift();
+                    chart_cumulative.data.datasets[0].data.shift();
+                }
+            }
+        }
+
+        function getWeekKey(date) {
+            const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+            const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+            const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+            return `${date.getFullYear()}-W${weekNumber.toString().padStart(2, '0')}`;
+        }
+
+        function updateUserMetrics() {
+            // Update DAU chart
+            const dauDates = Array.from(dailyActiveUsers.keys()).sort().slice(-30);
+            chart_dau.data.labels = dauDates.map(d => d.substring(5));
+            chart_dau.data.datasets[0].data = dauDates.map(d => dailyActiveUsers.get(d).size);
+
+            // Update WAU chart
+            const wauWeeks = Array.from(weeklyActiveUsers.keys()).sort().slice(-20);
+            chart_wau.data.labels = wauWeeks;
+            chart_wau.data.datasets[0].data = wauWeeks.map(w => weeklyActiveUsers.get(w).size);
+
+            // Update MAU chart
+            const mauMonths = Array.from(monthlyActiveUsers.keys()).sort().slice(-12);
+            chart_mau.data.labels = mauMonths;
+            chart_mau.data.datasets[0].data = mauMonths.map(m => monthlyActiveUsers.get(m).size);
+
+            // Calculate ratios
+            if (wauWeeks.length > 0) {
+                chart_ratio_dau_wau.data.labels = wauWeeks;
+                chart_ratio_dau_wau.data.datasets[0].data = wauWeeks.map(w => {
+                    const wauCount = weeklyActiveUsers.get(w).size;
+                    return wauCount > 0 ? (dailyActiveUsers.get(Array.from(dailyActiveUsers.keys()).pop())?.size || 0) / wauCount : 0;
+                });
+            }
+
+            if (mauMonths.length > 0) {
+                chart_ratio_dau_mau.data.labels = mauMonths;
+                chart_ratio_dau_mau.data.datasets[0].data = mauMonths.map(m => {
+                    const mauCount = monthlyActiveUsers.get(m).size;
+                    return mauCount > 0 ? (dailyActiveUsers.get(Array.from(dailyActiveUsers.keys()).pop())?.size || 0) / mauCount : 0;
+                });
+            }
+
+            // New users by day
+            const usersByDay = new Map();
+            userFirstSeen.forEach((date, user) => {
+                const dateKey = date.toISOString().split('T')[0];
+                if (!usersByDay.has(dateKey)) usersByDay.set(dateKey, 0);
+                usersByDay.set(dateKey, usersByDay.get(dateKey) + 1);
+            });
+            const dailyKeys = Array.from(usersByDay.keys()).sort().slice(-30);
+            chart_new_daily.data.labels = dailyKeys.map(d => d.substring(5));
+            chart_new_daily.data.datasets[0].data = dailyKeys.map(d => usersByDay.get(d));
+
+            // New users by month
+            const usersByMonth = new Map();
+            userFirstSeen.forEach((date, user) => {
+                const monthKey = date.toISOString().substring(0, 7);
+                if (!usersByMonth.has(monthKey)) usersByMonth.set(monthKey, 0);
+                usersByMonth.set(monthKey, usersByMonth.get(monthKey) + 1);
+            });
+            const monthlyKeys = Array.from(usersByMonth.keys()).sort().slice(-12);
+            chart_new_monthly.data.labels = monthlyKeys;
+            chart_new_monthly.data.datasets[0].data = monthlyKeys.map(m => usersByMonth.get(m));
+
+            chart_dau.update();
+            chart_wau.update();
+            chart_mau.update();
+            chart_ratio_dau_wau.update();
+            chart_ratio_dau_mau.update();
+            chart_new_daily.update();
+            chart_new_monthly.update();
+
+            // Update stat cards
+            const latestDAU = dailyActiveUsers.get(Array.from(dailyActiveUsers.keys()).pop())?.size || 0;
+            const latestWAU = weeklyActiveUsers.get(Array.from(weeklyActiveUsers.keys()).pop())?.size || 0;
+            const latestMAU = monthlyActiveUsers.get(Array.from(monthlyActiveUsers.keys()).pop())?.size || 0;
+            
+            document.getElementById("stat-dau").textContent = latestDAU;
+            document.getElementById("stat-wau").textContent = latestWAU;
+            document.getElementById("stat-mau").textContent = latestMAU;
+        }
+
+        function updateAllCharts() {
+            chart_live.update();
+            
+            // Update hourly with source breakdown
+            chart_hourly.data.datasets[0].data = messagesByHourDiscord;
+            chart_hourly.data.datasets[1].data = messagesByHourDiscourse;
+            chart_hourly.update();
+            
+            // Update weekdays with source breakdown
+            chart_weekdays.data.datasets[0].data = messagesByWeekdayDiscord;
+            chart_weekdays.data.datasets[1].data = messagesByWeekdayDiscourse;
+            chart_weekdays.update();
+            
+            chart_avglen_hour.update();
+            chart_histogram.update();
+            chart_cumulative.update();
+            updateHeatmap();
+            updateUserMetrics();
+        }
+
+        async function loadStatistics() {
+            try {
+                const res = await fetch("/api/statistics");
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+
+                const stats = await res.json();
+
+                document.getElementById("stat-total").textContent = stats.total_messages || 0;
+                document.getElementById("stat-lastHour").textContent = stats.messages_last_hour || 0;
+                document.getElementById("stat-discord").textContent = stats.discord_messages || 0;
+                document.getElementById("stat-discourse").textContent = stats.discourse_messages || 0;
+                document.getElementById("stat-liveTotal").textContent = stats.live_messages || 0;
+
+                chart_sources.data.datasets[0].data = [
+                    stats.discord_messages || 0,
+                    stats.discourse_messages || 0
+                ];
+                chart_sources.update();
+
+                updateTime.textContent = formatTime();
+
+            } catch (e) {
+                addLog(`❌ Chyba API stats: ${e.message}`, "error");
+            }
+        }
+
+        async function loadMessages() {
+            try {
+                const res = await fetch("/api/messages");
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+
+                const messages = await res.json();
+                
+                if (messages && messages.length > 0) {
+                    addLog(`📦 Načteno ${messages.length} historických zpráv`, "history");
+                    
+                    messages.forEach(msg => {
+                        processMessage(msg, true);
+                        addMessageToDisplay(msg);
+                    });
+
+                    // Group messages by month for monthly chart
+                    const msgsByMonth = new Map();
+                    messages.forEach(msg => {
+                        const monthKey = msg.timestamp.substring(0, 7);
+                        msgsByMonth.set(monthKey, (msgsByMonth.get(monthKey) || 0) + 1);
+                    });
+                    const monthKeys = Array.from(msgsByMonth.keys()).sort().slice(-12);
+                    chart_messages_monthly.data.labels = monthKeys;
+                    chart_messages_monthly.data.datasets[0].data = monthKeys.map(m => msgsByMonth.get(m));
+                    chart_messages_monthly.update();
+
+                    updateAllCharts();
+                }
+
+            } catch (e) {
+                addLog(`❌ Chyba načítání zpráv: ${e.message}`, "error");
+            }
+        }
+
+        function startWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            
+            addLog(`🔌 Připojuji k ${wsUrl}...`, "ws");
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                statusDot.classList.add("online");
+                statusText.textContent = "Online";
+                reconnectAttempts = 0;
+                addLog("✅ WebSocket připojen", "ws");
+            };
+
+            ws.onclose = () => {
+                statusDot.classList.remove("online");
+                statusText.textContent = "Offline";
+                reconnectAttempts++;
+                const delay = Math.min(30000, 3000 * reconnectAttempts);
+                addLog(`❌ WebSocket odpojen (reconnect za ${delay/1000}s)`, "error");
+                setTimeout(startWebSocket, delay);
+            };
+
+            ws.onerror = (error) => {
+                addLog(`⚠️ WebSocket error`, "error");
+            };
+
+            ws.onmessage = (msg) => {
+                let packet = null;
+                try {
+                    packet = JSON.parse(msg.data);
+                } catch (e) {
+                    addLog("❌ Nevalidní WS data", "error");
+                    return;
+                }
+
+                if (packet.type === "live_message") {
+                    liveTotal++;
+                    liveCounter.textContent = `${liveTotal} LIVE`;
+
+                    const content = packet.content || "";
+                    const author = packet.author || "unknown";
+                    const source = packet.source || "unknown";
+                    
+                    addLog(`🟢 [${source}] ${author}: "${content.substring(0, 60)}"`, "live");
+
+                    const msgObj = {
+                        timestamp: packet.timestamp || new Date().toISOString(),
+                        content_preview: content,
+                        source: source,
+                        author_hash: author,
+                        author_name: author,
+                        channel_name: packet.channel || "unknown",
+                        has_attachments: false,
+                        reply_count: 0,
+                        reaction_count: 0,
+                        is_historical: false
+                    };
+
+                    processMessage(msgObj, false);
+                    addMessageToDisplay(msgObj);
+
+                    updateAllCharts();
+                }
+
+                if (packet.type === "history_progress") {
+                    addLog(`📦 [${packet.source}] Historie: ${packet.count} zpráv`, "history");
+                }
+
+                if (packet.type === "history_complete") {
+                    addLog(`✅ [${packet.source}] Historie načtena: ${packet.count || 0} zpráv`, "history");
+                }
+
+                if (packet.type === "history_start") {
+                    addLog(`⏳ [${packet.source}] Začínám načítat historii...`, "history");
+                }
+            };
+        }
+
+        // Initialize
+        addLog("🚀 Dashboard inicializován", "ws");
+        loadStatistics();
+        loadMessages();
+        startWebSocket();
+
+        setInterval(loadStatistics, 5000);
+    </script>
+
+</body>
+
+</html>
