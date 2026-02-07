@@ -2,107 +2,79 @@ import discord
 from discord.ext import commands
 from typing import List, Optional
 
-TITLE = "📘 Přehled příkazů a modulů"
-FOOTER = "Metricord Bot – Help System"
+TITLE = "📘 Metricord - Analytics Bot"
+FOOTER = "Metricord Bot – Analytics & Predictions"
 
 
 PAGE_DATA = [
     {
-        "name": "⚙️ Core (bot.py)",
+        "name": "⚙️ Základní příkazy",
         "desc": (
-            "• Start logů do `CONSOLE_CHANNEL_ID` (chunkuje dlouhé zprávy)\n"
-            "• Načítá všechny cogy z `commands/`\n"
-            "• Globální check podle `COMMANDS_CONFIG` (`enabled` / `admin_only`)\n"
+            "**Ping** – `*ping` nebo `/ping`\n"
+            "Zobrazí latenci bota a stav připojení\n\n"
+            "**Help** – `*help` nebo `/help [modul]`\n"
+            "Zobrazí tuto nápovědu\n"
+            "Můžeš zadat název modulu pro přímý přechod\n"
         ),
     },
     {
-        "name": "🪵 Logování (commands/log.py)",
+        "name": "📊 Analytics - Activity Tracking",
         "desc": (
-            "**Slash group:** `/log`\n"
-            "• `/log status` – stav, metriky, detaily\n"
-            "• `/log toggle <typ|all> <true/false>` – granularita (messages/members/channels/roles/voice/...)\n"
-            "• `/log ignore <channel|user> <id> <add|remove>` – ignorování\n"
-            "• `/log stats` – statistiky cogu\n"
-            "• `/log test` – zkušební embed do obou log kanálů\n"
-            "**Loguje:** členy (join/leave/update, role, timeout, pending…), profily (glob.)\n"
-            "kanály (create/update/delete/overwrites), vlákna, role, emoji/stickers,\n"
-            "invites, webhooks, integrace, stage, scheduled events, reactions,\n"
-            "moderaci a vybrané audit log akce, (volitelně) presence změny\n"
-            "**Perzistence:** `data/log_config.json` (nastavení), `data/member_cache.json` (cache)\n"
+            "**Real-time sledování aktivity uživatelů**\n\n"
+            "Bot automaticky trackuje:\n"
+            "• Zprávy v kanálech\n"
+            "• Voice aktivitu\n"
+            "• Reakce a interakce\n"
+            "• Join/Leave eventy\n\n"
+            "Data se ukládají do Redis a jsou dostupná v dashboardu.\n"
         ),
     },
     {
-        "name": "📊 Reporty (commands/report.py)",
+        "name": "� Analytics - HyperLogLog Stats",
         "desc": (
-            "• Auto 1. den v měsíci → report za předchozí měsíc do `REPORT_CHANNEL_ID`\n"
-            "• Manuálně: `*report` (na `GUILD_ID`)\n"
-            "**Data:** `data/member_counts.json` (joins/leaves), `data/active_users.json` (denní set aktivních)\n"
-            "**Metriky:** Noví, Odchody, Celkem, DAU, MAU, DAU/MAU%, Boti/Lidé, Online, počty kanálů/rolí\n"
+            "**Efektivní counting pomocí HyperLogLog algoritmu**\n\n"
+            "**Metriky:**\n"
+            "• **DAU** (Daily Active Users) - denní aktivní uživatelé\n"
+            "• **WAU** (Weekly Active Users) - týdenní aktivní\n"
+            "• **MAU** (Monthly Active Users) - měsíční aktivní\n\n"
+            "**Výhody HLL:**\n"
+            "• Konstantní paměťová náročnost\n"
+            "• Rychlé operace\n"
+            "• Přesnost ~98%\n\n"
+            "Všechny metriky jsou dostupné v web dashboardu.\n"
         ),
     },
     {
-        "name": "🧮 Analytika HLL (activity_hll_optimized.py)",
+        "name": "🎯 Analytics - Predictions",
         "desc": (
-            "• `*dau [days_ago=0]` – DAU pro den\n"
-            "• `*wau` – 7d rolling\n"
-            "• `*mau [window_days=30]` – N-denní rolling (N ≤ retention)\n"
-            "• `*anloghere` – nastav kanál pro heartbeat log\n"
-            "• `*topusers [N]`, `*topchannels [N]` – dnešní heavy-hitters (Space-Saving, RAM only)\n"
-            "**Konfigurace (`CONFIG`):** `REDIS_URL`, retenční dny, cooldowny, `TOP_K`, atd.\n"
+            "**Predikce chování uživatelů (pro bakalářskou práci)**\n\n"
+            "Bot sbírá data pro:\n"
+            "• Predikci aktivity uživatelů\n"
+            "• Analýzu engagement trendů\n"
+            "• Detekci churn risk\n"
+            "• Community health score\n\n"
+            "**Dostupné v dashboardu:**\n"
+            "• Grafy aktivity (Chart.js)\n"
+            "• Predictions interface\n"
+            "• User profily\n"
+            "• Real-time metriky\n"
         ),
     },
     {
-        "name": "📢 Hromadné DM (commands/notify.py)",
+        "name": "� Web Dashboard",
         "desc": (
-            "• `*notify \"zpráva\" [@role|role_id|ALL] [--skip @uživatel @role 123...]` *(admin)*\n"
-            "• Posílá DM opatrně (≈90±30 s mezi uživateli, concurrency=1, retry)\n"
-            "• Výsledky (CSV) jako příloha do `CONSOLE_CHANNEL_ID`\n"
-            "• `DRY_RUN = True` → jen simulace\n"
-        ),
-    },
-    {
-        "name": "✅ Verifikace (commands/verification.py)",
-        "desc": (
-            "• Při joinu: přidá ověřovací roli, pošle DM s kódem, čeká na odpověď\n"
-            "• Moderátor potvrdí tlačítkem v `MOD_CHANNEL_ID`\n"
-            "• Po ověření: DM „Vítej“ + uvítací zpráva do `WELCOME_CHANNEL_ID`\n"
-        ),
-    },
-    {
-        "name": "🧹 Purge (commands/purge.py)",
-        "desc": (
-            "• `*purge <množství 1–100> [@uživatel] [slovo]` *(manage_messages)*\n"
-            "• Najde přesně N odpovídajících zpráv (prochází až ~1000), hromadně smaže\n"
-        ),
-    },
-    {
-        "name": "📶 Status (commands/status.py)",
-        "desc": (
-            "• `*status [kód|stav] [služba] (podrobnosti)` *(manage_messages)*\n"
-            "• Kódy 1..11 mapují na stavy (online/údržba/výpadek/…)\n"
-            "• Mazání příkazové zprávy, cooldown, hezký barevný embed\n"
-        ),
-    },
-    {
-        "name": "🏁 Emoji Challenge (commands/emojirole.py)",
-        "desc": (
-            "**Slash (/challenge):** `setup role:@Role channel_name:<#kanál> emojis:\"🍁 :strongdoge: 🔥\"`, "
-            "`show`, `settings`, `messages add|list|clear`, `clear`\n"
-            "**Prefix (*challenge):** `setup/show/messages add|list|clear/clear`\n"
-            "**Chování:** při úspěšné kombinaci → ✅ reakce, přidá roli, odpoví náhodnou zprávou (30 přednastavených)\n"
-            "**Formát emoji:** Unicode (🍁 🔥 💪), custom `:strongdoge:` nebo `<:strongdoge:123...>`, kombinované `🍁 :strongdoge: 🔥`\n"
-            "**Nastavení:** `require_all`, `react_ok`, `reply_on_success`\n"
-            "**Data:** `data/challenge_config.json`\n"
-        ),
-    },
-    {
-        "name": "🔥 Výzvy (commands/vyzva.py)",
-        "desc": (
-            "• `*vyhodnotit_vyzvu [#kanál|-] [vypis=true/false] [filtr|photo|-] "
-            "[mode=days/fotosum/weekly] [interval] [počet role] [počet role] ...` *(admin)*\n"
-            "• Režimy: `days` (počet dní s aktivitou), `fotosum` (počet příspěvků s fotkou), "
-            "`weekly` (po sobě jdoucí X-denní intervaly s aktivitou)\n"
-            "• Může přidělovat role po dosažení prahů\n"
+            "**Přístup:** http://localhost:8092\n\n"
+            "**Funkce:**\n"
+            "• Real-time metriky (DAU/MAU/WAU)\n"
+            "• Interaktivní grafy aktivity\n"
+            "• User analytics\n"
+            "• Predictions & insights\n"
+            "• OAuth přihlášení přes Discord\n\n"
+            "**Technologie:**\n"
+            "• FastAPI backend\n"
+            "• Jinja2 templates\n"
+            "• Chart.js grafy\n"
+            "• Redis cache\n"
         ),
     },
 ]
@@ -120,7 +92,7 @@ class HelpPaginator(discord.ui.View):
             discord.SelectOption(label=self._clean_label(embed.title), value=str(i))
             for i, embed in enumerate(self.pages)
         ]
-        self.select_menu.options = options  
+        self.select_menu.options = options
 
         self._refresh_button_states()
 
@@ -134,21 +106,21 @@ class HelpPaginator(discord.ui.View):
         await interaction.response.edit_message(embed=self.pages[self.index], view=self)
 
     def _refresh_button_states(self):
-        self.prev_button.disabled = (self.index <= 0)  
-        self.next_button.disabled = (self.index >= len(self.pages) - 1)  
+        self.prev_button.disabled = (self.index <= 0)
+        self.next_button.disabled = (self.index >= len(self.pages) - 1)
 
     @discord.ui.button(label="◀ Prev", style=discord.ButtonStyle.secondary)
-    async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):  
+    async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.index = max(0, self.index - 1)
         await self._update(interaction)
 
     @discord.ui.button(label="Next ▶", style=discord.ButtonStyle.secondary)
-    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):  
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.index = min(len(self.pages) - 1, self.index + 1)
         await self._update(interaction)
 
     @discord.ui.button(label="✖ Close", style=discord.ButtonStyle.danger)
-    async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):  
+    async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.author.id:
             return await interaction.response.send_message("Zavřít může jen autor nápovědy.", ephemeral=True)
         for child in self.children:
@@ -157,7 +129,7 @@ class HelpPaginator(discord.ui.View):
         self.stop()
 
     @discord.ui.select(placeholder="Přejít na modul…")
-    async def select_menu(self, interaction: discord.Interaction, select: discord.ui.Select):  
+    async def select_menu(self, interaction: discord.Interaction, select: discord.ui.Select):
         try:
             target = int(select.values[0])
         except Exception:
@@ -176,7 +148,7 @@ class HelpPaginator(discord.ui.View):
 
 
 class HelpCustom(commands.Cog):
-    """Zobrazí stránkovaný přehled modulů a příkazů."""
+    """Zobrazí přehled Metricord analytics bota."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -188,7 +160,7 @@ class HelpCustom(commands.Cog):
             embed = discord.Embed(
                 title=page["name"],
                 description=page["desc"],
-                color=discord.Color.blurple()
+                color=discord.Color.blue()
             )
             embed.set_author(name=TITLE)
             embed.set_footer(text=f"{FOOTER} • {i}/{total}")
@@ -197,7 +169,7 @@ class HelpCustom(commands.Cog):
             pages.append(embed)
         return pages
 
-    @commands.hybrid_command(name="help", description="Zobrazí stránkovaný přehled příkazů a chování modulů")
+    @commands.hybrid_command(name="help", description="Zobrazí přehled Metricord analytics bota")
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def help_command(self, ctx: commands.Context, modul: Optional[str] = None):
         """
@@ -224,8 +196,7 @@ class HelpCustom(commands.Cog):
             view.message = msg
 
 async def setup(bot: commands.Bot):
-    
+    # remove default help
     if "help" in bot.all_commands:
         bot.remove_command("help")
     await bot.add_cog(HelpCustom(bot))
-
