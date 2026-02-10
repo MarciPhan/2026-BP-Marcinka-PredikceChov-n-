@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 import os
 
 # same .env hack as in bot
-env_path = "/root/discord-bot/.env"
+env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env")
 if os.path.exists(env_path):
     with open(env_path) as f:
         for line in f:
@@ -27,7 +27,6 @@ from collections import defaultdict
 import secrets
 import httpx
 import sys
-sys.path.append('/root/discord-bot')  # hacky but works
 from shared.redis_client import get_redis_client
 
 # load secrets from config or generate temp ones
