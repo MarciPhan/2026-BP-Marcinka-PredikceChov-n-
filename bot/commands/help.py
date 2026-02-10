@@ -61,6 +61,29 @@ PAGE_DATA = [
         ),
     },
     {
+        "name": "📈 Analytics - Community Score",
+        "desc": (
+            "**Detailní výpočet skóre zdraví komunity (0-100)**\n\n"
+            "Skóre se skládá ze 4 vážených složek (každá 25%):\n\n"
+            "**1. Tým & Moderace (25%)**\n"
+            "• Ideální poměr: **50-100 členů na moderátora**\n"
+            "• Penalizace za nedostatek i přebytek moderátorů\n\n"
+            "**2. Bezpečnost (25%)**\n"
+            "• Level verifikace (max 60b)\n"
+            "• Filtr explicitního obsahu (max 20b)\n"
+            "• 2FA pro moderátory (20b)\n\n"
+            "**3. Engagement (25%)**\n"
+            "• **Participation Rate:** % denně aktivních členů\n"
+            "• **Reply Ratio:** Poměr odpovědí ku všem zprávám (konverzace)\n"
+            "• **Voice Activity:** Průměrný čas ve voice na aktivního uživatele\n\n"
+            "**4. Aktivita Moderace (25%)**\n"
+            "• Počet mod akcí (bany, kicky, timeouty) na 100 uživatelů\n"
+            "• Hodnotí se přiměřenost (ani málo, ani moc)\n\n"
+            "**Hodnocení:**\n"
+            "🟢 **>80** Vynikající | 🔵 **>60** Dobrý | 🟠 **>40** Průměrný | 🔴 **<40** Nízký"
+        ),
+    },
+    {
         "name": "� Web Dashboard",
         "desc": (
             "**Přístup:** http://localhost:8092\n\n"
