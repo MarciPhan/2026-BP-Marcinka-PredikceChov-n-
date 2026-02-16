@@ -19,3 +19,14 @@ status_page_output.html
 
 # VSCode settings
 .vscode/
+
+# Thesis
+bakalarskaPrace_implementace.md
+
+# AI Files
+.gemini/
+.agent/
+*.agent.md
+task.md
+implementation_plan.md
+walkthrough.md

@@ -421,19 +421,28 @@ class ActivityHLLOptCog(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         if member.bot: return
-        month_key = datetime.now().strftime("%Y-%m")
+        now = datetime.now()
+        month_key = now.strftime("%Y-%m")
+        day_key_str = now.strftime("%Y-%m-%d")
         
-        await self.r.hincrby(f"stats:joins:{member.guild.id}", month_key, 1)
+        pipe = self.r.pipeline()
+        pipe.hincrby(f"stats:joins:{member.guild.id}", month_key, 1)
+        pipe.hincrby(f"stats:joins:daily:{member.guild.id}", day_key_str, 1)
+        await pipe.execute()
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         if member.bot: return
         try:
-            month_key = datetime.now().strftime("%Y-%m")
+            now = datetime.now()
+            month_key = now.strftime("%Y-%m")
+            day_key_str = now.strftime("%Y-%m-%d")
             
-            await self.r.hincrby(f"stats:leaves:{member.guild.id}", month_key, 1)
+            pipe = self.r.pipeline()
+            pipe.hincrby(f"stats:leaves:{member.guild.id}", month_key, 1)
+            pipe.hincrby(f"stats:leaves:daily:{member.guild.id}", day_key_str, 1)
+            await pipe.execute()
         except Exception as e:
-            
             print(f"[ActivityHLL] Error in on_member_remove: {e}")
 
 async def setup(bot: commands.Bot):
