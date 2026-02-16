@@ -1110,7 +1110,7 @@ async def profile_page(request: Request, _=Depends(require_auth)):
     
     
     
-    bot_guild_ids.add("615171377783242769") 
+ 
     
     
     servers = []
@@ -1164,7 +1164,11 @@ async def activity_page(request: Request, guild_id: str = None, start_date: str 
     if not guild_id:
         guild_id = request.session.get("guild_id")
     
-    target_guild_id = guild_id or "615171377783242769" 
+    user_guilds = await get_user_guilds(user_session["id"])
+    target_guild_id = guild_id or request.session.get("active_guild_id")
+    
+    if not target_guild_id and user_guilds:
+        target_guild_id = str(user_guilds[0]["id"]) 
 
     
     if start_date:
@@ -1383,7 +1387,17 @@ async def user_activity_page(request: Request, uid: int, start_date: str = None,
     
     try:
         r = await get_redis_client()
-        gid = 615171377783242769
+        user_session = request.session.get("discord_user")
+        if not user_session:
+             return RedirectResponse(url="/")
+        
+        # Try to get from query param or session
+        gid = request.query_params.get("guild_id")
+        if not gid:
+             gid = request.session.get("active_guild_id")
+        
+        if not gid:
+             return RedirectResponse(url="/select-server")
         
         
         info = await r.hgetall(f"user:info:{uid}")
@@ -2092,6 +2106,8 @@ async def trigger_backfill(request: Request, guild_id: Optional[str] = Form(None
     
     
     
+    
+    
     from .utils import get_redis_client
     r = await get_redis_client()
     
@@ -2100,20 +2116,12 @@ async def trigger_backfill(request: Request, guild_id: Optional[str] = Form(None
     dashboard_guilds = await r.smembers("bot:guilds:dashboard") or set()
     
     
-    if not primary_guilds and not dashboard_guilds:
-        all_guilds = await r.smembers("bot:guilds")
-        
-        primary_known = {"615171377783242769", "1226095910157680691"}
-        if target_gid in primary_known:
-            bot_token_val = primary_token
-        else:
-            bot_token_val = dashboard_token or primary_token
-    elif target_gid in primary_guilds:
+    if target_gid in primary_guilds:
         bot_token_val = primary_token
     elif target_gid in dashboard_guilds:
         bot_token_val = dashboard_token
     else:
-        
+        # Fallback to dashboard token (safe default for new setups)
         bot_token_val = dashboard_token or primary_token
     
     if os.path.exists(script_path) and bot_token_val:
@@ -2215,8 +2223,15 @@ async def leave_server(request: Request, _=Depends(require_admin)):
     
     from .utils import get_redis_client
     r = await get_redis_client()
-    primary_known = {"615171377783242769", "1226095910157680691"}
-    bot_token = primary_token if guild_id in primary_known else (dashboard_token or primary_token)
+    primary_guilds = await r.smembers("bot:guilds:primary") or set()
+    dashboard_guilds = await r.smembers("bot:guilds:dashboard") or set()
+    
+    if guild_id in primary_guilds:
+        bot_token = primary_token
+    elif guild_id in dashboard_guilds:
+        bot_token = dashboard_token
+    else:
+        bot_token = dashboard_token or primary_token
     
     if not bot_token:
         return JSONResponse({"status": "error", "message": "Bot token not found"}, status_code=500)

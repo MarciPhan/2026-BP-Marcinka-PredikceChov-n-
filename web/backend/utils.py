@@ -643,7 +643,7 @@ async def get_redis_dashboard_stats(guild_id: int, start_date: str = None, end_d
         pass
     
 
-async def get_summary_card_data(discord_dau=0, discord_mau=0, discord_wau=0, discord_users=0, guild_id: int = 615171377783242769):
+async def get_summary_card_data(discord_dau=0, discord_mau=0, discord_wau=0, discord_users=0, guild_id: int = None):
     """
     Get summary card data using ONLY real data from Redis (Primary) and database (Fallback).
     Prioritizes live bot data for user counts.
@@ -688,7 +688,7 @@ def get_challenge_config() -> Dict[str, Any]:
 def save_challenge_config(new_config: Dict[str, Any]):
     CONFIG_PATH.write_text(json.dumps(new_config, ensure_ascii=False, indent=2), encoding="utf-8")
 
-async def get_realtime_online_count(guild_id: int = 615171377783242769) -> int:
+async def get_realtime_online_count(guild_id: int = None) -> int:
     """
     Get REAL count of currently online members from Discord.
     Connects to bot data stored via bot presence updates.

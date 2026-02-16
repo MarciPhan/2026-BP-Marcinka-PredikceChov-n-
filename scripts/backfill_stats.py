@@ -126,7 +126,12 @@ class BackfillClient(discord.Client):
             
             # Update progress
             progress = int((idx / max(total_channels, 1)) * 50) # First 50% for messages
-            await self.redis.set(progress_key, json.dumps({"status": "processing_messages", "progress": progress, "messages": msg_count}))
+            await self.redis.set(progress_key, json.dumps({
+                "status": "processing_messages", 
+                "progress": progress, 
+                "messages": msg_count,
+                "current_channel": channel.name
+            }))
 
         # Write messages to Redis
         print(f"Writing {msg_count} messages to Redis...")
