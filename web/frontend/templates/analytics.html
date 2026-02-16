@@ -419,7 +419,6 @@
 {% elif widget_id == 'weekday_chart' %}{{ render_weekday() }}
 {% elif widget_id == 'msg_len_chart' %}{{ render_msg_len() }}
 {% elif widget_id == 'weekend_chart' %}{{ render_weekend_ratio() }}
-{% elif widget_id == 'weekend_chart' %}{{ render_weekend_ratio() }}
 {% elif widget_id == 'xp_leaderboard' %}{{ render_xp_leaderboard() }}
 {% endif %}
 {% endmacro %}
@@ -687,23 +686,6 @@
         if (document.getElementById('leaderboard-tbody')) loadLeaderboard();
         if (document.getElementById('peak-hour')) loadPeakAnalysis();
         if (document.getElementById('commandChart')) loadCommandStats();
-        if (document.getElementById('voice-tbody')) loadVoiceStats();
-        if (document.getElementById('trafficChart')) loadTrafficStats();
-        if (document.getElementById('trend-7d')) loadAnalyticsTools();
-
-        // Load Extended Stats if any new widget is present
-        if (document.getElementById('growthChart') || document.getElementById('hourlyChart') || document.getElementById('weekdayChart') || document.getElementById('msgLenChart') || document.getElementById('weekendChart')) {
-            loadExtendedStats();
-        }
-        if (document.getElementById('growthChart') || document.getElementById('hourlyChart') || document.getElementById('weekdayChart') || document.getElementById('msgLenChart') || document.getElementById('weekendChart')) {
-            loadExtendedStats();
-        }
-        if (document.getElementById('xp-leaderboard-tbody')) {
-            loadXpLeaderboard();
-            // Live update every 5 seconds
-            setInterval(loadXpLeaderboard, 5000);
-        }
-
         if (document.getElementById('voice-tbody')) {
             loadVoiceStats();
             setInterval(loadVoiceStats, 5000);
@@ -746,12 +728,12 @@
                 });
             }
 
-            if (document.getElementById('weekendChart')) {
+            if (document.getElementById('weekendChart') && data.weekend_ratio) {
                 new Chart(document.getElementById('weekendChart'), {
                     type: 'pie',
                     data: {
                         labels: ['Pracovní dny', 'Víkend'],
-                        datasets: [{ data: [data.weekend_ratio.weekday, data.weekend_ratio.weekend], backgroundColor: ['#3b82f6', '#ec4899'] }]
+                        datasets: [{ data: [data.weekend_ratio.weekday || 0, data.weekend_ratio.weekend || 0], backgroundColor: ['#3b82f6', '#ec4899'] }]
                     }
                 });
             }

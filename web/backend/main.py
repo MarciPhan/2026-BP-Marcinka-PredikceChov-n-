@@ -97,7 +97,7 @@ async def log_requests(request: Request, call_next):
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
-    return RedirectResponse(url="/static/img/hero_dashboard.png") 
+    return RedirectResponse(url="/static/img/favicon.png") 
 
 
 @app.get("/select-server", response_class=HTMLResponse)
@@ -1286,7 +1286,7 @@ async def profile_page(request: Request, _=Depends(require_auth)):
 @app.get("/activity", response_class=HTMLResponse)
 async def activity_page(request: Request, guild_id: str = None, start_date: str = None, end_date: str = None, role_id: str = None, _=Depends(require_auth)):
     """Moderator Activity Page with manual Redis aggregation."""
-    
+    from .utils import get_user_guilds
     
     user_role = request.session.get("role", "guest")
     user_id = request.session.get("discord_user", {}).get("id")
@@ -1295,7 +1295,7 @@ async def activity_page(request: Request, guild_id: str = None, start_date: str 
     if not guild_id:
         guild_id = request.session.get("guild_id")
     
-    user_guilds = await get_user_guilds(user_session["id"])
+    user_guilds = await get_user_guilds(user_id)
     target_guild_id = guild_id or request.session.get("active_guild_id")
     
     if not target_guild_id and user_guilds:
@@ -1315,7 +1315,6 @@ async def activity_page(request: Request, guild_id: str = None, start_date: str 
     
     if user_role != "admin":
         if user_role == "mod":
-            from .utils import get_user_guilds
             user_guilds = await get_user_guilds(user_id)
             managed_ids = [g["id"] for g in user_guilds]
             
@@ -2415,8 +2414,10 @@ async def get_analytics_tools(request: Request, start_date: Optional[str] = None
 async def get_extended_stats(request: Request, start_date: str = None, end_date: str = None, _=Depends(require_auth)):
     """Get extended statistics for new widgets."""
     guild_id = request.session.get("guild_id")
-    print(f"[EXTENDED STATS] Request for guild: {guild_id}")
     if not guild_id: return JSONResponse({"status": "error"}, status_code=400)
+    guild_id = int(guild_id)
+    
+    print(f"[EXTENDED STATS] Request for guild: {guild_id}")
     
     from .utils import get_deep_stats_redis, get_redis_dashboard_stats, load_member_stats
     

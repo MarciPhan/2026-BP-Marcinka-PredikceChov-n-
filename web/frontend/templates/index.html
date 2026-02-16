@@ -581,31 +581,31 @@
 <script>
     const chartData = {
         dau: {
-            labels: {{ dau_labels | tojson | safe }},
-    data: { { dau_data | tojson | safe } }
+            labels: {{ dau_labels | tojson | safe}},
+    data: {{ dau_data | tojson | safe }}
         },
     growth: {
-        labels: { { labels | tojson | safe } },
-        joins: { { joins_data | tojson | safe } },
-        leaves: { { leaves_data | tojson | safe } },
-        total: { { total_data | default ([]) | tojson | safe } }
+        labels: {{ labels | tojson | safe }},
+        joins: {{ joins_data | tojson | safe }},
+        leaves: {{ leaves_data | tojson | safe }},
+        total: {{ total_data | default ([]) | tojson | safe }}
     },
     hourly: {
-        labels: { { hourly_labels | tojson | safe } },
-        data: { { hourly_activity | tojson | safe } }
+        labels: {{ hourly_labels | tojson | safe }},
+        data: {{ hourly_activity | tojson | safe }}
     },
     stickiness: {
-        labels: { { retention_labels | tojson | safe } },
-        dauMau: { { dau_mau_ratio | tojson | safe } },
-        dauWau: { { dau_wau_ratio | tojson | safe } }
+        labels: {{ retention_labels | tojson | safe }},
+        dauMau: {{ dau_mau_ratio | tojson | safe }},
+        dauWau: {{ dau_wau_ratio | tojson | safe }}
     },
     msglen: {
-        labels: { { msglen_labels | tojson | safe } },
-        data: { { msglen_data | tojson | safe } }
+        labels: {{ msglen_labels | tojson | safe }},
+        data: {{ msglen_data | tojson | safe }}
     },
     weekly: {
-        labels: { { weekly_labels | tojson | safe } },
-        data: { { weekly_data | tojson | safe } }
+        labels: {{ weekly_labels | tojson | safe }},
+        data: {{ weekly_data | tojson | safe }}
     }
     };
 
@@ -641,7 +641,7 @@
                             },
                             options: {
                                 ...ChartUtils.premiumChartOptions,
-                                scales: { x: { stacked: true }, y: { stacked: true } }
+                                scales: { x: { stacked: true }, y: { stacked: true }}
                             }
                         });
                     }
