@@ -14,6 +14,13 @@
             <span>LIVE</span>
         </div>
 
+        {% if is_discourse %}
+        <button id="syncDiscourseBtn" onclick="triggerDiscourseSync()" class="btn"
+            style="padding: 6px 12px; white-space: nowrap; display: flex; align-items: center; gap: 6px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
+            🔄 Sync Now
+        </button>
+        {% endif %}
+
         <button id="editLayoutBtn" onclick="toggleEditMode()" class="btn"
             style="padding: 6px 12px; white-space: nowrap; display: flex; align-items: center; gap: 8px; background: var(--bg-card);">
             🖊️ Upravit rozložení
@@ -575,30 +582,30 @@
     const chartData = {
         dau: {
             labels: {{ dau_labels | tojson | safe }},
-    data: {{ dau_data | tojson | safe }}
+    data: { { dau_data | tojson | safe } }
         },
     growth: {
-        labels: {{ labels | tojson | safe }},
-        joins: {{ joins_data | tojson | safe }},
-        leaves: {{ leaves_data | tojson | safe }},
-        total: {{ total_data | default ([]) | tojson | safe }}
+        labels: { { labels | tojson | safe } },
+        joins: { { joins_data | tojson | safe } },
+        leaves: { { leaves_data | tojson | safe } },
+        total: { { total_data | default ([]) | tojson | safe } }
     },
     hourly: {
-        labels: {{ hourly_labels | tojson | safe }},
-        data: {{ hourly_activity | tojson | safe }}
+        labels: { { hourly_labels | tojson | safe } },
+        data: { { hourly_activity | tojson | safe } }
     },
     stickiness: {
-        labels: {{ retention_labels | tojson | safe }},
-        dauMau: {{ dau_mau_ratio | tojson | safe }},
-        dauWau: {{ dau_wau_ratio | tojson | safe }}
+        labels: { { retention_labels | tojson | safe } },
+        dauMau: { { dau_mau_ratio | tojson | safe } },
+        dauWau: { { dau_wau_ratio | tojson | safe } }
     },
     msglen: {
-        labels: {{ msglen_labels | tojson | safe }},
-        data: {{ msglen_data | tojson | safe }}
+        labels: { { msglen_labels | tojson | safe } },
+        data: { { msglen_data | tojson | safe } }
     },
     weekly: {
-        labels: {{ weekly_labels | tojson | safe }},
-        data: {{ weekly_data | tojson | safe }}
+        labels: { { weekly_labels | tojson | safe } },
+        data: { { weekly_data | tojson | safe } }
     }
     };
 
@@ -634,7 +641,7 @@
                             },
                             options: {
                                 ...ChartUtils.premiumChartOptions,
-                                scales: { x: { stacked: true }, y: { stacked: true }}
+                                scales: { x: { stacked: true }, y: { stacked: true } }
                             }
                         });
                     }
@@ -755,4 +762,48 @@
         } catch (e) { console.error(e); }
     });
 </script>
+
+
+{% if is_discourse %}
+<script>
+    async function triggerDiscourseSync() {
+        const btn = document.getElementById('syncDiscourseBtn');
+        if (!btn) return;
+
+        // confirm
+        if (!confirm("Spustit manuální synchronizaci s Discourse?")) return;
+
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Syncing...';
+
+        const formData = new FormData();
+        formData.append('guild_id', '{{ guild_id }}');
+
+        try {
+            const resp = await fetch('/api/discourse/sync', {
+                method: 'POST',
+                body: formData
+            });
+            const res = await resp.json();
+
+            if (resp.ok) {
+                btn.innerHTML = '✅ Hotovo';
+                btn.style.color = '#4ade80';
+                btn.style.borderColor = '#4ade80';
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                alert("Chyba: " + (res.error || "Neznámá chyba"));
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Chyba spojení");
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+</script>
+{% endif %}
 {% endblock %}
