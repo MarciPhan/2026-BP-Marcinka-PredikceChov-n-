@@ -639,6 +639,22 @@ async def get_redis_dashboard_stats(guild_id: int, start_date: str = None, end_d
         await r.setex(cache_key, 60, json.dumps(stats))
         return stats
         
+    except Exception as e:
+        print(f"Error fetching Redis dashboard stats: {e}")
+        return {
+            "hourly_activity": [0] * 24,
+            "hourly_labels": [f"{h}:00" for h in range(24)],
+            "msglen_labels": [],
+            "msglen_data": [],
+            "heatmap_data": [[0 for _ in range(24)] for _ in range(7)],
+            "heatmap_max": 1,
+            "peak_hour": "--",
+            "peak_day": "--",
+            "peak_messages": "--",
+            "quiet_period": "--",
+            "cumulative_msgs": [],
+            "is_estimated": False
+        }
     finally:
         pass
     
