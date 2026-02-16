@@ -6,7 +6,9 @@ from collections import defaultdict, Counter
 import redis.asyncio as redis
 import httpx
 import sys
-sys.path.append('/root/discord-bot')
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 
 
 from shared.redis_client import get_redis, REDIS_URL
@@ -30,50 +32,88 @@ def K_DAU(gid: int, d: str) -> str:
 async def load_member_stats(guild_id: int, start_date: str = None, end_date: str = None) -> Dict[str, Any]:
     """
     Načte Member Growth data z Redis (Joins/Leaves) a filtruje podle data.
+    Používá aktuální počet členů a zpětně dopočítá historii pro realistické zobrazení.
     """
     r = await get_redis()
     try:
+        # Načteme aktuální počet členů ze serveru
+        current_members_str = await r.get(f"presence:total:{guild_id}")
+        current_members = int(current_members_str) if current_members_str else 0
         
-        joins_data = await r.hgetall(f"stats:joins:{guild_id}")
-        leaves_data = await r.hgetall(f"stats:leaves:{guild_id}")
+        # Načteme historická data joins/leaves (DENNÍ i MĚSÍČNÍ pro zpětnou kompatibilitu)
+        # Nyní preferujeme denní klíče: stats:joins:daily:{guild_id} (YYYY-MM-DD)
+        joins_data = await r.hgetall(f"stats:joins:daily:{guild_id}")
+        leaves_data = await r.hgetall(f"stats:leaves:daily:{guild_id}")
         
-        
+        # Pokud nemáme periodu, nastavíme default na posledních 30 dní
+        if not start_date or not end_date:
+            e_dt = datetime.now()
+            s_dt = e_dt - timedelta(days=30)
+        else:
+            try:
+                s_dt = datetime.strptime(start_date, "%Y-%m-%d")
+                e_dt = datetime.strptime(end_date, "%Y-%m-%d")
+            except:
+                # Fallback on error
+                e_dt = datetime.now()
+                s_dt = e_dt - timedelta(days=30)
+                
+        # Generujeme seznam všech dní v intervalu
+        date_list = []
+        curr = s_dt
+        while curr <= e_dt:
+            date_list.append(curr.strftime("%Y-%m-%d"))
+            curr += timedelta(days=1)
+            
+        # Získáme všechny existující klíče z Redis (i mimo interval, pro výpočet offsetu)
         all_keys = set(joins_data.keys()) | set(leaves_data.keys())
-        sorted_keys = sorted(all_keys)
+        sorted_keys = sorted(all_keys) # YYYY-MM-DD string sort works correctly
         
-        cumulative_count = 0 
+        # Spočítáme čistou změnu (net change) od KONCE našeho intervalu až do SOUČASNOSTI
+        # Tím zjistíme, kolik členů bylo na konci našeho intervalu.
+        # Current = End_Value + (Changes_After_End)  =>  End_Value = Current - (Changes_After_End)
         
+        net_change_after = 0
+        last_date_in_range = date_list[-1]
         
-        if start_date:
-             start_ym = start_date[:7]
-             for k in sorted_keys:
-                 if k < start_ym:
-                     j = int(joins_data.get(k, 0))
-                     l = int(leaves_data.get(k, 0))
-                     cumulative_count += (j - l)
-                 else:
-                     break
+        for k in sorted_keys:
+            if k > last_date_in_range:
+                j = int(joins_data.get(k, 0))
+                l = int(leaves_data.get(k, 0))
+                net_change_after += (j - l)
+                
+        end_count = current_members - net_change_after
+        
+        # Nyní zpětně dopočítáme stavy pro dny v našem intervalu
+        # Jdeme od posledního dne intervalu k prvnímu
         
         total_counts = []
         joins = []
         leaves = []
-        
         labels = []
-        for k in sorted_keys:
+        
+        running_total = end_count
+        
+        for day_str in reversed(date_list):
+            j = int(joins_data.get(day_str, 0))
+            l = int(leaves_data.get(day_str, 0))
             
+            # Hodnota na KONCI dne 'day_str' je running_total
+            total_counts.insert(0, running_total)
+            joins.insert(0, j)
+            leaves.insert(0, l)
+            labels.insert(0, day_str)
             
-            if start_date and k < start_date[:7]: continue
-            if end_date and k > end_date[:7]: continue
+            # Před přechodem na předchozí den odečteme změnu tohoto dne
+            # Start_Value = End_Value - (Join - Leave)
+            running_total -= (j - l)
 
-            j = int(joins_data.get(k, 0))
-            l = int(leaves_data.get(k, 0))
-            net = j - l
-            cumulative_count += net
-            
-            total_counts.append(cumulative_count)
-            joins.append(j)
-            leaves.append(l)
-            labels.append(k)
+        return {
+            "labels": labels,
+            "total": total_counts,
+            "joins": joins,
+            "leaves": leaves
+        }
 
         return {
             "labels": labels,
@@ -83,6 +123,8 @@ async def load_member_stats(guild_id: int, start_date: str = None, end_date: str
         }
     except Exception as e:
         print(f"Error loading member stats from Redis: {e}")
+        import traceback
+        traceback.print_exc()
         return {"labels": [], "total": [], "joins": [], "leaves": []}
     finally:
         pass
