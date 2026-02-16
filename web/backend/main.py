@@ -116,7 +116,8 @@ async def select_server_page(request: Request):
     return templates.TemplateResponse("select_server.html", {
         "request": request, 
         "guilds": user_guilds,
-        "user": user
+        "user": user,
+        "client_id": DISCORD_CLIENT_ID
     })
 
 @app.get("/select-server/{guild_id}")
@@ -2059,7 +2060,12 @@ async def update_xp_formula(
 @app.post("/api/trigger-backfill")
 async def trigger_backfill(request: Request, guild_id: Optional[str] = Form(None), _=Depends(require_admin)):
     """Trigger manual backfill from dashboard (Admin only)."""
-    target_gid = guild_id or request.session.get("guild_id") or "615171377783242769"
+    target_gid = guild_id or request.session.get("guild_id")
+    print(f"DEBUG: trigger_backfill - Form guild_id: {guild_id}, Session guild_id: {request.session.get('guild_id')}, Resolved: {target_gid}")
+
+    if not target_gid:
+         return JSONResponse({"status": "error", "message": "No guild ID found in session or request"}, status_code=400)
+
     
     import subprocess
     import sys
@@ -2074,10 +2080,15 @@ async def trigger_backfill(request: Request, guild_id: Optional[str] = Form(None
     if os.path.exists(token_path):
         with open(token_path, 'r') as f:
             for line in f:
-                if line.strip().startswith("TOKEN ="):
+                if line.strip().startswith("TOKEN =") and "None" not in line:
                     primary_token = line.split("=")[1].strip().strip('"').strip("'")
                 elif line.strip().startswith("DASHBOARD_TOKEN ="):
                     dashboard_token = line.split("=")[1].strip().strip('"').strip("'")
+    
+    if not primary_token:
+        primary_token = os.getenv("BOT_TOKEN")
+    if not dashboard_token:
+        dashboard_token = os.getenv("DASHBOARD_TOKEN")
     
     
     

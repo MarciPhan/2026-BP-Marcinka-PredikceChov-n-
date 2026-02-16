@@ -126,23 +126,28 @@
 
         <div class="server-grid">
             {% for guild in guilds %}
+            {% if guild.bot_in_guild %}
             <a href="/select-server/{{ guild.id }}" class="server-card">
-                {% if guild.icon %}
-                <img src="https://cdn.discordapp.com/icons/{{ guild.id }}/{{ guild.icon }}.png" class="server-icon"
-                    alt="{{ guild.name }}">
                 {% else %}
-                <div class="server-icon">{{ guild.name[:2] }}</div>
-                {% endif %}
+                <a href="https://discord.com/api/oauth2/authorize?client_id={{ client_id }}&permissions=8&scope=bot%20applications.commands&guild_id={{ guild.id }}&disable_guild_select=true"
+                    class="server-card" target="_blank">
+                    {% endif %}
+                    {% if guild.icon %}
+                    <img src="https://cdn.discordapp.com/icons/{{ guild.id }}/{{ guild.icon }}.png" class="server-icon"
+                        alt="{{ guild.name }}">
+                    {% else %}
+                    <div class="server-icon">{{ guild.name[:2] }}</div>
+                    {% endif %}
 
-                <span class="server-name">{{ guild.name }}</span>
+                    <span class="server-name">{{ guild.name }}</span>
 
-                {% if guild.bot_in_guild %}
-                <span class="server-status status-configured">Manage</span>
-                {% else %}
-                <span class="server-status status-invite">Setup</span>
-                {% endif %}
-            </a>
-            {% endfor %}
+                    {% if guild.bot_in_guild %}
+                    <span class="server-status status-configured">Manage</span>
+                    {% else %}
+                    <span class="server-status status-invite">Setup (Invite Bot)</span>
+                    {% endif %}
+                </a>
+                {% endfor %}
         </div>
 
         {% if not guilds %}

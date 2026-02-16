@@ -50,7 +50,7 @@
                 </select>
             </div>
         </div>
-        
+
         <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--glass-border);">
             <div style="display: flex; align-items: center; justify-content: space-between;">
                 <div>
@@ -79,7 +79,7 @@
                 <div
                     style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--text-muted);">
                     <span id="backfillCurrentStatus" style="font-weight: 500; color: var(--text-primary);">Příprava
-                        procesoru...</span>
+                        procesu...</span>
                     <span id="backfillCount">0 zpráv</span>
                 </div>
                 <div id="backfillChannel"
@@ -397,6 +397,7 @@
 
 
     async function triggerBackfill() {
+        console.log("Triggering backfill for guild: {{ sidebar_guild_id }}");
         showModal("Potvrzení", "Opravdu chcete spustit stahování historie? Toto může trvat dlouho.", true, async () => {
             const btn = document.getElementById('backfillBtn');
             const status = document.getElementById('backfillStatus');
@@ -408,6 +409,7 @@
                 // Must send SOME data to satisfy multipart/form-data requirement of FastAPI
                 const formData = new FormData();
                 formData.append('action', 'trigger');
+                formData.append('guild_id', '{{ sidebar_guild_id }}');
 
                 const resp = await fetch('/api/trigger-backfill', { method: 'POST', body: formData });
 
@@ -551,7 +553,7 @@
     <form method="POST" action="/settings/weights">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
 
-            
+
             {% macro input_field(label, name, value, desc) %}
             <div>
                 <label style="display: block; font-weight: 600; margin-bottom: 8px;">{{ label }}</label>
@@ -693,7 +695,7 @@
     <form method="POST" action="/settings/security-score">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
 
-            
+
             <div style="grid-column: 1 / -1;">
                 <h3 style="font-size: 1rem; margin-bottom: 16px; color: var(--text-primary);">Váhy komponent
                     (celkem
@@ -751,7 +753,7 @@
                     měsíc</div>
             </div>
 
-            
+
             <div
                 style="grid-column: 1 / -1; margin-top: 16px; padding-top: 24px; border-top: 1px solid var(--glass-border);">
                 <h3 style="font-size: 1rem; margin-bottom: 16px; color: var(--text-primary);">Ideální hodnoty
