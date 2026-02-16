@@ -735,15 +735,33 @@ async def save_user_guilds(user_id: str, guilds_data: List[Dict[str, Any]], expi
 
 async def get_user_guilds(user_id: str) -> List[Dict[str, Any]]:
     """
-    Retrieve user guilds from Redis.
+    Retrieve user guilds from Redis (Discord + Discourse).
     """
     r = await get_redis()
+    final_guilds = []
+    
     try:
+        # 1. Standard Discord Guilds
         key = f"session:guilds:{user_id}"
         data = await r.get(key)
         if data is not None:
-            return json.loads(data)
-        return None 
+            final_guilds.extend(json.loads(data))
+            
+        # 2. Discourse Virtual Guilds
+        discourse_ids = await r.smembers(f"user:discourse:{user_id}")
+        for d_id in discourse_ids:
+            conf = await r.hgetall(f"discourse:conf:{d_id}")
+            if conf:
+                final_guilds.append({
+                    "id": str(d_id),
+                    "name": conf.get("name", "Unknown Discourse"),
+                    "icon": conf.get("icon_url", ""),
+                    "is_admin": True,  # Owners are admins of their discourse
+                    "is_mod_candidate": True,
+                    "is_discourse": True # Flag to distinguish
+                })
+
+        return final_guilds
     except Exception as e:
         print(f"Error retrieving guilds from Redis: {e}")
         return []

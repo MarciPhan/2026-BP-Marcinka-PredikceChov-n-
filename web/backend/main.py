@@ -27,6 +27,17 @@ from collections import defaultdict
 import secrets
 import httpx
 import sys
+from pathlib import Path
+
+# Add root to sys.path to allow importing scripts
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(ROOT_DIR))
+
+try:
+    from scripts.discourse_sync import DiscourseSync
+except ImportError:
+    DiscourseSync = None
+
 from shared.redis_client import get_redis_client
 
 # load secrets from config or generate temp ones
@@ -111,7 +122,8 @@ async def select_server_page(request: Request):
     
     
     for g in user_guilds:
-        g["bot_in_guild"] = str(g["id"]) in bot_guilds
+        # Check if bot is in guild OR if it is a virtual Discourse guild
+        g["bot_in_guild"] = (str(g["id"]) in bot_guilds) or g.get("is_discourse", False)
         
     return templates.TemplateResponse("select_server.html", {
         "request": request, 
@@ -135,9 +147,16 @@ async def set_active_server(request: Request, guild_id: str):
     
     bot_guilds = await get_bot_guilds()
     if guild_id not in bot_guilds:
+        # Check if it is a Discourse guild
+        is_discourse = False
+        for g in user_guilds:
+            if str(g["id"]) == guild_id and g.get("is_discourse"):
+                is_discourse = True
+                break
         
-        
-        pass
+        if not is_discourse:
+            # If not bot guild AND not discourse guild -> error or redirect
+            pass
 
     
     guild_name = "Unknown Server"
@@ -152,6 +171,84 @@ async def set_active_server(request: Request, guild_id: str):
     request.session["guild_name"] = guild_name
     request.session["guild_icon"] = guild_icon
     return RedirectResponse(url="/", status_code=303)
+
+
+@app.get("/add-discourse", response_class=HTMLResponse)
+async def add_discourse_page(request: Request):
+    """Page to add a new Discourse server."""
+    user = request.session.get("discord_user")
+    if not user:
+        return RedirectResponse(url="/")
+    return templates.TemplateResponse("add_discourse.html", {"request": request, "user": user})
+
+@app.post("/api/discourse/add")
+async def api_add_discourse(
+    request: Request,
+    url: str = Form(...),
+    api_key: str = Form(...),
+    api_user: str = Form(...)
+):
+    """API endpoint to add a Discourse server."""
+    user = request.session.get("discord_user")
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+        
+    # Basic validation
+    url = url.strip().rstrip("/")
+    if not url.startswith("http"):
+        return JSONResponse({"error": "Invalid URL"}, status_code=400)
+        
+    # Verify connection to Discourse
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"{url}/site.json",
+                headers={"Api-Key": api_key, "Api-Username": api_user}
+            )
+            if resp.status_code != 200:
+                 return JSONResponse({"error": f"Failed to connect: {resp.status_code}"}, status_code=400)
+            
+            site_data = resp.json()
+            title = site_data.get("title", "Discourse Forum")
+            icon = ""
+            # Try to find an icon
+            if "icon" in site_data:
+                 # Helper to resolve relative URLs if needed, specific to discourse structure
+                 pass
+
+    except Exception as e:
+        return JSONResponse({"error": f"Connection error: {str(e)}"}, status_code=400)
+
+    # connection ok -> generate ID and save
+    try:
+        r = await get_redis_client()
+        
+        # Generate a unique psuedo-snowflake ID (negative to distinguish from Discord?) 
+        # Or just a large random int. Let's use negative timestamps to be safe and easy
+        import time
+        guild_id = int(time.time() * 1000) * -1 
+        
+        # Save config
+        conf_key = f"discourse:conf:{guild_id}"
+        await r.hset(conf_key, mapping={
+            "url": url,
+            "api_key": api_key,
+            "api_user": api_user,
+            "name": title,
+            "icon_url": icon,
+            "created_by": user["id"]
+        })
+        
+        # Link to user
+        await r.sadd(f"user:discourse:{user['id']}", guild_id)
+        
+        # Add to global list
+        await r.sadd("discourse:ids", guild_id)
+        
+        return JSONResponse({"success": True, "guild_id": str(guild_id)})
+        
+    except Exception as e:
+        return JSONResponse({"error": f"Database error: {str(e)}"}, status_code=500)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -223,6 +320,35 @@ async def docs_changelog(request: Request):
 async def support_page(request: Request):
     return templates.TemplateResponse("docs/support.html", {"request": request})
 
+@app.post("/api/discourse/sync")
+async def api_trigger_sync(request: Request, guild_id: str = Form(...)):
+    """Trigger manual Discourse sync."""
+    user = request.session.get("discord_user")
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    # Check permissions (admins or owners)
+    # We can use get_dashboard_permissions logic or just check ownership
+    # For now, simplistic check: is user in user:discourse:{user_id}?
+    # Actually, let's trust the session guild_id logic or check redis
+    
+    r = await get_redis_client()
+    is_owner = await r.sismember(f"user:discourse:{user['id']}", guild_id)
+    if not is_owner and request.session.get("role") != "admin":
+         # Check if it is a real guild and user has perms?
+         # Discourse sync is strictly for discourse guilds which are owned by creators
+         return JSONResponse({"error": "Permission denied"}, status_code=403)
+
+    if not DiscourseSync:
+        return JSONResponse({"error": "Sync script not available"}, status_code=500)
+    
+    try:
+        syncer = DiscourseSync()
+        await syncer.sync_guild(guild_id)
+        return JSONResponse({"success": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
 async def _dashboard_logic(request: Request, start_date: str = None, end_date: str = None, role_id: str = None):
     """Main Dashboard Overview."""
     
@@ -287,6 +413,10 @@ async def _dashboard_logic(request: Request, start_date: str = None, end_date: s
 
     guild_id = int(guild_id)
     
+    # Check if this is a Discourse guild for context
+    is_discourse = False
+    if guild_id < 0: # Our negative ID convention for Discourse
+        is_discourse = True
     
     
     from .utils import get_dashboard_permissions
@@ -427,6 +557,7 @@ async def _dashboard_logic(request: Request, start_date: str = None, end_date: s
         "start_date": start_date,
         "end_date": end_date,
         "guild_id": guild_id,
+        "is_discourse": is_discourse,
         "user": user,
         
         
@@ -2284,6 +2415,7 @@ async def get_analytics_tools(request: Request, start_date: Optional[str] = None
 async def get_extended_stats(request: Request, start_date: str = None, end_date: str = None, _=Depends(require_auth)):
     """Get extended statistics for new widgets."""
     guild_id = request.session.get("guild_id")
+    print(f"[EXTENDED STATS] Request for guild: {guild_id}")
     if not guild_id: return JSONResponse({"status": "error"}, status_code=400)
     
     from .utils import get_deep_stats_redis, get_redis_dashboard_stats, load_member_stats

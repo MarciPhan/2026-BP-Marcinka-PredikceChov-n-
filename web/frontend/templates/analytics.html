@@ -755,7 +755,14 @@
                     }
                 });
             }
-        } catch (e) { }
+        } catch (e) {
+            console.error("Error loading extended stats:", e);
+            // Optional: visual indication
+            if (document.getElementById('growthChart')) {
+                const ctx = document.getElementById('growthChart').getContext('2d');
+                ctx.fillText("Error loading data", 10, 50);
+            }
+        }
     }
 
     async function loadComparisons() {

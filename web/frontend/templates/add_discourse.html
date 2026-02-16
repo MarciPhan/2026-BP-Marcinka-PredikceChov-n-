@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Discourse Server - Metricord</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f0f13;
+            --bg-card: #18191f;
+            --primary: #5865F2;
+            --primary-hover: #4752c4;
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+        }
+
+        .form-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #2f3136;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            color: white;
+        }
+
+        .error-msg {
+            color: var(--danger);
+            background: rgba(239, 68, 68, 0.1);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-msg {
+            color: var(--success);
+            background: rgba(34, 197, 94, 0.1);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Add Discourse Forum</h1>
+
+        <div class="form-card">
+            <div id="error-box" class="error-msg"></div>
+            <div id="success-box" class="success-msg">Server successfully added! Redirecting...</div>
+
+            <form id="add-form">
+                <div class="form-group">
+                    <label for="url">Forum URL</label>
+                    <input type="url" id="url" name="url" placeholder="https://discourse.example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="api_user">API Username (System user)</label>
+                    <input type="text" id="api_user" name="api_user" placeholder="system" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="api_key">API Key (Global Key)</label>
+                    <input type="password" id="api_key" name="api_key" placeholder="Paste your API key here" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="submit-btn">Connect Forum</button>
+                <a href="/select-server" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+
+        <p style="text-align: center; color: #555; font-size: 0.8rem; margin-top: 20px;">
+            The API Key requires "Global" permissions to read posts and user activity.
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('add-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const btn = document.getElementById('submit-btn');
+            const errBox = document.getElementById('error-box');
+            const successBox = document.getElementById('success-box');
+
+            btn.disabled = true;
+            btn.innerText = "Connecting...";
+            errBox.style.display = 'none';
+            successBox.style.display = 'none';
+
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch('/api/discourse/add', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    successBox.style.display = 'block';
+                    btn.innerText = "Success!";
+                    setTimeout(() => {
+                        window.location.href = '/select-server';
+                    }, 1500);
+                } else {
+                    throw new Error(result.error || 'Unknown error occurred');
+                }
+            } catch (error) {
+                errBox.innerText = error.message;
+                errBox.style.display = 'block';
+                btn.disabled = false;
+                btn.innerText = "Connect Forum";
+            }
+        });
+    </script>
+</body>
+
+</html>

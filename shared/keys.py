@@ -49,3 +49,15 @@ def K_EVENTS_VOICE(gid: int, uid: int) -> str:
 def K_EVENTS_ACTION(gid: int, uid: int) -> str:
     """User mod action events sorted set key."""
     return f"events:action:{gid}:{uid}"
+
+def K_DISCOURSE_CONF(gid: int) -> str:
+    """Discourse guild configuration hash key."""
+    return f"discourse:conf:{gid}"
+
+def K_USER_DISCOURSE(uid: int) -> str:
+    """Set of Discourse guild IDs owned by user."""
+    return f"user:discourse:{uid}"
+
+def K_DISCOURSE_IDS() -> str:
+    """Set of all registered Discourse guild IDs."""
+    return "discourse:ids"
