@@ -30,6 +30,7 @@ class BackfillClient(discord.Client):
         intents = discord.Intents.default()
         intents.members = True
         intents.guilds = True
+        intents.message_content = True
         super().__init__(intents=intents)
         self.target_guild_id = guild_id
         self.days = days
@@ -48,6 +49,8 @@ class BackfillClient(discord.Client):
             guild = self.get_guild(self.target_guild_id)
             if not guild:
                 print(f"Guild {self.target_guild_id} not found!")
+                progress_key = f"backfill:progress:{self.target_guild_id}"
+                await self.redis.set(progress_key, json.dumps({"status": "error", "message": "Guild not found. Is the bot added?"}))
                 await self.close()
                 return
 
@@ -58,7 +61,7 @@ class BackfillClient(discord.Client):
             traceback.print_exc()
         finally:
             if self.redis:
-                await self.redis.close()
+                await self.redis.aclose()
             await self.close()
 
     async def _update_user_info(self, user):
@@ -66,7 +69,7 @@ class BackfillClient(discord.Client):
         if user.bot: return
         key = f"user:info:{user.id}"
         name = getattr(user, 'display_name', user.name)
-        avatar = str(user.avatar_url) if hasattr(user, 'avatar_url') else ""
+        avatar = str(user.display_avatar.url) if hasattr(user, 'display_avatar') else ""
         roles = ""
         if isinstance(user, discord.Member):
              roles = ",".join(str(r.id) for r in user.roles)
@@ -80,7 +83,7 @@ class BackfillClient(discord.Client):
         progress_key = f"backfill:progress:{gid}"
         await self.redis.set(progress_key, json.dumps({"status": "starting", "progress": 0}))
 
-        limit_date = datetime.utcnow() - timedelta(days=self.days)
+        limit_date = datetime.now() - timedelta(days=self.days)
         discord_epoch = datetime(2015, 1, 1)
         if limit_date < discord_epoch: limit_date = discord_epoch
         
