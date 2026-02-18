@@ -110,7 +110,7 @@ async def demo_login(request: Request):
     }
     request.session["guild_id"] = "demo-guild"
     request.session["guild_name"] = "Demo Server"
-    request.session["role"] = "guest"
+    request.session["role"] = "admin"
     request.session["login_time"] = datetime.now().isoformat()
     return RedirectResponse(url="/", status_code=303)
 
@@ -2800,6 +2800,19 @@ async def api_security_score(request: Request, _=Depends(require_auth)):
     try:
         print("[DEBUG] /api/security-score invoked")
         guild_id = get_guild_id(request)
+        
+        if guild_id == "demo-guild":
+            return JSONResponse({
+                "overall_score": 85,
+                "rating": "Velmi dobré",
+                "components": {
+                    "mod_ratio": {"score": 90, "value": "1:72", "label": "Moderátorů"},
+                    "security": {"score": 80, "value": "Medium", "label": "Zabezpečení"},
+                    "engagement": {"score": 85, "value": "24%", "label": "Engagement"},
+                    "moderation": {"score": 85, "value": "Aktivní", "label": "Moderace"}
+                }
+            })
+
         print(f"[DEBUG] Calculating score for guild {guild_id}")
         score_data = await get_security_score(guild_id)
         print(f"[DEBUG] Score result: {score_data}")
@@ -2819,7 +2832,8 @@ if __name__ == "__main__":
 
 
 
-def get_guild_id(request: Request, guild_id: Optional[str] = None) -> int:
+from typing import Union
+def get_guild_id(request: Request, guild_id: Optional[str] = None) -> Union[int, str]:
     """Helper to get guild ID from session or param."""
     gid = request.session.get("guild_id")
     if not gid and guild_id:
@@ -2829,7 +2843,15 @@ def get_guild_id(request: Request, guild_id: Optional[str] = None) -> int:
     
     if not gid:
         raise HTTPException(status_code=400, detail="No guild selected")
-    return int(gid)
+        
+    if gid == "demo-guild":
+        return gid
+        
+    try:
+        return int(gid)
+    except (ValueError, TypeError):
+        return gid
+
 
 async def get_discord_channels(guild_id: int):
     """Fetch channels from Discord API."""
