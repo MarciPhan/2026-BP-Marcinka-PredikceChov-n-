@@ -59,21 +59,23 @@ DISCORD_CLIENT_SECRET=
 DISCORD_REDIRECT_URI=http://localhost:8092/auth/callback
 ```
 
-### Spuštění
+### Rychlé spuštění
+
+Nejjednodušší způsob, jak spustit vše najednou (Redis, Bot, Dashboard):
 
 ```bash
-# 1. Spusť Redis
-redis-server --daemonize yes
-
-# 2. Spusť bota
-export PYTHONPATH=$(pwd)
-python bot/main.py
-
-# 3. Spusť dashboard (v novém terminálu)
-export PYTHONPATH=$(pwd)
-cd web
-python -m uvicorn backend.main:app --host 0.0.0.0 --port 8092
+chmod +x start.sh
+./start.sh
 ```
+
+Skript se postará o spuštění Redisu, nastavení prostředí a spuštění obou služeb na pozadí. Logy najdete v `bot_std.log` a `dashboard_std.log`.
+
+### Manuální spuštění
+
+Pokud chcete spouštět komponenty jednotlivě:
+1. **Spusť Redis**: `redis-server --daemonize yes`
+2. **Spusť bota**: `export PYTHONPATH=$(pwd) && python bot/main.py`
+3. **Spusť dashboard**: `cd web && export PYTHONPATH=$(pwd) && python -m uvicorn backend.main:app --host 0.0.0.0 --port 8092`
 
 Dashboard pak běží na: http://localhost:8092
 

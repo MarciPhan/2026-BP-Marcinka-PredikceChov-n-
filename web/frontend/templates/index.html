@@ -162,7 +162,7 @@
     <div style="height: 300px;"><canvas id="memberGrowthChart"></canvas></div>
     <div id="growthEmpty"
         style="display: none; height: 100%; align-items: center; justify-content: center; top:0; position:absolute;">
-        Brak danych</div>
+        Žádná data</div>
 </div>
 {% elif id == 'chart_hourly' %}
 <div class="card" data-id="chart_hourly" style="min-height: 350px;">
@@ -578,35 +578,63 @@
     });
 </script>
 
+<script id="dashboard-data" type="application/json">
+    {
+        "dau_labels": {{ dau_labels | tojson | safe }},
+        "dau_data": {{ dau_data | tojson | safe }},
+        "labels": {{ labels | tojson | safe }},
+        "joins_data": {{ joins_data | tojson | safe }},
+        "leaves_data": {{ leaves_data | tojson | safe }},
+        "total_data": {{ total_data | default([]) | tojson | safe }},
+        "hourly_labels": {{ hourly_labels | tojson | safe }},
+        "hourly_activity": {{ hourly_activity | tojson | safe }},
+        "retention_labels": {{ retention_labels | tojson | safe }},
+        "dau_mau_ratio": {{ dau_mau_ratio | tojson | safe }},
+        "dau_wau_ratio": {{ dau_wau_ratio | tojson | safe }},
+        "msglen_labels": {{ msglen_labels | tojson | safe }},
+        "msglen_data": {{ msglen_data | tojson | safe }},
+        "weekly_labels": {{ weekly_labels | tojson | safe }},
+        "weekly_data": {{ weekly_data | tojson | safe }},
+        "heatmap_data": {{ redis_stats.heatmap_data | default([]) | tojson | safe }},
+        "heatmap_max": {{ redis_stats.heatmap_max | default(1) | tojson | safe }},
+        "realtime_active": {{ realtime_active | default(0) | tojson | safe }},
+        "total_members": {{ total_members | default(0) | tojson | safe }},
+        "avg_dau": {{ avg_dau | default(0) | tojson | safe }},
+        "churn_rate": {{ churn_rate | default(0) | tojson | safe }},
+        "guild_id": {{ guild_id | tojson | safe }}
+    }
+</script>
+
 <script>
+    const rawData = JSON.parse(document.getElementById('dashboard-data').textContent);
     const chartData = {
         dau: {
-            labels: {{ dau_labels | tojson | safe}},
-    data: {{ dau_data | tojson | safe }}
+            labels: rawData.dau_labels,
+            data: rawData.dau_data
         },
-    growth: {
-        labels: {{ labels | tojson | safe }},
-        joins: {{ joins_data | tojson | safe }},
-        leaves: {{ leaves_data | tojson | safe }},
-        total: {{ total_data | default ([]) | tojson | safe }}
-    },
-    hourly: {
-        labels: {{ hourly_labels | tojson | safe }},
-        data: {{ hourly_activity | tojson | safe }}
-    },
-    stickiness: {
-        labels: {{ retention_labels | tojson | safe }},
-        dauMau: {{ dau_mau_ratio | tojson | safe }},
-        dauWau: {{ dau_wau_ratio | tojson | safe }}
-    },
-    msglen: {
-        labels: {{ msglen_labels | tojson | safe }},
-        data: {{ msglen_data | tojson | safe }}
-    },
-    weekly: {
-        labels: {{ weekly_labels | tojson | safe }},
-        data: {{ weekly_data | tojson | safe }}
-    }
+        growth: {
+            labels: rawData.labels,
+            joins: rawData.joins_data,
+            leaves: rawData.leaves_data,
+            total: rawData.total_data
+        },
+        hourly: {
+            labels: rawData.hourly_labels,
+            data: rawData.hourly_activity
+        },
+        stickiness: {
+            labels: rawData.retention_labels,
+            dauMau: rawData.dau_mau_ratio,
+            dauWau: rawData.dau_wau_ratio
+        },
+        msglen: {
+            labels: rawData.msglen_labels,
+            data: rawData.msglen_data
+        },
+        weekly: {
+            labels: rawData.weekly_labels,
+            data: rawData.weekly_data
+        }
     };
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -641,7 +669,7 @@
                             },
                             options: {
                                 ...ChartUtils.premiumChartOptions,
-                                scales: { x: { stacked: true }, y: { stacked: true }}
+                                scales: { x: { stacked: true }, y: { stacked: true } }
                             }
                         });
                     }
@@ -697,69 +725,71 @@
             }
 
             // Heatmap Rendering
-            const heatmapData = {{ redis_stats.heatmap_data | default ([]) | tojson | safe
-        }};
-    const heatmapContainer = document.getElementById('heatmap-container');
-    if (heatmapData.length > 0 && heatmapContainer) {
-        const days = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
-        const maxVal = {{ redis_stats.heatmap_max | default (1)
-    }};
+            const heatmapData = rawData.heatmap_data;
+            const heatmapContainer = document.getElementById('heatmap-container');
+            if (heatmapData.length > 0 && heatmapContainer) {
+                const days = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
+                const maxVal = rawData.heatmap_max;
 
-    heatmapData.forEach((dayData, dayIdx) => {
-        const row = document.createElement('div');
-        row.style.display = 'grid';
-        row.style.gridTemplateColumns = '40px repeat(24, 1fr)';
-        row.style.gap = '4px';
-        row.style.alignItems = 'center';
+                heatmapData.forEach((dayData, dayIdx) => {
+                    const row = document.createElement('div');
+                    row.style.display = 'grid';
+                    row.style.gridTemplateColumns = '40px repeat(24, 1fr)';
+                    row.style.gap = '4px';
+                    row.style.alignItems = 'center';
 
-        // Day Label
-        const label = document.createElement('div');
-        label.textContent = days[dayIdx];
-        label.style.fontSize = '0.7rem';
-        label.style.color = 'var(--text-secondary)';
-        row.appendChild(label);
+                    // Day Label
+                    const label = document.createElement('div');
+                    label.textContent = days[dayIdx];
+                    label.style.fontSize = '0.7rem';
+                    label.style.color = 'var(--text-secondary)';
+                    row.appendChild(label);
 
-        // Hour Cells
-        dayData.forEach(val => {
-            const cell = document.createElement('div');
-            cell.style.borderRadius = '2px';
-            cell.style.height = '100%';
+                    // Hour Cells
+                    dayData.forEach(val => {
+                        const cell = document.createElement('div');
+                        cell.style.borderRadius = '2px';
+                        cell.style.height = '100%';
 
-            // Color intensity
-            const intensity = val > 0 ? (val / maxVal) : 0;
-            const alpha = Math.max(0.1, intensity); // Min opacity for visible cells if > 0
+                        // Color intensity
+                        const intensity = val > 0 ? (val / maxVal) : 0;
+                        const alpha = Math.max(0.1, intensity); // Min opacity for visible cells if > 0
 
-            if (val === 0) {
-                cell.style.background = 'rgba(255,255,255,0.03)';
-            } else {
-                cell.style.background = `rgba(139, 92, 246, ${alpha})`; // Primary color
-                cell.title = `Msg: ${val}`;
-                // Tooltip can be enhanced later
-            }
-            row.appendChild(cell);
-        });
-        heatmapContainer.appendChild(row);
-    });
+                        if (val === 0) {
+                            cell.style.background = 'rgba(255,255,255,0.03)';
+                        } else {
+                            cell.style.background = `rgba(139, 92, 246, ${alpha})`; // Primary color
+                            cell.title = `Msg: ${val}`;
+                        }
+                        row.appendChild(cell);
+                    });
+                    heatmapContainer.appendChild(row);
+                });
             }
 
-    // Animate stats
-    const valOnline = {{ realtime_active | default (0) | tojson | safe }};
-    const valMembers = {{ total_members | default (0) | tojson | safe }};
-    const valDau = {{ avg_dau | default (0) | tojson | safe }};
-    const valChurn = {{ churn_rate | default (0) | tojson | safe }};
+            // Animate stats
+            const valOnline = rawData.realtime_active;
+            const valMembers = rawData.total_members;
+            const valDau = rawData.avg_dau;
+            const valChurn = rawData.churn_rate;
 
-    const stats = [
-        { id: 'stat-online', value: valOnline },
-        { id: 'stat-members', value: valMembers },
-        { id: 'stat-dau', value: valDau },
-        { id: 'stat-churn', value: valChurn }
-    ];
-    stats.forEach(s => {
-        const el = document.getElementById(s.id);
-        if (el) el.innerText = s.value;
-    });
+            const stats = [
+                { id: 'stat-online', value: valOnline },
+                { id: 'stat-members', value: valMembers },
+                { id: 'stat-dau', value: valDau },
+                { id: 'stat-churn', value: valChurn }
+            ];
+            stats.forEach(s => {
+                const el = document.getElementById(s.id);
+                if (el) {
+                    if (s.id === 'stat-churn') el.innerText = s.value + '%';
+                    else el.innerText = s.value;
+                }
+            });
 
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error("Dashboard init error:", e);
+        }
     });
 </script>
 
@@ -778,7 +808,8 @@
         btn.innerHTML = '⏳ Syncing...';
 
         const formData = new FormData();
-        formData.append('guild_id', '{{ guild_id }}');
+        // Use rawData from main script block
+        formData.append('guild_id', rawData.guild_id);
 
         try {
             const resp = await fetch('/api/discourse/sync', {
