@@ -81,7 +81,10 @@ from .utils import (
     get_daily_stats, get_action_weights
 )
 
-
+try:
+    from .demo_data import get_demo_stats
+except ImportError:
+    get_demo_stats = lambda *args: {}
 
 app = FastAPI(title="Metricord", docs_url=None, redoc_url=None)
 
@@ -93,6 +96,24 @@ async def log_requests(request: Request, call_next):
     print(f"REQUEST: {request.method} {request.url.path}")
     response = await call_next(request)
     return response
+
+
+@app.get("/login/demo")
+async def demo_login(request: Request):
+    """Login as a demo user with offline data."""
+    request.session["authenticated"] = True
+    request.session["discord_user"] = {
+        "id": "demo",
+        "username": "Demo User",
+        "discriminator": "0000",
+        "avatar": None
+    }
+    request.session["guild_id"] = "demo-guild"
+    request.session["guild_name"] = "Demo Server"
+    request.session["role"] = "guest"
+    request.session["login_time"] = datetime.now().isoformat()
+    return RedirectResponse(url="/", status_code=303)
+
 
 
 @app.get("/favicon.ico", include_in_schema=False)
@@ -394,12 +415,26 @@ async def _dashboard_logic(request: Request, start_date: str = None, end_date: s
         return templates.TemplateResponse("landing.html", {"request": request, "stats": public_stats})
 
     # Restrict guest users
-    if request.session.get("role") == "guest":
+    if request.session.get("role") == "guest" and request.session.get("guild_id") != "demo-guild":
         return RedirectResponse(url="/leaderboard")
     
     guild_id = request.session.get("guild_id")
     if not guild_id:
         return RedirectResponse(url="/select-server")
+
+    if guild_id == "demo-guild":
+        # SERVE MOCK DATA
+        stats = get_demo_stats(start_date, end_date)
+        context = {
+            "request": request,
+            **stats, # unpacking all the pre-calculated stats
+            "user": user,
+            "is_demo": True,
+            "is_discourse": False
+        }
+        sidebar_ctx = await get_sidebar_context(request)
+        context.update(sidebar_ctx)
+        return templates.TemplateResponse("index.html", context)
     
     
     start_date = start_date or request.session.get("start_date", "2025-12-21")
@@ -643,6 +678,12 @@ async def get_sidebar_context(request: Request) -> Dict[str, Any]:
             if user:
                 request.session["guild_id"] = guild_id
     
+    if guild_id == "demo-guild":
+        return {
+            "sidebar_guild_id": "demo-guild",
+            "sidebar_guild_name": "Demo Server",
+            "sidebar_guild_icon": "", # Could be a static asset
+        }
     
     resolved_guild = None
     
