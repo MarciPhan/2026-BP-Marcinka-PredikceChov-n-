@@ -23,6 +23,9 @@ status_page_output.html
 # Thesis
 bakalarskaPrace_implementace.md
 
+# Logs
+logs/
+
 # AI Files
 .gemini/
 .agent/
