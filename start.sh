@@ -1,36 +1,25 @@
 #!/bin/bash
 
-# ==============================================================================
-# Metricord Startup Script
-# ==============================================================================
 
-# Barvy pro výstup
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
 
-echo -e "${BLUE}=== Metricord Startup Sequence ===${NC}"
+echo -e "Metricord start"
 
-# 1. Kontrola Redis/Valkey
-echo -e "${YELLOW}[1/3] Kontrola Redis/Valkey...${NC}"
+echo -e "[1/3] Kontrola Redis/Valkey..."
 if pgrep -x "redis-server" > /dev/null || pgrep -x "valkey-server" > /dev/null; then
-    echo -e "${GREEN}Database (Redis/Valkey) již běží.${NC}"
+    echo -e "Database již běží."
 else
-    echo -e "${YELLOW}Spouštím Redis...${NC}"
+    echo -e "Spouštím Redis..."
     redis-server --daemonize yes
     sleep 2
     if pgrep -x "redis-server" > /dev/null || pgrep -x "valkey-server" > /dev/null; then
-        echo -e "${GREEN}Database úspěšně spuštěna.${NC}"
+        echo -e "Database úspěšně spuštěna."
     else
-        echo -e "${RED}Chyba: Nepodařilo se spustit Database server!${NC}"
+        echo -e "Chyba: Nepodařilo se spustit Database server!"
         exit 1
     fi
 fi
 
-# 2. Nastavení prostředí
-echo -e "${YELLOW}[2/3] Konfigurace prostředí...${NC}"
+echo -e "[2/3] Konfigurace prostředí..."
 export PYTHONPATH=$(pwd)
 PYTHON_CMD="python3"
 
@@ -40,10 +29,8 @@ if [ -d ".venv" ]; then
     PYTHON_CMD="python"
 fi
 
-# 3. Spuštění služeb
-echo -e "${YELLOW}[3/3] Spouštění služeb...${NC}"
+echo -e "[3/3] Spouštění služeb...${NC}"
 
-# Ukončení starých procesů (pokud existují)
 pkill -f "bot/main.py" 2>/dev/null
 pkill -f "uvicorn web.backend.main:app" 2>/dev/null
 
@@ -57,26 +44,25 @@ DASH_PID=$!
 
 sleep 3
 
-# Závěrečná kontrola
 FAIL=0
 if ps -p $BOT_PID > /dev/null; then
-    echo -e "${GREEN}✅ Discord Bot běží (PID: $BOT_PID)${NC}"
+    echo -e "Discord Bot běží (PID: $BOT_PID)"
 else
-    echo -e "${RED}❌ Discord Bot se nepodařilo spustit! Podívej se do bot_std.log${NC}"
+    echo -e "Discord Bot se nepodařilo spustit! Podívej se do bot_std.log"
     FAIL=1
 fi
 
 if ps -p $DASH_PID > /dev/null; then
-    echo -e "${GREEN}✅ Dashboard běží (PID: $DASH_PID)${NC}"
-    echo -e "${BLUE}Dashboard dostupný na: http://localhost:8092${NC}"
+    echo -e "Dashboard běží (PID: $DASH_PID)"
+    echo -e "Dashboard dostupný na: http://localhost:8092"
 else
-    echo -e "${RED}❌ Dashboard se nepodařilo spustit! Podívej se do dashboard_std.log${NC}"
+    echo -e "Dashboard se nepodařilo spustit! Podívej se do dashboard_std.log"
     FAIL=1
 fi
 
 if [ $FAIL -eq 0 ]; then
-    echo -e "${GREEN}=== Všechny služby byly úspěšně spuštěny ===${NC}"
+    echo -e "Všechny služby byly úspěšně spuštěny"
 else
-    echo -e "${RED}=== Některé služby se nepodařilo spustit ===${NC}"
+    echo -e "Některé služby se nepodařilo spustit "
     exit 1
 fi

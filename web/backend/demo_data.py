@@ -108,11 +108,11 @@ def get_demo_stats(start_date: str = None, end_date: str = None) -> Dict[str, An
     total_hours_30d = 1450.5
     
     leaderboard = [
-        {"rank": 1, "username": "AdminMaster", "avatar": None, "action_count": 150, "weighted_h": 45.2, "role_names": ["Admin", "Mod"]},
-        {"rank": 2, "username": "ModSarah", "avatar": None, "action_count": 120, "weighted_h": 38.5, "role_names": ["Mod"]},
-        {"rank": 3, "username": "HelperJoe", "avatar": None, "action_count": 85, "weighted_h": 22.1, "role_names": ["Helper"]},
-        {"rank": 4, "username": "BotDev", "avatar": None, "action_count": 40, "weighted_h": 15.0, "role_names": ["Dev"]},
-        {"rank": 5, "username": "CommunityMgr", "avatar": None, "action_count": 25, "weighted_h": 40.0, "role_names": ["Manager"]}
+        {"rank": 1, "name": "AdminMaster", "avatar": None, "action_count": 150, "weighted_h": 45.2, "role_names": ["Admin", "Mod"]},
+        {"rank": 2, "name": "ModSarah", "avatar": None, "action_count": 120, "weighted_h": 38.5, "role_names": ["Mod"]},
+        {"rank": 3, "name": "HelperJoe", "avatar": None, "action_count": 85, "weighted_h": 22.1, "role_names": ["Helper"]},
+        {"rank": 4, "name": "BotDev", "avatar": None, "action_count": 40, "weighted_h": 15.0, "role_names": ["Dev"]},
+        {"rank": 5, "name": "CommunityMgr", "avatar": None, "action_count": 25, "weighted_h": 40.0, "role_names": ["Manager"]}
     ]
     
     # Stickiness
@@ -201,10 +201,73 @@ def get_demo_stats(start_date: str = None, end_date: str = None) -> Dict[str, An
         "hourly_labels": [f"{h}:00" for h in range(24)],
         "hourly_activity": hourly_activity,
         "retention_labels": date_list_str,
+        "daily_labels": date_list_str,
+        "daily_hours": [random.randint(5, 15) for _ in range(days_count)],
         "dau_mau_ratio": dau_mau_ratio,
         "dau_wau_ratio": dau_wau_ratio,
         "msglen_labels": msglen_labels,
         "msglen_data": msglen_data,
         "weekly_labels": ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"],
         "weekly_data": weekly_counts
+    }
+
+def get_demo_predictions_data() -> Dict[str, Any]:
+    """Mock data for /api/predictions-data."""
+    now = datetime.now()
+    history_dates = [(now - timedelta(days=30*i)).strftime("%Y-%m") for i in range(12)][::-1]
+    history_members = [1000 + i*20 + random.randint(-5, 5) for i in range(12)]
+    
+    forecast_dates = [(now + timedelta(days=30*i)).strftime("%Y-%m") for i in range(1, 7)]
+    forecast_members = [history_members[-1] + i*25 for i in range(1, 7)]
+    
+    cz_days = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"]
+    forecast_day_labels = [(now + timedelta(days=i)).strftime("%a") for i in range(1, 8)] # Simplified
+    forecast_day_labels = ["Út", "St", "Čt", "Pá", "So", "Ne", "Po"] # Hardcoded for predictability
+    forecast_activity = [random.randint(800, 1200) for _ in range(7)]
+    
+    daus = [random.randint(280, 350) for _ in range(30)]
+    dau_forecast = [random.randint(320, 360) for _ in range(7)]
+    
+    return {
+        "history": {
+            "dates": history_dates,
+            "members": history_members,
+            "joins": [random.randint(30, 60) for _ in range(12)],
+            "leaves": [random.randint(10, 30) for _ in range(12)]
+        },
+        "forecast": {
+            "dates": forecast_dates,
+            "members": forecast_members,
+            "days": forecast_day_labels,
+            "activity": forecast_activity
+        },
+        "dau": {
+            "history": daus,
+            "history_labels": [(now - timedelta(days=29-i)).strftime("%Y-%m-%d") for i in range(30)],
+            "forecast": dau_forecast,
+            "forecast_labels": [(now + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(1, 8)],
+            "avg": sum(daus)//30,
+            "trend": "up"
+        },
+        "mau": {
+            "current": 1250,
+            "forecast": [1250, 1280, 1310, 1345],
+            "dau_mau_ratio": 24.5
+        },
+        "predictions": {
+            "members_30d": 1280,
+            "members_growth_pct": 2.4,
+            "expected_msgs_tomorrow": 950,
+            "expected_dau": 340,
+            "avg_dau": 315,
+            "churn_risk": 5,
+            "avg_monthly_growth": 30.5,
+            "current_members": 1250
+        },
+        "channels": [
+            {"name": "general", "count": 450},
+            {"name": "pokec", "count": 300},
+            {"name": "hry", "count": 120},
+            {"name": "bot-spam", "count": 80}
+        ]
     }
