@@ -1119,8 +1119,8 @@ async def get_xp_leaderboard(request: Request):
     
     if guild_id == "demo-guild":
         return JSONResponse([
-            {"user_id": f"demo-{i}", "username": f"Demo User {i}", "display_name": f"Demo User {i}", "xp": (10-i)*1000, "level": 10-i, "rank": i}
-            for i in range(1, 11)
+            {"user_id": f"demo-{i}", "username": f"Demo User {i}", "display_name": f"Demo User {i}", "xp": (100 - i) * 1000, "level": 100 - i, "rank": i, "avatar": None}
+            for i in range(1, 101)
         ])
     
     r = await get_redis_client()
@@ -1200,21 +1200,36 @@ async def analytics_page(request: Request, start_date: str = None, end_date: str
             "request": request,
             "user": user,
             **stats,
+            "start_date": start_date or stats["start_date"],
+            "end_date": end_date or stats["end_date"],
             "selected_role": role_id or "all",
+            "roles": stats["roles"],
             "has_any_data": True,
+            "widget_order": [
+                "wow_card", "mom_card", "top_channels", "leaderboard", 
+                "peak_analysis", "channel_dist", "commands", "voice_stats", 
+                "traffic", "trend_analysis", "engagement", "export", "insights"
+            ],
             "all_widgets": [
-                {
-                    "id": "wow_card",
-                    "title": "Týdenní Růst (WoW)",
-                    "type": "chart",
-                    "data": {"labels": stats["labels"], "values": stats["total_data"]}
-                },
-                {
-                    "id": "mom_card",
-                    "title": "Měsíční Růst (MoM)",
-                    "type": "chart",
-                    "data": {"labels": stats["labels"], "values": stats["total_data"]}
-                }
+                ('wow_card', '📈 Trends (WoW)'),
+                ('mom_card', '📊 Trends (MoM)'),
+                ('top_channels', '🏆 Top Channels'),
+                ('leaderboard', '👑 Leaderboard'),
+                ('peak_analysis', '🔥 Peak Time'),
+                ('channel_dist', '📢 Channel Dist'),
+                ('commands', '🤖 Commands'),
+                ('voice_stats', '🎙️ Voice Stats'),
+                ('traffic', '🚦 Traffic'),
+                ('trend_analysis', '📈 Growth Trend'),
+                ('engagement', '🎯 Engagement'),
+                ('export', '📤 Export Tools'),
+                ('insights', '💡 Insights'),
+                ('growth_chart', '📈 Member Growth'),
+                ('hourly_chart', '⏰ Hourly Activity'),
+                ('weekday_chart', '📅 Weekday Activity'),
+                ('msg_len_chart', '📏 Msg Lengths'),
+                ('weekend_chart', '🎉 Weekend Ratio'),
+                ('xp_leaderboard', '🏆 XP Leaderboard')
             ]
         }
         ctx.update(sidebar_ctx)
@@ -1345,6 +1360,16 @@ async def profile_page(request: Request, _=Depends(require_auth)):
             "dashboard_url": f"/activity?guild_id={g['id']}" if is_active else None,
             "invite_url": f"https://discord.com/api/oauth2/authorize?client_id={DISCORD_CLIENT_ID}&permissions=8&scope=bot" if not is_active else None
         })
+    
+    # ADD DEMO GUILD FOR TESTING
+    servers.append({
+        "id": "demo-guild",
+        "name": "Demo Server (Metricord)",
+        "icon": "https://cdn.discordapp.com/embed/avatars/0.png",
+        "active": True,
+        "dashboard_url": "/activity?guild_id=demo-guild",
+        "invite_url": None
+    })
 
     
     current_guild_id = request.session.get("guild_id")
@@ -1654,6 +1679,20 @@ async def user_activity_page(request: Request, uid: int, start_date: str = None,
     except ValueError:
         d_start = today - timedelta(days=30)
         d_end = today
+
+    if str(uid).startswith("demo-") or request.session.get("guild_id") == "demo-guild":
+        data = get_demo_user_activity(uid)
+        sidebar_ctx = await get_sidebar_context(request)
+        ctx = {
+            "request": request,
+            "user_info": data["user_info"],
+            "days": data["days"],
+            "values": data["values"],
+            "is_bot": False,
+            "summary": data["summary"]
+        }
+        ctx.update(sidebar_ctx)
+        return templates.TemplateResponse("user_activity.html", ctx)
 
     user_info = {"name": f"User {uid}", "avatar": "", "roles": []}
     daily_stats = {} 
@@ -2585,10 +2624,20 @@ async def leave_server(request: Request, _=Depends(require_admin)):
 @app.get("/api/analytics-tools")
 async def get_analytics_tools(request: Request, start_date: Optional[str] = None, end_date: Optional[str] = None, _=Depends(require_auth)):
     """Get data for analytical tools."""
-    guild_id = request.session.get("guild_id")
-    if not guild_id:
-         return JSONResponse({"status": "error", "message": "No guild selected"}, status_code=400)
-    
+    try:
+        guild_id = get_guild_id(request, start_date) # Helper handles session/param
+        
+        if guild_id == "demo-guild":
+            s = get_demo_stats(start_date, end_date)
+            return JSONResponse({
+                "status": "ok",
+                "trends": s["trends"],
+                "engagement": s["engagement"],
+                "insights": s["insights"]
+            })
+    except Exception as e:
+        print(f"Error in analytics-tools initial check: {e}")
+
     from .utils import get_trend_analysis, get_engagement_score, get_insights
     
     try:
@@ -2690,10 +2739,12 @@ async def export_data(
     if not guild_id:
          return JSONResponse({"status": "error", "message": "No guild selected"}, status_code=400)
     
+    if guild_id == "demo-guild":
+        return JSONResponse({"status": "error", "message": "Export is not available in demo mode."}, status_code=403)
+    
     from .utils import get_redis_client, get_activity_stats, get_leaderboard_data, get_channel_distribution
     import io
     import csv
-    
     
     timestamp = datetime.now().strftime('%Y%m%d_%H%M')
     filename = f"{export_type}_{guild_id}_{timestamp}"
@@ -2902,12 +2953,13 @@ async def export_data(
 @app.get("/api/logs")
 async def get_live_logs(request: Request):
     """API endpoint to get live logs from Redis."""
+    guild_id = request.session.get("guild_id")
+    if guild_id == "demo-guild":
+        return {"logs": get_demo_logs()}
+
     try:
-        
         r = await get_redis_client()
-        
         logs = await r.lrange("dashboard:live_logs", 0, -1)
-        
         return {"logs": logs[::-1]}
     except Exception as e:
         return {"logs": [f"Error fetching logs: {e}"]}
@@ -2915,9 +2967,7 @@ async def get_live_logs(request: Request):
 @app.get("/api/peak-stats")
 async def get_peak_stats_api(request: Request, start_date: Optional[str] = None, end_date: Optional[str] = None, role_id: str = "all"):
     """Get peak activity stats."""
-    guild_id = request.session.get("guild_id")
-    if not guild_id:
-         return {"error": "No guild selected", "peak_analysis": {"peak_hour": "--", "peak_day": "--", "peak_messages": "--", "quiet_period": "--"}}
+    guild_id = get_guild_id(request)
     
     if guild_id == "demo-guild":
         return {
@@ -2970,7 +3020,7 @@ async def get_channel_stats(request: Request, start_date=None, end_date=None, ro
 async def api_leaderboard(request: Request, limit: int = 15, start_date=None, end_date=None, role_id="all"):
     """Get user leaderboard."""
     try:
-        gid = request.session.get("guild_id")
+        gid = get_guild_id(request)
         if gid == "demo-guild":
             from .demo_data import get_demo_stats
             stats = get_demo_stats()
@@ -2995,6 +3045,21 @@ async def api_leaderboard(request: Request, limit: int = 15, start_date=None, en
 async def api_time_comparisons(request: Request, start_date: Optional[str] = None, end_date: Optional[str] = None):
     """Get WoW and MoM comparisons."""
     try:
+        guild_id = request.session.get("guild_id")
+        if guild_id == "demo-guild":
+            s = get_demo_stats(start_date, end_date)
+            # Simulate comparison data to match frontend expectations
+            return {
+                "week_over_week": {
+                    "this_week": s["activity_stats"]["avg_dau"],
+                    "change_percent": 15.4
+                },
+                "month_over_month": {
+                    "this_month": s["stats"]["discord"]["mau"],
+                    "change_percent": 45.2
+                }
+            }
+        
         guild_id = get_guild_id(request)
         return await get_time_comparisons(guild_id, start_date=start_date, end_date=end_date)
     except Exception as e:
@@ -3008,14 +3073,17 @@ async def api_security_score(request: Request, _=Depends(require_auth)):
         guild_id = get_guild_id(request)
         
         if guild_id == "demo-guild":
+            s = get_demo_stats()
+            sec = s["security_score_data"]
             return JSONResponse({
-                "overall_score": 85,
-                "rating": "Velmi dobré",
+                "overall_score": sec["overall_score"],
+                "rating": sec["rating"],
+                "rating_color": sec["rating_color"],
                 "components": {
-                    "mod_ratio": {"score": 90, "value": "1:72", "label": "Moderátorů"},
-                    "security": {"score": 80, "value": "Medium", "label": "Zabezpečení"},
-                    "engagement": {"score": 85, "value": "24%", "label": "Engagement"},
-                    "moderation": {"score": 85, "value": "Aktivní", "label": "Moderace"}
+                    "mod_ratio": {"score": sec["mod_ratio_score"], "value": "1:72", "label": "Moderátorů"},
+                    "security": {"score": sec["security_settings_score"], "value": "Medium", "label": "Zabezpečení"},
+                    "engagement": {"score": sec["engagement_score"], "value": "24%", "label": "Engagement"},
+                    "moderation": {"score": sec["moderation_score"], "value": "Aktivní", "label": "Moderace"}
                 }
             })
 
@@ -3085,12 +3153,14 @@ async def api_voice_stats(
     role_id: str = "all"
 ):
     """API endpoint for voice leaderboard."""
-    gid = request.session.get("guild_id")
+    gid = get_guild_id(request)
     if gid == "demo-guild":
-        return [
-            {"user_id": "demo-1", "name": "Demo User 1", "duration": 3600, "duration_fmt": "1h 0m"},
-            {"user_id": "demo-2", "name": "Demo User 2", "duration": 1800, "duration_fmt": "30m"}
-        ]
+        return {
+            "leaderboard": [
+                {"user_id": "demo-1", "name": "Demo User 1", "duration": 3600, "minutes": 60, "duration_fmt": "1h 0m"},
+                {"user_id": "demo-2", "name": "Demo User 2", "duration": 1800, "minutes": 30, "duration_fmt": "30m"}
+            ]
+        }
     gid = get_guild_id(request)
     return await get_voice_leaderboard(gid, limit, start_date=start_date, end_date=end_date, role_id=role_id)
 
@@ -3103,13 +3173,15 @@ async def api_command_stats(
     role_id: str = "all"
 ):
     """API endpoint for command usage stats."""
-    gid = request.session.get("guild_id")
+    gid = get_guild_id(request)
     if gid == "demo-guild":
-        return [
-            {"name": "/help", "count": 150},
-            {"name": "/stats", "count": 120},
-            {"name": "/leaderboard", "count": 85}
-        ]
+        return {
+            "commands": [
+                {"name": "/help", "count": 150},
+                {"name": "/stats", "count": 120},
+                {"name": "/leaderboard", "count": 85}
+            ]
+        }
     gid = get_guild_id(request)
     return await get_command_stats(gid, limit, start_date=start_date, end_date=end_date, role_id=role_id)
 
@@ -3122,7 +3194,7 @@ async def api_traffic_stats(
     role_id: str = "all"
 ):
     """API endpoint for traffic stats (joins/leaves)."""
-    gid = request.session.get("guild_id")
+    gid = get_guild_id(request)
     if gid == "demo-guild":
         s = get_demo_stats()
         return s["member_stats"]
@@ -3132,12 +3204,15 @@ async def api_traffic_stats(
 @app.get("/api/channel-distribution")
 async def api_channel_distribution(request: Request, start_date=None, end_date=None, role_id="all"):
     """DEPRECATED: Redirecting to channel-stats."""
-    gid = request.session.get("guild_id")
+    gid = get_guild_id(request)
     if gid == "demo-guild":
-        return [
-            {"channel_id": "1", "name": "obecné", "count": 14502},
-            {"channel_id": "2", "name": "pokec", "count": 12400}
-        ]
+        return {
+            "channels": [
+                {"channel_id": "1", "name": "obecné", "count": 14502},
+                {"channel_id": "2", "name": "pokec", "count": 12400}
+            ],
+            "guild_id": gid
+        }
     return await get_channel_stats(request, start_date, end_date, role_id)
 
 

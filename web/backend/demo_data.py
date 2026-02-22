@@ -9,9 +9,13 @@ def get_demo_stats(start_date: str = None, end_date: str = None) -> Dict[str, An
     """
     
     # 1. Date Handling
-    if start_date and end_date:
-        s_dt = datetime.strptime(start_date, "%Y-%m-%d")
-        e_dt = datetime.strptime(end_date, "%Y-%m-%d")
+    if start_date and end_date and start_date.strip() and end_date.strip():
+        try:
+            s_dt = datetime.strptime(start_date, "%Y-%m-%d")
+            e_dt = datetime.strptime(end_date, "%Y-%m-%d")
+        except:
+            e_dt = datetime.now()
+            s_dt = e_dt - timedelta(days=30)
     else:
         e_dt = datetime.now()
         s_dt = e_dt - timedelta(days=30)
@@ -137,6 +141,39 @@ def get_demo_stats(start_date: str = None, end_date: str = None) -> Dict[str, An
     
     churn_rate = round((sum(leaves) / max(1, totals[-1])) * 100, 2)
     
+    # 7. Analytics Tools Data
+    trends = {
+        "growth_7d": 12.5,
+        "growth_30d": 45.2,
+        "avg_dau": int(avg_dau),
+        "prediction": int(avg_dau * 1.15)
+    }
+    
+    engagement = {
+        "score": 82,
+        "msg_activity": 78,
+        "voice_activity": 85,
+        "retention": 83
+    }
+    
+    security_score_data = {
+        "overall_score": 88,
+        "rating": "Vynikající",
+        "rating_color": "#10B981",
+        "mod_ratio_score": 95,
+        "security_settings_score": 80,
+        "engagement_score": 85,
+        "moderation_score": 92
+    }
+    
+    insights = [
+        {"text": "🚨 **Kritický stav**: 120 členů na moderátora! Urgentně naberte."},
+        {"text": "✅ **Silný tým**: Skvělý poměr moderátorů – rychlá reakce zaručena."},
+        {"text": "⚠️ **Slabé ověření**: Pouze e-mail. Zvažte vyšší úroveň."},
+        {"text": "📈 **Vysoké zapojení**: 25.4% aktivních – výborné!"},
+        {"text": "💡 **Interakce tip**: Přidejte ankety/hlasování pro více konverzací."}
+    ]
+
     # Construct the final unified dictionary expected by the template
     return {
         "member_stats": {
@@ -208,7 +245,12 @@ def get_demo_stats(start_date: str = None, end_date: str = None) -> Dict[str, An
         "msglen_labels": msglen_labels,
         "msglen_data": msglen_data,
         "weekly_labels": ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"],
-        "weekly_data": weekly_counts
+        "weekly_data": weekly_counts,
+        # Analytics Tools
+        "trends": trends,
+        "engagement": engagement,
+        "insights": insights,
+        "security_score_data": security_score_data
     }
 
 def get_demo_predictions_data() -> Dict[str, Any]:
@@ -271,3 +313,61 @@ def get_demo_predictions_data() -> Dict[str, Any]:
             {"name": "bot-spam", "count": 80}
         ]
     }
+
+def get_demo_logs() -> List[str]:
+    """Mock live logs for demo mode."""
+    actions = ["MESSAGE_CREATE", "VOICE_STATE_UPDATE", "MEMBER_JOIN", "MEMBER_LEAVE", "COMMAND_USED"]
+    users = ["AdminMaster", "ModSarah", "HelperJoe", "User123", "DemoGuest"]
+    channels = ["general", "pokec", "hry", "staff-lounge"]
+    
+    logs = []
+    now = datetime.now()
+    for i in range(20):
+        time_str = (now - timedelta(seconds=i*30)).strftime("%H:%M:%S")
+        action = random.choice(actions)
+        user = random.choice(users)
+        channel = random.choice(channels)
+        
+        if action == "MESSAGE_CREATE":
+            msg = f"[{time_str}] {user}: sent message in #{channel}"
+        elif action == "VOICE_STATE_UPDATE":
+            msg = f"[{time_str}] {user}: joined voice channel 'General VC'"
+        elif action == "COMMAND_USED":
+            msg = f"[{time_str}] {user}: used command /stats"
+        else:
+            msg = f"[{time_str}] {user}: {action.lower().replace('_', ' ')}"
+        logs.append(msg)
+    return logs
+
+def get_demo_user_activity(uid: int) -> Dict[str, Any]:
+    """Mock activity data for a specific user."""
+    days = 30
+    now = datetime.now()
+    labels = [(now - timedelta(days=i)).strftime("%m-%d") for i in range(days)][::-1]
+    values = [random.uniform(0.5, 4.0) for _ in range(days)]
+    
+    return {
+        "user_info": {
+            "name": f"Demo User {uid}",
+            "avatar": None,
+            "roles": ["Moderator", "Active Member"]
+        },
+        "days": labels,
+        "values": values,
+        "summary": {
+            "total_h": round(sum(values), 1),
+            "chat_h": round(sum(values) * 0.6, 1),
+            "voice_h": round(sum(values) * 0.4, 1),
+            "actions": random.randint(50, 200),
+            "breakdown": {
+                "Bans": random.randint(0, 5),
+                "Kicks": random.randint(0, 10),
+                "Timeouts": random.randint(5, 30),
+                "Unbans": random.randint(0, 2),
+                "Verifications": random.randint(10, 50),
+                "Deleted Msgs": random.randint(20, 100),
+                "Role Updates": random.randint(5, 20)
+            }
+        }
+    }
+

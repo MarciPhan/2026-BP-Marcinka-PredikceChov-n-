@@ -675,6 +675,11 @@
             const rid = document.getElementById('roleFilter');
             if (rid) urlParams.set('role_id', rid.value);
         }
+        // Always ensure guild_id is passed if present in current URL
+        const currentUrlParams = new URLSearchParams(window.location.search);
+        if (currentUrlParams.has('guild_id')) {
+            urlParams.set('guild_id', currentUrlParams.get('guild_id'));
+        }
         return urlParams.toString();
     }
 
@@ -686,6 +691,10 @@
         if (document.getElementById('leaderboard-tbody')) loadLeaderboard();
         if (document.getElementById('peak-hour')) loadPeakAnalysis();
         if (document.getElementById('commandChart')) loadCommandStats();
+        if (document.getElementById('growthChart')) loadExtendedStats();
+        if (document.getElementById('trafficChart')) loadTrafficStats();
+        if (document.getElementById('trend-7d')) loadAnalyticsTools();
+        if (document.getElementById('xp-leaderboard-tbody')) loadXpLeaderboard();
         if (document.getElementById('voice-tbody')) {
             loadVoiceStats();
             setInterval(loadVoiceStats, 5000);
@@ -793,7 +802,7 @@
 
     async function loadXpLeaderboard() {
         try {
-            const resp = await fetch('/api/leaderboard/xp');
+            const resp = await fetch(`/api/leaderboard/xp?${getFilterParams()}`);
             const data = await resp.json();
             const tbody = document.getElementById('xp-leaderboard-tbody');
 
@@ -932,14 +941,16 @@
 
             // Insights
             const cont = document.getElementById('insights-container');
-            cont.innerHTML = '';
-            data.insights.forEach(i => {
-                const d = document.createElement('div');
-                d.className = 'insight-item';
-                d.style.padding = '10px'; d.style.marginBottom = '5px'; d.style.background = 'var(--bg-tertiary)'; d.style.borderLeft = '4px solid #8b5cf6';
-                d.textContent = i.text;
-                cont.appendChild(d);
-            });
+            if (cont && data.insights) {
+                cont.innerHTML = '';
+                data.insights.forEach(i => {
+                    const d = document.createElement('div');
+                    d.className = 'insight-item';
+                    d.style.padding = '10px'; d.style.marginBottom = '5px'; d.style.background = 'var(--bg-tertiary)'; d.style.borderLeft = '4px solid #8b5cf6';
+                    d.textContent = i.text || i;
+                    cont.appendChild(d);
+                });
+            }
         } catch (e) { }
     }
 </script>
