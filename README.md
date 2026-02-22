@@ -4,72 +4,132 @@ Discord bot s pokročilou analytikou, prediktivními modely a interaktivním das
 
 Projekt vznikl jako součást bakalářské práce zaměřené na **predikci chování uživatelů na Discord serverech**.
 
-## 🚀 Hlavní Funkce
+---
 
-### 📈 Analytika & Monitoring
-- **Real-time sledování aktivity**: Detailní monitoring DAU/MAU/WAU (denní/měsíční/týdenní aktivní uživatelé).
-- **HyperLogLog**: Efektivní počítání unikátních uživatelů s minimální paměťovou náročností.
-- **Heatmapy aktivity**: Vizualizace nejoblíbenějších hodin a dní v týdnu pro zasílání zpráv.
-- **Sledování růstu**: Historie příchodů a odchodů členů s přepínatelnými grafy.
+## � Obsah
+1. [Příprava (Před instalací)](#-příprava-před-instalací)
+2. [Instalace (Krok za krokem)](#-instalace-krok-za-krokem)
+3. [Používání systému](#-používání-systému)
+4. [Údržba a Monitoring](#-údržba-a-monitoring)
+5. [Odstranění systému](#-odstranění-systému)
 
-### 🏠 Skóre komunity (Community Health)
-- **Komplexní hodnocení**: Algoritmus počítající celkové zdraví serveru na základě:
-    - Poměru moderátorů k počtu uživatelů.
-    - Úrovně zabezpečení serveru (verification levels, MFA, explicit filter).
-    - Zapojení uživatelů (participation rate, reply ratio, voice activity).
-    - Aktivity moderátorského týmu.
-- **Chytré postřehy (Insights)**: Automaticky generované tipy a varování na základě naměřených metrik.
+---
 
-### 🔮 Predikce & Trendy
-- **Predikce růstu**: Odhad počtu členů a zpráv na následující období.
-- **Stickiness & Retention**: Analýza toho, jak se uživatelé na server vrací a jaká je jejich retence.
-- **Predictive Analytics**: Identifikace trendů v zapojení a včasné varování před stagnací.
+## 🛠 1. Příprava (Před instalací)
 
-### 🛠️ Moderace & Správa
-- **Event Logging**: Podrobné logování zpráv, hlasové aktivity a akcí moderátorů do Redis.
-- **Verifikace**: Systematické potvrzování nových členů pro zvýšení bezpečnosti.
-- **Bot příkazy**:
-    - `/stats` - Okamžitý přehled statistik serveru.
-    - `/verify` - Spuštění verifikačního procesu.
-    - `/report` - Generování PDF/textových reportů (pouze admin).
-    - `/purge` - Hromadné mazání zpráv.
+Před samotným spuštěním bota musíte připravit externí služby:
 
-## 💻 Webový Dashboard
-Interaktivní rozhraní postavené na **FastAPI** a **Chart.js** s moderním "dark-glass" designem.
-- **Přizpůsobitelné rozložení**: Možnost měnit pořadí i velikost widgetů přímo v prohlížeči.
-- **Demo režim**: Plně funkční ukázkový režim pro testování bez nutnosti připojení k reálnému serveru.
-- **OAuth2 integrace**: Bezpečné přihlášení přes Discord.
-- **Live Logs**: Sledování aktivity na serveru v reálném čase přímo v dashboardu.
+### A. Discord Developer Portal
+1. Jděte na [Discord Developer Portal](https://discord.com/developers/applications).
+2. Vytvořte novou aplikaci (**New Application**) a pojmenujte ji (např. "Metricord").
+3. V sekci **Bot**:
+    - Vygenerujte si token (**Reset Token**) a bezpečně si ho uložte.
+    - Zapněte všechny **Privileged Gateway Intents** (Presence, Server Members, Message Content).
+4. V sekci **OAuth2**:
+    - Vytvořte si URL pro pozvání bota s oprávněním `Administrator` (pro testování) nebo minimálně `Manage Server`, `View Audit Log` a `Read Messages/View Channels`.
 
-## 🏗️ Technologický Stack
-- **Backend**: Python 3.10+, FastAPI
-- **Bot**: discord.py / nextcord
-- **Database**: Redis (Valkey) - primární úložiště pro real-time data a cache
-- **Frontend**: HTML5, Vanilla CSS (modern glassmorphism UI), Jinja2 templates, Chart.js
+### B. Redis Database
+Metricord využívá Redis pro real-time analytiku.
+- **Linux (Ubuntu/Debian)**: `sudo apt install redis-server`
+- **Ostatní**: Doporučujeme využít Docker (viz níže).
 
-## 🛠️ Instalace & Spuštění
+---
 
-### 1. Příprava prostředí
+## 🚀 2. Instalace (Krok za krokem)
+
+### Krok 1: Klonování a příprava složky
+```bash
+git clone https://github.com/MarciPhan/2026-BP-Marcinka-PredikceChov-n-.git
+cd Discord-bot-main
+```
+
+### Krok 2: Virtuální prostředí
+Vždy doporučujeme používat virtuální prostředí, aby nedošlo ke konfliktům v balíčcích:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
+```
+
+### Krok 3: Instalace závislostí
+```bash
 pip install -r requirements.txt
 ```
 
-### 2. Konfigurace
-Vytvořte `.env` soubor:
+### Krok 4: Konfigurace `.env`
+Vytvořte v root složce soubor `.env` a vložte do něj:
 ```env
-BOT_TOKEN=váš_bot_token
-DASHBOARD_TOKEN=token_pro_dashboard
+BOT_TOKEN=váš_discord_token_z_portálu
+DASHBOARD_TOKEN=náhodný_dlouhý_string_pro_zabezpečení
 REDIS_URL=redis://localhost:6379/0
+REDIS_HOST=localhost
 ```
 
-### 3. Rychlý start
-Metricord obsahuje automatizační skript, který spustí Redis i oba procesy najednou:
+---
+
+## 🕹 3. Používání systému
+
+### Spuštění
+Nejjednodušší způsob je použít přiložený startovací skript:
 ```bash
-chmod +x start.sh
 ./start.sh
 ```
+Tento skript:
+1. Zkontroluje, zda běží Redis (pokud ne, pokusí se ho spustit).
+2. Aktivuje virtuální prostředí.
+3. Spustí bota i dashboard jako procesy na pozadí.
+
+### Dashboard (Webové rozhraní)
+Po spuštění je dashboard dostupný na: `http://localhost:8092`
+- **Demo režim**: Pokud se nechcete přihlašovat, stačí v URL použít `?guild_id=demo-guild` nebo kliknout na "Demo" v přihlašovací obrazovce.
+- **Interaktivní prvky**: Widgety na dashboardu můžete přesouvat nebo měnit jejich velikost (změny se ukládají v prohlížeči).
+
+### Bot Příkazy
+- `/stats`: Zobrazí aktuální rychlý přehled serveru (členové, aktivita).
+- `/verify`: Spustí process verifikace nového uživatele.
+- `/report`: Vygeneruje podrobný měsíční report (pouze pro administrátory).
+- `/help`: Zobrazí nápovědu ke všem dostupným funkcím.
+
+---
+
+## � 4. Údržba a Monitoring
+
+### Sledování logů
+Pokud systém nefunguje podle představ, zkontrolujte logy:
+- **Bot**: `tail -f bot_std.log`
+- **Dashboard**: `tail -f dashboard_std.log`
+
+### Záloha dat
+Veškerá data jsou v Redisu. Pro zálohu stačí zkopírovat soubor `dump.rdb` (obvykle v `/var/lib/redis/` nebo v lokální složce, pokud spouštíte Redis ručně).
+
+---
+
+## 🗑 5. Odstranění systému
+
+Pokud si přejete Metricord kompletně odstranit ze svého stroje, postupujte takto:
+
+### Krok 1: Zastavení procesů
+Nejprve ukončete běžící bota a dashboard:
+```bash
+pkill -f "bot/main.py"
+pkill -f "uvicorn"
+```
+
+### Krok 2: Odstranění dat z Redisu
+Pokud chcete smazat i nashromážděné statistiky:
+```bash
+redis-cli FLUSHALL
+```
+
+### Krok 3: Smazání souborů
+```bash
+cd ..
+rm -rf Discord-bot-main
+```
+
+### Krok 4: Odstranění z Discordu
+V Discord aplikaci stačí bota "vyhodit" (Kick) ze serveru a na [Developer Portalu](https://discord.com/developers/applications) aplikaci smazat v sekci **Settings** -> **Delete Application**.
+
+---
 
 ## 📝 Licence & Autor
 Projekt Metricord je proprietární software vytvořený jako součást bakalářské práce v roce 2026.
