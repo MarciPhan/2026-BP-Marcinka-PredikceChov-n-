@@ -167,7 +167,6 @@ def get_demo_stats(start_date: str = None, end_date: str = None) -> Dict[str, An
     }
     
     insights = [
-        {"text": "🚨 **Kritický stav**: 120 členů na moderátora! Urgentně naberte."},
         {"text": "✅ **Silný tým**: Skvělý poměr moderátorů – rychlá reakce zaručena."},
         {"text": "⚠️ **Slabé ověření**: Pouze e-mail. Zvažte vyšší úroveň."},
         {"text": "📈 **Vysoké zapojení**: 25.4% aktivních – výborné!"},

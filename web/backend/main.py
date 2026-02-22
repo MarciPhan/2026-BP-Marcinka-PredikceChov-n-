@@ -3084,7 +3084,8 @@ async def api_security_score(request: Request, _=Depends(require_auth)):
                     "security": {"score": sec["security_settings_score"], "value": "Medium", "label": "Zabezpečení"},
                     "engagement": {"score": sec["engagement_score"], "value": "24%", "label": "Engagement"},
                     "moderation": {"score": sec["moderation_score"], "value": "Aktivní", "label": "Moderace"}
-                }
+                },
+                "insights": [i["text"] for i in s["insights"]]
             })
 
         print(f"[DEBUG] Calculating score for guild {guild_id}")
