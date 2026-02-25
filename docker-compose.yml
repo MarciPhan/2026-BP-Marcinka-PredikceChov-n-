@@ -49,7 +49,7 @@ services:
     restart: always
     depends_on:
       - redis
-    command: [ "uvicorn", "web.backend.main:app", "--host", "0.0.0.0", "--port", "8092" ]
+    command: [ "uvicorn", "web.backend.main:app", "--host", "0.0.0.0", "--port", "${DASHBOARD_PORT:-8093}" ]
     environment:
       - REDIS_URL=redis://redis:6379/0
       - DASHBOARD_SECRET_KEY=${DASHBOARD_SECRET_KEY}
@@ -58,7 +58,7 @@ services:
       - BOT_TOKEN=${BOT_TOKEN}
       - TZ=Europe/Prague
     ports:
-      - "8092:8092"
+      - "${DASHBOARD_PORT:-8093}:${DASHBOARD_PORT:-8093}"
     volumes:
       - .:/app
       - ./dashboard_std.log:/app/dashboard_std.log

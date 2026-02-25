@@ -32,7 +32,7 @@ echo "Bot PID: $BOT_PID"
 
 # Start Dashboard
 echo "[INFO] Starting Dashboard..."
-nohup $PYTHON_CMD -m uvicorn web.backend.main:app --host 0.0.0.0 --port 8092 > dashboard_std.log 2>&1 &
+nohup $PYTHON_CMD -m uvicorn web.backend.main:app --host 0.0.0.0 --port 8093 > dashboard_std.log 2>&1 &
 DASH_PID=$!
 echo "Dashboard PID: $DASH_PID"
 

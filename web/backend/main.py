@@ -54,7 +54,7 @@ except ImportError:
     SESSION_EXPIRY_HOURS = 24
     DISCORD_CLIENT_ID = ""
     DISCORD_CLIENT_SECRET = ""
-    DISCORD_REDIRECT_URI = "http://localhost:8092/auth/callback"
+    DISCORD_REDIRECT_URI = "http://localhost:8093/auth/callback"
     ADMIN_USER_IDS = []
     BOT_TOKEN = ""
     print(f"WARNING: Using generated secrets.")
@@ -808,17 +808,23 @@ async def login_page(request: Request):
         })
     
     
+    import base64
+    # Prioritize X-Forwarded-Host from proxies
+    orig_host = request.headers.get("x-forwarded-host") or request.headers.get("host", "")
+    state_str = base64.urlsafe_b64encode(orig_host.encode()).decode() if orig_host else "default"
+    
     params = {
         "client_id": DISCORD_CLIENT_ID,
         "redirect_uri": DISCORD_REDIRECT_URI,
         "response_type": "code",
-        "scope": "identify guilds"
+        "scope": "identify guilds",
+        "state": state_str
     }
     auth_url = f"{DISCORD_AUTH_URL}?" + "&".join(f"{k}={v}" for k, v in params.items())
     return RedirectResponse(url=auth_url)
 
 @app.get("/auth/callback")
-async def auth_callback(request: Request, code: str = None, error: str = None):
+async def auth_callback(request: Request, code: str = None, error: str = None, state: str = None):
     """Handle Discord OAuth callback with HTML redirect for cookie persistence."""
     if error:
         return templates.TemplateResponse("login.html", {"request": request, "error": f"Discord error: {error}"})
@@ -941,17 +947,28 @@ async def auth_callback(request: Request, code: str = None, error: str = None):
         
         
         
-        html_content = """
+        redirect_url = "/"
+        if state and state != "default":
+            try:
+                import base64
+                orig_host = base64.urlsafe_b64decode(state.encode()).decode()
+                # Check if we should use https based on common proxy headers
+                proto = request.headers.get("x-forwarded-proto") or "http"
+                redirect_url = f"{proto}://{orig_host}/"
+            except:
+                pass
+
+        html_content = f"""
         <!DOCTYPE html>
         <html>
         <head>
-            <meta http-equiv="refresh" content="1;url=/" />
+            <meta http-equiv="refresh" content="1;url={redirect_url}" />
             <title>Redirecting...</title>
             <style>
-                body { background: #0a0a0f; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-                .loader { border: 4px solid #333; border-top: 4px solid #5865F2; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                .container { text-align: center; }
+                body {{ background: #0a0a0f; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }}
+                .loader {{ border: 4px solid #333; border-top: 4px solid #5865F2; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }}
+                @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
+                .container {{ text-align: center; }}
             </style>
         </head>
         <body>
@@ -959,7 +976,7 @@ async def auth_callback(request: Request, code: str = None, error: str = None):
                 <div class="loader" style="margin: 0 auto 20px;"></div>
                 <h2>Přihlášení úspěšné!</h2>
                 <p>Přesměrování na dashboard...</p>
-                <script>setTimeout(function(){ window.location.href = "/"; }, 1000);</script>
+                <script>setTimeout(function(){{ window.location.href = "{redirect_url}"; }}, 1000);</script>
             </div>
         </body>
         </html>

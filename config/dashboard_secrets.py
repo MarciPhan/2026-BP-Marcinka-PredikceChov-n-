@@ -22,9 +22,17 @@ OTP_MAX_ATTEMPTS = 5
 OTP_RATE_LIMIT = 3
 
 
+# Port settings
+DASHBOARD_PORT = int(os.getenv("DASHBOARD_PORT", 8093))
+
+# Discord OAuth
 DISCORD_CLIENT_ID = "1462004084302151814"
 DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
-DISCORD_REDIRECT_URI = "http://localhost:8092/auth/callback"
+
+# Use configured redirect URI or construct from port
+DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI")
+if not DISCORD_REDIRECT_URI:
+    DISCORD_REDIRECT_URI = f"http://localhost:{DASHBOARD_PORT}/auth/callback"
 
 
 ADMIN_USER_IDS = [471218810964410368]  
