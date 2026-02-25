@@ -21,6 +21,10 @@
             style="display: none; background: var(--success-gradient); color: white;">
             💾 Uložit
         </button>
+        <button id="resetLayoutBtn" class="btn" onclick="resetLayout()"
+            style="display: none; background: var(--danger-gradient); color: white;">
+            🔄 Reset
+        </button>
     </div>
 </div>
 
@@ -547,6 +551,7 @@
     const hiddenGrid = document.getElementById('hidden-widgets-grid');
     const editBtn = document.getElementById('editLayoutBtn');
     const saveBtn = document.getElementById('saveLayoutBtn');
+    const resetBtn = document.getElementById('resetLayoutBtn');
 
     function toggleEditMode() {
         if (sortableMain) {
@@ -557,6 +562,7 @@
             editBtn.innerHTML = '🖊️ Upravit rozložení';
             editBtn.style.background = 'var(--bg-card)';
             saveBtn.style.display = 'none';
+            resetBtn.style.display = 'none';
             drawer.style.display = 'none';
             grid.classList.remove('draggable-mode');
             hiddenGrid.classList.remove('draggable-mode');
@@ -578,7 +584,18 @@
             editBtn.innerHTML = '❌ Zrušit úpravy';
             editBtn.style.background = 'var(--bg-tertiary)';
             saveBtn.style.display = 'inline-block';
+            resetBtn.style.display = 'inline-block';
         }
+    }
+
+    async function resetLayout() {
+        if (!confirm('Opravdu chcete resetovat rozložení na výchozí hodnoty?')) return;
+        const formData = new FormData();
+        formData.append('page', 'analytics');
+        try {
+            await fetch('/settings/dashboard/reset', { method: 'POST', body: formData });
+            window.location.reload();
+        } catch (e) { alert('Chyba při resetování: ' + e); }
     }
 
     // --- Robust Resize Logic ---

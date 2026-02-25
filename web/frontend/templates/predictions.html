@@ -17,6 +17,10 @@
             style="padding: 6px 12px; white-space: nowrap; display: none; align-items: center; gap: 8px; background: var(--success-gradient); color: white;">
             💾 Uložit
         </button>
+        <button id="resetLayoutBtn" onclick="resetLayout()" class="btn"
+            style="padding: 6px 12px; white-space: nowrap; display: none; align-items: center; gap: 8px; background: var(--danger-gradient); color: white;">
+            🔄 Reset
+        </button>
     </div>
 </div>
 
@@ -283,6 +287,7 @@
     const hiddenGrid = document.getElementById('hidden-widgets-grid');
     const editBtn = document.getElementById('editLayoutBtn');
     const saveBtn = document.getElementById('saveLayoutBtn');
+    const resetBtn = document.getElementById('resetLayoutBtn');
 
     // Move hidden widgets to drawer on load
     document.addEventListener('DOMContentLoaded', () => {
@@ -304,6 +309,7 @@
             editBtn.classList.remove('btn-active');
             editBtn.style.background = '';
             saveBtn.style.display = 'none';
+            resetBtn.style.display = 'none';
             drawer.style.display = 'none';
             grid.classList.remove('draggable-mode');
             hiddenGrid.classList.remove('draggable-mode');
@@ -338,6 +344,27 @@
             editBtn.innerHTML = '❌ Zrušit';
             editBtn.style.background = 'var(--bg-tertiary)';
             saveBtn.style.display = 'flex';
+            resetBtn.style.display = 'flex';
+        }
+    }
+
+    async function resetLayout() {
+        if (!confirm('Opravdu chcete resetovat rozložení na výchozí hodnoty?')) return;
+        const formData = new FormData();
+        formData.append('page', 'predictions');
+        try {
+            const resp = await fetch('/settings/dashboard/reset', {
+                method: 'POST',
+                body: formData
+            });
+            if (resp.ok) {
+                window.location.reload();
+            } else {
+                alert('Chyba při resetování rozložení');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Chyba spojení');
         }
     }
 

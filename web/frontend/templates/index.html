@@ -29,6 +29,10 @@
             style="padding: 6px 12px; white-space: nowrap; display: none; align-items: center; gap: 8px; background: var(--success-gradient); color: white;">
             💾 Uložit
         </button>
+        <button id="resetLayoutBtn" onclick="resetLayout()" class="btn"
+            style="padding: 6px 12px; white-space: nowrap; display: none; align-items: center; gap: 8px; background: var(--danger-gradient); color: white;">
+            🔄 Reset
+        </button>
 
         <form method="GET" action="/"
             style="display: flex; gap: 12px; align-items: center; background: var(--bg-card); padding: 8px 16px; border-radius: 12px; border: 1px solid var(--glass-border);">
@@ -220,6 +224,14 @@
 {% set default_order = ['kpi_online', 'kpi_members', 'kpi_dau', 'kpi_churn', 'security_score', 'chart_growth',
 'chart_hourly', 'chart_heatmap', 'chart_stickiness', 'chart_msglen', 'chart_weekly', 'response_stats'] %}
 {% set active_order = widget_order if widget_order else default_order %}
+
+{% set hidden_widgets = [] %}
+{% for widget_id in default_order %}
+{% if widget_id not in active_order %}
+{% set _ = hidden_widgets.append(widget_id) %}
+{% endif %}
+{% endfor %}
+
 {% set saved_spans = request.session.get('dashboard_spans', {}) %}
 <div id="dashboard-grid" class="grid">
     {% for widget_id in active_order %}
@@ -384,6 +396,7 @@
     const hiddenGrid = document.getElementById('hidden-widgets-grid');
     const editBtn = document.getElementById('editLayoutBtn');
     const saveBtn = document.getElementById('saveLayoutBtn');
+    const resetBtn = document.getElementById('resetLayoutBtn');
 
     // Move hidden widgets to drawer on load
     document.addEventListener('DOMContentLoaded', () => {
@@ -405,6 +418,7 @@
             editBtn.classList.remove('btn-active');
             editBtn.style.background = '';
             saveBtn.style.display = 'none';
+            resetBtn.style.display = 'none';
             drawer.style.display = 'none';
             grid.classList.remove('draggable-mode');
             hiddenGrid.classList.remove('draggable-mode');
@@ -439,6 +453,27 @@
             editBtn.innerHTML = '❌ Zrušit';
             editBtn.style.background = 'var(--bg-tertiary)';
             saveBtn.style.display = 'flex';
+            resetBtn.style.display = 'flex';
+        }
+    }
+
+    async function resetLayout() {
+        if (!confirm('Opravdu chcete resetovat rozložení na výchozí hodnoty?')) return;
+        const formData = new FormData();
+        formData.append('page', 'overview');
+        try {
+            const resp = await fetch('/settings/dashboard/reset', {
+                method: 'POST',
+                body: formData
+            });
+            if (resp.ok) {
+                window.location.reload();
+            } else {
+                alert('Chyba při resetování rozložení');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Chyba spojení');
         }
     }
 

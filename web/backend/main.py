@@ -2028,6 +2028,35 @@ async def update_dashboard_layout(
     elif page == "predictions": redirect_url = "/predictions"
     
     return RedirectResponse(url=redirect_url, status_code=303)
+    
+@app.post("/settings/dashboard/reset")
+async def reset_dashboard_layout(
+    request: Request,
+    page: str = Form("analytics"),
+    _=Depends(require_auth)
+):
+    """Reset dashboard layout preferences to defaults."""
+    if page == "overview":
+        if "overview_order" in request.session:
+            del request.session["overview_order"]
+    elif page == "predictions":
+        if "predictions_order" in request.session:
+            del request.session["predictions_order"]
+    else:
+        if "analytics_order" in request.session:
+            del request.session["analytics_order"]
+        if "dashboard_order" in request.session:
+            del request.session["dashboard_order"]
+            
+    # Also clear spans if we want a full reset
+    if "dashboard_spans" in request.session:
+        del request.session["dashboard_spans"]
+        
+    redirect_url = "/analytics"
+    if page == "overview": redirect_url = "/"
+    elif page == "predictions": redirect_url = "/predictions"
+    
+    return RedirectResponse(url=redirect_url, status_code=303)
 
 @app.post("/settings/security-score")
 async def update_security_score_settings(
