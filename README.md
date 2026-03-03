@@ -1,4 +1,4 @@
-# 📊 Metricord
+# Metricord
 
 Discord bot s pokročilou analytikou, prediktivními modely a interaktivním dashboardem pro správu a rozvoj komunit.
 
@@ -6,7 +6,7 @@ Projekt vznikl jako součást bakalářské práce zaměřené na **predikci cho
 
 ---
 
-## � Obsah
+## Obsah
 1. [Příprava (Před instalací)](#-příprava-před-instalací)
 2. [Instalace (Krok za krokem)](#-instalace-krok-za-krokem)
 3. [Používání systému](#-používání-systému)
@@ -15,7 +15,7 @@ Projekt vznikl jako součást bakalářské práce zaměřené na **predikci cho
 
 ---
 
-## 🛠 1. Příprava (Před instalací)
+## 1. Příprava (Před instalací)
 
 Před samotným spuštěním bota musíte připravit externí služby:
 
@@ -35,7 +35,7 @@ Metricord využívá Redis pro real-time analytiku.
 
 ---
 
-## 🚀 2. Instalace (Krok za krokem)
+## 2. Instalace (Krok za krokem)
 
 ### Krok 1: Klonování a příprava složky
 ```bash
@@ -66,7 +66,7 @@ REDIS_HOST=localhost
 
 ---
 
-## 🕹 3. Používání systému
+## 3. Používání systému
 
 ### Spuštění
 Nejjednodušší způsob je použít přiložený startovací skript:
@@ -91,7 +91,7 @@ Po spuštění je dashboard dostupný na: `http://localhost:8092`
 
 ---
 
-## � 4. Údržba a Monitoring
+## 4. Údržba a Monitoring
 
 ### Sledování logů
 Pokud systém nefunguje podle představ, zkontrolujte logy:
@@ -103,7 +103,7 @@ Veškerá data jsou v Redisu. Pro zálohu stačí zkopírovat soubor `dump.rdb` 
 
 ---
 
-## 🗑 5. Odstranění systému
+## 5. Odstranění systému
 
 Pokud si přejete Metricord kompletně odstranit ze svého stroje, postupujte takto:
 
@@ -131,6 +131,6 @@ V Discord aplikaci stačí bota "vyhodit" (Kick) ze serveru a na [Developer Port
 
 ---
 
-## 📝 Licence & Autor
+## Licence & Autor
 Projekt Metricord je proprietární software vytvořený jako součást bakalářské práce v roce 2026.
 Všechna práva vyhrazena.
