@@ -784,7 +784,7 @@ async def docs_page(request: Request, page_name: str = "index"):
     allowed_pages = {
         "index", "setup", "commands", "security", "analytics", "export",
         "faq", "support", "ai", "backfill", "roles", "insights",
-        "privacy", "terms", "changelog"
+        "privacy", "terms", "changelog", "predictions"
     }
     
     if page_name not in allowed_pages:

@@ -127,7 +127,20 @@ rm -rf Discord-bot-main
 ```
 
 ### Krok 4: Odstranění z Discordu
-V Discord aplikaci stačí bota "vyhodit" (Kick) ze serveru a na [Developer Portalu](https://discord.com/developers/applications) aplikaci smazat v sekci **Settings** -> **Delete Application**.
+V Discord aplikaci stačí bota "vyhodit" (Kick) ze serveru a na [Developer Portalu](https://discord.com/developers/applications) aplikaci smazat v sekci **Settings** -> **Delete Application`.
+
+---
+
+## 6. Technická analýza a predikce
+
+Metricord není jen sběrač dat, ale pokročilý analytický nástroj. Mezi klíčové funkce patří:
+- **Engagement Score**: Komplexní hodnocení zapojení komunity (0-100).
+- **Security Audit**: Automatické vyhodnocování bezpečnosti serveru a moderátorské zátěže.
+- **Prediktivní modely**: Odhady budoucího růstu a aktivity pomocí lineární regrese a sezónních indexů.
+- **Smart Insights**: AI-ready interpretace dat pro správce serveru.
+
+Podrobný technický popis algoritmů a metodiky naleznete v samostatném dokumentu:
+[**Technická dokumentace analýzy a predikce**](docs/TECHNICAL_DESCRIPTION.md)
 
 ---
 

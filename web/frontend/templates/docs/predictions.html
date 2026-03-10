@@ -1,0 +1,54 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Technologie Predikce{% endblock %}
+
+{% block docs_content %}
+<section id="predictions">
+    <h1>Technologie Predikce</h1>
+    <p>Metricord využívá kombinaci statistických metod a lineární regrese pro odhad budoucího vývoje vaší komunity. Zde je podrobný popis toho, jak naše modely fungují.</p>
+
+    <div class="info-box">
+        <b>Důležité upozornění:</b>
+        Všechny predikce jsou odhady založené na historických datech. Nepředvídatelné události (např. raid na server nebo zmínka influencera) mohou realitu výrazně změnit.
+    </div>
+
+    <h2>1. Predikce růstu členů</h2>
+    <p>Tento model odhaduje počet členů v horizontu 30, 60 a 90 dní.</p>
+    <ul>
+        <li><b>Metodika:</b> Výpočet čistého přírůstku (Joins - Leaves) za posledních 12 měsíců.</li>
+        <li><b>Klouzavý průměr:</b> Model bere v úvahu průměrný měsíční růst a projektuje ho lineárně do budoucna.</li>
+        <li><b>Využití:</b> Pomáhá plánovat nábor nových moderátorů nebo škálování infrastruktury.</li>
+    </ul>
+
+    <h2>2. Lineární regrese a trend aktivity</h2>
+    <p>Pro odhad počtu zpráv používáme metodu nejmenších čtverců pro nalezení trendové přímky.</p>
+    <div class="info-box" style="background: rgba(59, 130, 246, 0.1); border-left-color: #3b82f6;">
+        <b>Vzorec:</b> <code>y = ax + b</code><br>
+        <i>Kde <b>a</b> reprezentuje sklon trendu (rychlost růstu/poklesu) a <b>b</b> počáteční bod.</i>
+    </div>
+    <p>Trend analyzuje data za posledních 30 dní a vyhodnocuje, zda aktivita serveru v čase roste nebo klesá.</p>
+
+    <h2>3. Sezónní indexy (Weekend Effect)</h2>
+    <p>Tradiční lineární regrese často selhává u Discord komunit, protože aktivita se výrazně mění podle dne v týdnu (např. víkendy jsou silnější).</p>
+    <p><b>Jak to funguje:</b></p>
+    <ol>
+        <li>Systém vypočítá <b>koeficient</b> pro každý den v týdnu na základě historie.</li>
+        <li>Pokud je sobota obvykle o 20 % aktivnější než průměr, dostane index <b>1.2</b>.</li>
+        <li>Lineární predikce pro budoucí sobotu je pak vynásobena tímto indexem pro vyšší přesnost.</li>
+    </ol>
+
+    <h2>4. Predikce stability (Churn Analysis)</h2>
+    <p>Widget "Predikce stability" vyhodnocuje riziko "vymírání" serveru.</p>
+    <ul>
+        <li><b>Skóre stability:</b> Vypočítává se jako poměr odchodů k celkové velikosti komunity.</li>
+        <li><b>Interpretace:</b> Pokud odchody tvoří více než 5 % celkového počtu členů za měsíc, systém vyhlásí varování.</li>
+        <li><b>Stickiness (DAU/MAU):</b> Sledujeme, kolik procent měsíčních uživatelů se vrací každý den. Vysoké číslo (>20 %) značí zdravé jádro komunity.</li>
+    </ul>
+
+    <h2>5. Predikce špičky</h2>
+    <p>Model analyzuje hodinovou aktivitu a identifikuje časy, kdy je v následujících 24 hodinách nejpravděpodobnější nejvyšší aktivita.</p>
+    <ul>
+        <li><b>Využití:</b> Plánování ohlášení (announcements) nebo spuštění eventů tak, aby zasáhly co nejvíce lidí.</li>
+    </ul>
+</section>
+{% endblock %}
