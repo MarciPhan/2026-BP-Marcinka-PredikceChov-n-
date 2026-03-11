@@ -1,5 +1,4 @@
-
-
+import os
 import re
 import secrets
 import string
@@ -14,26 +13,27 @@ from email.mime.multipart import MIMEMultipart
 import sys
 sys.path.append('/root/discord-bot')
 try:
-    from dashboard_secrets import (
+    from config.dashboard_secrets import (
         SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM,
-        ALLOWED_EMChytréL_DOMChytréN, OTP_LENGTH, OTP_EXPIRY_SECONDS,
+        ALLOWED_EMAIL_DOMAIN, OTP_LENGTH, OTP_EXPIRY_SECONDS,
         OTP_MAX_ATTEMPTS, OTP_RATE_LIMIT
     )
 except ImportError:
-    
-    SMTP_HOST = "smtp.gmail.com"
-    SMTP_PORT = 587
-    SMTP_USER = ""
-    SMTP_PASSWORD = ""
-    SMTP_FROM = "Dashboard <noreply@metricord.app>"
+    SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USER = os.getenv("SMTP_USER", "")
+    SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+    SMTP_FROM = os.getenv("SMTP_FROM", "Dashboard <noreply@metricord.app>")
     ALLOWED_EMAIL_DOMAIN = "@metricord.app"
     OTP_LENGTH = 6
     OTP_EXPIRY_SECONDS = 300
     OTP_MAX_ATTEMPTS = 5
     OTP_RATE_LIMIT = 3
 
+from shared.redis_client import get_redis
 
-REDIS_URL = "redis://172.22.0.2:6379/0"
+
+# REDIS_URL moved to shared.redis_client
 
 def validate_email(email: str) -> Tuple[bool, str]:
     """Validate email format only (no domain restriction)."""
@@ -48,7 +48,7 @@ def validate_email(email: str) -> Tuple[bool, str]:
 def get_user_role(email: str) -> str:
     """Return user role based on email domain."""
     ADMIN_DOMAINS = ["@metricord.app"]
-    for domain in ADMIN_DOMChytréNS:
+    for domain in ADMIN_DOMAINS:
         if email.lower().endswith(domain):
             return "admin"
     return "guest"
@@ -61,12 +61,11 @@ def generate_otp() -> str:
 async def store_otp(email: str, otp: str) -> bool:
     """Store OTP in Redis with expiry."""
     try:
-        r = redis.from_url(REDIS_URL, decode_responses=True)
+        r = await get_redis()
         
         await r.setex(f"otp:{email}", OTP_EXPIRY_SECONDS, otp)
         
         await r.setex(f"otp_attempts:{email}", OTP_EXPIRY_SECONDS, "0")
-        await r.close()
         return True
     except Exception as e:
         print(f"Error storing OTP: {e}")
@@ -75,42 +74,29 @@ async def store_otp(email: str, otp: str) -> bool:
 async def verify_otp(email: str, otp: str) -> Tuple[bool, str]:
     """Verify OTP against stored value."""
     try:
-        r = redis.from_url(REDIS_URL, decode_responses=True)
-        
+        r = await get_redis()
         
         print(f"[DEBUG] Verifying OTP for email: '{email}'")
         key = f"otp:{email}"
-        print(f"[DEBUG] Looking up Redis key: '{key}'")
-        
         
         stored_otp = await r.get(key)
-        print(f"[DEBUG] Stored OTP: '{stored_otp}' vs Input OTP: '{otp}'")
         
         if not stored_otp:
-            print("[DEBUG] OTP key not found or expired.")
-            await r.close()
-            return False, "OTP expired or not found"
-        
+            return False, "OTP kód vypršel nebo neexistuje"
         
         attempts = int(await r.get(f"otp_attempts:{email}") or "0")
         if attempts >= OTP_MAX_ATTEMPTS:
             await r.delete(f"otp:{email}")
             await r.delete(f"otp_attempts:{email}")
-            await r.close()
-            return False, "Too many failed attempts"
-        
+            return False, "Příliš mnoho neúspěšných pokusů"
         
         if stored_otp == otp:
-            
             await r.delete(f"otp:{email}")
             await r.delete(f"otp_attempts:{email}")
-            await r.close()
             return True, "Valid"
         else:
-            
             await r.incr(f"otp_attempts:{email}")
-            await r.close()
-            return False, f"Invalid OTP ({OTP_MAX_ATTEMPTS - attempts - 1} attempts remaining)"
+            return False, f"Neplatný kód (zbývá {OTP_MAX_ATTEMPTS - attempts - 1} pokusů)"
     
     except Exception as e:
         print(f"Error verifying OTP: {e}")
@@ -119,23 +105,20 @@ async def verify_otp(email: str, otp: str) -> Tuple[bool, str]:
 async def check_rate_limit(email: str) -> Tuple[bool, int]:
     """Check if email has exceeded rate limit. Returns (allowed, remaining_seconds)."""
     try:
-        r = redis.from_url(REDIS_URL, decode_responses=True)
+        r = await get_redis()
         
         rate_key = f"otp_rate:{email}"
         count = await r.get(rate_key)
         
         if count and int(count) >= OTP_RATE_LIMIT:
             ttl = await r.ttl(rate_key)
-            await r.close()
             return False, ttl
-        
         
         if count:
             await r.incr(rate_key)
         else:
             await r.setex(rate_key, 600, "1")  
         
-        await r.close()
         return True, 0
     except Exception as e:
         print(f"Error checking rate limit: {e}")

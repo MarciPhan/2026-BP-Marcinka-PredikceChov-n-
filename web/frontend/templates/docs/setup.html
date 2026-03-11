@@ -38,5 +38,23 @@ Doporučené nastavení:
     <h3>Přístup pro moderátory</h3>
     <p>Ve výchozím nastavení má přístup pouze majitel serveru. V sekci <b>Tým</b> můžete přidat role (např. @Moderator),
         které budou mít přístup k prohlížení statistik.</p>
+
+    <h2>3. Nastavení E-mailu (OTP)</h2>
+    <p>Pro přihlašování pomocí e-mailu je nutné v souboru <code>config/dashboard_secrets.py</code> nastavit SMTP server.
+    </p>
+
+    <div class="info-box">
+        <b>Důležité hodnoty</b>
+        <ul>
+            <li><code>SMTP_HOST</code> - Adresa vašeho SMTP serveru (např. smtp.gmail.com)</li>
+            <li><code>SMTP_PORT</code> - Port (obvykle 587 pro TLS)</li>
+            <li><code>SMTP_USER</code> - Uživatelské jméno / E-mail</li>
+            <li><code>SMTP_PASSWORD</code> - Heslo (pro Gmail použijte "App Password")</li>
+        </ul>
+    </div>
+
+    <p>Pokud nejsou tyto údaje vyplněny, bot běží v <b>Dev Módu</b> a přihlašovací kódy vypisuje pouze do konzole serveru.
+    </p>
+
 </section>
 {% endblock %}

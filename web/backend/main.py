@@ -85,6 +85,11 @@ try:
 except ImportError:
     get_demo_stats = lambda *args: {}
 
+from .otp_utils import (
+    validate_email, get_user_role, generate_otp, store_otp, verify_otp, 
+    check_rate_limit, send_otp_email, mask_email
+)
+
 app = FastAPI(title="Metricord")
 # Vypneme automatickou dokumentaci pro čistotu
 
@@ -113,6 +118,76 @@ async def demo_login(request: Request):
     request.session["role"] = "admin"
     request.session["login_time"] = datetime.now().isoformat()
     return RedirectResponse(url="/", status_code=303)
+
+
+@app.get("/login-email", response_class=HTMLResponse)
+async def login_email_page(request: Request, error: Optional[str] = None):
+    # Zobrazení stránky pro zadání emailu
+    return templates.TemplateResponse("login_email.html", {"request": request, "error": error})
+
+@app.post("/api/auth/request-otp")
+async def request_otp(request: Request, email: str = Form(...)):
+    # Validace a odeslání OTP
+    is_valid, msg = validate_email(email)
+    if not is_valid:
+        return templates.TemplateResponse("login_email.html", {"request": request, "error": msg})
+    
+    # Rate limit check
+    allowed, wait_time = await check_rate_limit(email)
+    if not allowed:
+        return templates.TemplateResponse("login_email.html", {"request": request, "error": f"Příliš mnoho žádostí. Zkuste to za {wait_time} sekund."})
+    
+    otp = generate_otp()
+    if await store_otp(email, otp):
+        if await send_otp_email(email, otp):
+            # Přesměrování na stránku pro ověření s předvyplněným e-mailem
+            return RedirectResponse(url=f"/verify-otp?email={email}", status_code=303)
+        else:
+            return templates.TemplateResponse("login_email.html", {"request": request, "error": "Chyba při odesílání e-mailu."})
+    else:
+        return templates.TemplateResponse("login_email.html", {"request": request, "error": "Chyba databáze při ukládání kódu."})
+
+@app.get("/verify-otp", response_class=HTMLResponse)
+async def verify_otp_page(request: Request, email: str, error: Optional[str] = None):
+    # Zobrazení stránky pro zadání kódu
+    masked = mask_email(email)
+    return templates.TemplateResponse("verify_otp_page.html", {
+        "request": request, 
+        "email": email, 
+        "masked_email": masked, 
+        "error": error
+    })
+
+@app.post("/api/auth/verify-otp")
+async def process_verify_otp(request: Request, email: str = Form(...), otp: str = Form(...)):
+    # Ověření kódu
+    is_valid, msg = await verify_otp(email, otp)
+    if is_valid:
+        # Přihlášení uživatele
+        request.session["authenticated"] = True
+        request.session["discord_user"] = {
+            "id": f"email:{email}",
+            "username": email.split('@')[0],
+            "avatar": None,
+            "email": email
+        }
+        # Nastavení role (admin pro @metricord.app, guest pro ostatní)
+        request.session["role"] = get_user_role(email)
+        request.session["login_time"] = datetime.now().isoformat()
+        
+        # Pokud je uživatel admin, pošleme ho na výběr serveru, jinak na demo/veřejné části
+        if request.session["role"] == "admin":
+             return RedirectResponse(url="/select-server", status_code=303)
+        else:
+             return RedirectResponse(url="/", status_code=303)
+    else:
+        masked = mask_email(email)
+        return templates.TemplateResponse("verify_otp_page.html", {
+            "request": request, 
+            "email": email, 
+            "masked_email": masked, 
+            "error": msg
+        })
 
 
 
@@ -643,7 +718,7 @@ async def _dashboard_logic(request: Request, start_date: str = None, end_date: s
 async def require_auth(request: Request):
     # Kontrola, jestli je uživatel přihlášen
     
-    allowed_paths = ["/login", "/auth/callback", "/logout", "/request-otp", "/verify-otp", "/resend-otp"]
+    allowed_paths = ["/login", "/auth/callback", "/logout", "/login-email", "/api/auth/request-otp", "/verify-otp", "/api/auth/verify-otp", "/resend-otp"]
     if request.url.path.startswith("/static") or request.url.path in allowed_paths:
         return
     

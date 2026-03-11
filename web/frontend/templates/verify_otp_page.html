@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ověření kódu - Metricord</title>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --text-primary: #ffffff;
+            --text-secondary: #9ca3af;
+            --accent: #8b5cf6;
+            --accent-hover: #7c3aed;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --error-red: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image:
+                radial-gradient(ellipse at top, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+        }
+
+        .login-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 48px;
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+
+        .email-display {
+            color: var(--accent);
+            font-weight: 600;
+            margin-top: 8px;
+            font-size: 16px;
+        }
+
+        .otp-container {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .otp-digit {
+            width: 50px;
+            height: 60px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            color: white;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .otp-digit:focus {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+        }
+
+        .submit-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.2s;
+            width: 100%;
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+
+        .submit-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .timer-info {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .timer-info span {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .resend-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            text-decoration: underline;
+            font-size: 14px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .resend-btn:hover:not(:disabled) {
+            color: white;
+        }
+
+        .resend-btn:disabled {
+            text-decoration: none;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--error-red);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer {
+            margin-top: 32px;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-card">
+        <div class="logo">🔑</div>
+        <h1>Ověření kódu</h1>
+        <p class="subtitle">Poslali jsme 6místný kód na adresu:<br>
+            <span class="email-display">{{ masked_email }}</span>
+        </p>
+
+        {% if error %}
+        <div class="error">
+            <span>⚠️</span>
+            <span>{{ error }}</span>
+        </div>
+        {% endif %}
+
+        <form action="/api/auth/verify-otp" method="POST" id="verifyForm">
+            <input type="hidden" name="email" value="{{ email }}">
+            <input type="hidden" name="otp" id="fullOtp">
+
+            <div class="otp-container">
+                <input type="text" class="otp-digit" maxlength="1" pattern="[0-9]" required autofocus>
+                <input type="text" class="otp-digit" maxlength="1" pattern="[0-9]" required>
+                <input type="text" class="otp-digit" maxlength="1" pattern="[0-9]" required>
+                <input type="text" class="otp-digit" maxlength="1" pattern="[0-9]" required>
+                <input type="text" class="otp-digit" maxlength="1" pattern="[0-9]" required>
+                <input type="text" class="otp-digit" maxlength="1" pattern="[0-9]" required>
+            </div>
+
+            <div class="timer-info">
+                Platnost kódu vyprší za: <span id="timer">5:00</span>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                Ověřit a přihlásit se
+            </button>
+        </form>
+
+        <form action="/api/auth/request-otp" method="POST" id="resendForm">
+            <input type="hidden" name="email" value="{{ email }}">
+            <button type="submit" class="resend-btn" id="resendBtn">
+                Znovu poslat kód
+            </button>
+        </form>
+
+        <p class="footer">Nedorazil kód? Zkontrolujte složku se spamem.</p>
+    </div>
+
+    <script>
+        const digits = document.querySelectorAll('.otp-digit');
+        const fullOtp = document.getElementById('fullOtp');
+        const form = document.getElementById('verifyForm');
+        const btn = document.getElementById('submitBtn');
+
+        digits.forEach((digit, idx) => {
+            digit.oninput = (e) => {
+                if (e.target.value && idx < digits.length - 1) {
+                    digits[idx + 1].focus();
+                }
+                checkComplete();
+            };
+
+            digit.onkeydown = (e) => {
+                if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+                    digits[idx - 1].focus();
+                }
+            };
+        });
+
+        function checkComplete() {
+            const val = Array.from(digits).map(d => d.value).join('');
+            fullOtp.value = val;
+            if (val.length === 6) {
+                // optional auto-submit
+            }
+        }
+
+        form.onsubmit = () => {
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Ověřuji...';
+        };
+
+        // Timer logic
+        let timeLeft = 300;
+        const timerSpan = document.getElementById('timer');
+        const countdown = setInterval(() => {
+            timeLeft--;
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            timerSpan.innerHTML = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                timerSpan.innerHTML = "EXPIROVÁNO";
+                btn.disabled = true;
+            }
+        }, 1000);
+
+        // Resend cooldown
+        const resendBtn = document.getElementById('resendBtn');
+        let resendWait = 30;
+        resendBtn.disabled = true;
+        const resendInterval = setInterval(() => {
+            resendWait--;
+            if (resendWait > 0) {
+                resendBtn.innerHTML = `Znovu poslat kód (${resendWait}s)`;
+            } else {
+                clearInterval(resendInterval);
+                resendBtn.innerHTML = `Znovu poslat kód`;
+                resendBtn.disabled = false;
+            }
+        }, 1000);
+    </script>
+</body>
+
+</html>
