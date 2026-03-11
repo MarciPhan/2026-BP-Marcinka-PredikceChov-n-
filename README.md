@@ -7,11 +7,11 @@ Projekt vznikl jako součást bakalářské práce zaměřené na **predikci cho
 ---
 
 ## Obsah
-1. [Příprava (Před instalací)](#-příprava-před-instalací)
-2. [Instalace (Krok za krokem)](#-instalace-krok-za-krokem)
-3. [Používání systému](#-používání-systému)
-4. [Údržba a Monitoring](#-údržba-a-monitoring)
-5. [Odstranění systému](#-odstranění-systému)
+1. [Příprava (Před instalací)](#1-příprava-před-instalací)
+2. [Instalace (Krok za krokem)](#2-instalace-krok-za-krokem)
+3. [Používání systému](#3-používání-systému)
+4. [Údržba a Monitoring](#4-údržba-a-monitoring)
+5. [Odstranění systému](#5-odstranění-systému)
 
 ---
 
@@ -84,7 +84,7 @@ Po spuštění je dashboard dostupný na: `http://localhost:8092`
 - **Interaktivní prvky**: Widgety na dashboardu můžete přesouvat nebo měnit jejich velikost (změny se ukládají v prohlížeči).
 
 ### Bot Příkazy
-- `/stats`: Zobrazí aktuální rychlý přehled serveru (členové, aktivita).
+- `/stats`: Zobrazí aktuální přehled serveru (členové, aktivita).
 - `/verify`: Spustí process verifikace nového uživatele.
 - `/report`: Vygeneruje podrobný měsíční report (pouze pro administrátory).
 - `/help`: Zobrazí nápovědu ke všem dostupným funkcím.
@@ -127,7 +127,7 @@ rm -rf Discord-bot-main
 ```
 
 ### Krok 4: Odstranění z Discordu
-V Discord aplikaci stačí bota "vyhodit" (Kick) ze serveru a na [Developer Portalu](https://discord.com/developers/applications) aplikaci smazat v sekci **Settings** -> **Delete Application`.
+V Discord aplikaci stačí bota vyhodit (Kick) ze serveru a na [Developer Portalu](https://discord.com/developers/applications) aplikaci smazat v sekci **Settings** -> **Delete Application**.
 
 ---
 

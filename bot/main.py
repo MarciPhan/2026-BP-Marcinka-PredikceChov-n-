@@ -77,23 +77,23 @@ async def log_start_info():
 @bot.command(name="sync")
 @commands.has_permissions(administrator=True)
 async def sync_tree(ctx: commands.Context):
-    await ctx.send("⏳ Synchronizuji slash příkazy...")
+    await ctx.send("Synchronizuji slash příkazy...")
     try:
         synced = await bot.tree.sync()
-        await ctx.send(f"✅ Synchronizováno {len(synced)} příkazů.")
+        await ctx.send(f"Synchronizováno {len(synced)} příkazů.")
     except Exception as e:
-        await ctx.send(f"❌ Chyba: {e}")
+        await ctx.send(f"Chyba: {e}")
 
 async def load_commands():
     """Load all command cogs from commands/ folder"""
     start = time.time()
     is_lite = os.getenv("BOT_LITE_MODE") == "1"  # lite mode for dashboard bot
     
-    await send_console_log(f"START: načítání cogů (Lite Mode: {is_lite})…")
+    await send_console_log(f"Načítání modulů (Lite Mode: {is_lite})")
     
     commands_dir = os.path.join(os.path.dirname(__file__), "commands")
     if not os.path.exists(commands_dir):
-        await send_console_log(f"[FATAL] složka '{commands_dir}' neexistuje")
+        await send_console_log(f"CHYBA: složka '{commands_dir}' neexistuje")
         return
 
     # make sure default help is gone
@@ -104,7 +104,7 @@ async def load_commands():
         f for f in os.listdir(commands_dir)
         if f.endswith(".py") and not f.startswith("_") and f != "__init__.py"
     ]
-    await send_console_log(f"Celkem {len(files)} modulů: {files}")
+    await send_console_log(f"Nalezeno {len(files)} modulů: {files}")
 
     for filename in files:
         module_name = f"bot.commands.{filename[:-3]}"
@@ -113,15 +113,15 @@ async def load_commands():
             
             interactive_cogs = ["echo", "emojirole", "help", "log", "notify", "ping", "purge", "report", "verification", "vyzva", "analytics_tracking"]
             if is_lite and any(mod in module_name for mod in interactive_cogs):
-                await send_console_log(f"⏩ {module_name} vynechán (Lite Mode)")
+                await send_console_log(f"Vynechán modul {module_name} (Lite Mode)")
                 continue
 
             await bot.load_extension(module_name)
-            await send_console_log(f"✅ {module_name} načten")
+            await send_console_log(f"Načten modul {module_name}")
         except Exception as e:
             import traceback
             tb = "".join(traceback.format_exception(type(e), e, e.__traceback__))[-1800:]
-            await send_console_log(f"❌ Chyba při načtení {module_name}: {e}\n```{tb}```")
+            await send_console_log(f"Chyba při načtení {module_name}: {e}\n```{tb}```")
             continue
 
         
@@ -212,7 +212,7 @@ async def on_ready():
     
     
     is_lite = os.getenv("BOT_LITE_MODE") == "1"
-    status_msg = "Analytics 📈" if is_lite else "Metricord Dashboard"
+    status_msg = "Analytics" if is_lite else "Metricord"
     activity = discord.Activity(type=discord.ActivityType.watching, name=status_msg)
     await bot.change_presence(status=discord.Status.online, activity=activity)
     
@@ -258,11 +258,9 @@ async def on_ready():
     
     try:
         synced = await bot.tree.sync()
-        await send_console_log(f"✅ Synchronizováno {len(synced)} slash příkazů.")
-        
-
+        await send_console_log(f"Slash příkazy synchronizovány ({len(synced)}).")
     except Exception as e:
-        await send_console_log(f"❌ Sync selhal: {e}")
+        await send_console_log(f"Sync selhal: {e}")
 
 @bot.event
 async def on_guild_join(guild: discord.Guild):

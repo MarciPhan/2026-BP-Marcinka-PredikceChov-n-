@@ -11,7 +11,7 @@ REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 
 class GDPRCommands(commands.Cog):
-    """GDPR compliance commands for user data management."""
+    # Příkazy pro správu dat uživatelů (GDPR)
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -23,15 +23,15 @@ class GDPRCommands(commands.Cog):
 
     @app_commands.command(name="privacy", description="Zobrazí informace o ochraně osobních údajů a GDPR")
     async def privacy(self, interaction: discord.Interaction):
-        """Display privacy policy and data collection information."""
+        # Zobrazí info o tom, co se o lidech sbírá
         embed = discord.Embed(
-            title="🔒 Ochrana osobních údajů - Metricord",
+            title="Ochrana osobních údajů - Metricord",
             description="Informace o tom, jaká data sbíráme a jak je chráníme.",
             color=discord.Color.blue()
         )
 
         embed.add_field(
-            name="📊 Co sbíráme",
+            name="Co sbíráme",
             value=(
                 "• **Metadata zpráv:** Počet zpráv, délka textu, zda je odpověď\n"
                 "• **Voice aktivita:** Délka času ve voice kanálech\n"
@@ -43,7 +43,7 @@ class GDPRCommands(commands.Cog):
         )
 
         embed.add_field(
-            name="❌ Co NESBÍRÁME",
+            name="Co nesbíráme",
             value=(
                 "• **Obsah zpráv** - nikdy neukládáme text zpráv\n"
                 "• **Soukromé konverzace (DM)**\n"
@@ -53,18 +53,18 @@ class GDPRCommands(commands.Cog):
         )
 
         embed.add_field(
-            name="🎯 Proč sbíráme data",
+            name="Proč sbíráme data",
             value=(
-                "• Poskytování analytics a statistik serveru\n"
+                "• Analýza a statistiky serveru\n"
                 "• Sledování aktivity moderátorů\n"
-                "• Vytváření leaderboardů a engagement metrik\n"
-                "• Predikce chování komunity (pro bakalářskou práci)"
+                "• Žebříčky a metriky zapojení\n"
+                "• Predikce pro bakalářskou práci"
             ),
             inline=False
         )
 
         embed.add_field(
-            name="⏱️ Jak dlouho ukládáme",
+            name="Jak dlouho ukládáme",
             value=(
                 "• **Uživatelské info:** 7 dní (automaticky expiruje)\n"
                 "• **Event data:** Neomezené (až do smazání)\n"
@@ -74,7 +74,7 @@ class GDPRCommands(commands.Cog):
         )
 
         embed.add_field(
-            name="🛡️ Tvoje práva (GDPR)",
+            name="Tvoje práva (GDPR)",
             value=(
                 "• **`/gdpr export`** - Stáhnout kopii všech tvých dat\n"
                 "• **`/gdpr delete`** - Smazat všechna tvá data z databáze\n"
@@ -84,7 +84,7 @@ class GDPRCommands(commands.Cog):
         )
 
         embed.add_field(
-            name="🔐 Zabezpečení",
+            name="Zabezpečení",
             value=(
                 "• Data jsou uložena v zabezpečené Redis databázi\n"
                 "• Přístup pouze pro autorizované procesy\n"
@@ -161,7 +161,7 @@ class GDPRCommands(commands.Cog):
             
             # Format output
             embed = discord.Embed(
-                title="📊 Tvoje data v Metricord",
+                title="Tvoje data v Metricord",
                 description="Export všech dat uložených v databázi",
                 color=discord.Color.green()
             )
@@ -174,7 +174,7 @@ class GDPRCommands(commands.Cog):
                 roles = info.get('roles', '')
                 if roles:
                     user_text += f"**Role IDs:** {roles[:100]}..."
-                embed.add_field(name="👤 Uživatelské info", value=user_text, inline=False)
+                embed.add_field(name="Uživatelské info", value=user_text, inline=False)
             
             # Guild data
             if data_summary["guilds"]:
@@ -197,11 +197,11 @@ class GDPRCommands(commands.Cog):
                     if gdata['actions'] > 0:
                         guild_text += f"**⚖️ Moderační akce:** {gdata['actions']}\n"
                     
-                    embed.add_field(name=f"🏠 {guild_name}", value=guild_text, inline=False)
+                    embed.add_field(name=f"{guild_name}", value=guild_text, inline=False)
             else:
                 embed.add_field(
-                    name="ℹ️ Žádná data",
-                    value="V databázi nejsou uložena žádná data o tvé aktivitě.",
+                    name="Žádná data",
+                    value="V databázi o tobě nic nemáme.",
                     inline=False
                 )
             
@@ -229,7 +229,7 @@ class GDPRCommands(commands.Cog):
                 self.user_id = user_id
                 self.value = None
             
-            @discord.ui.button(label="✅ Ano, smazat moje data", style=discord.ButtonStyle.danger)
+            @discord.ui.button(label="Ano, smazat data", style=discord.ButtonStyle.danger)
             async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
                 await interaction.response.defer()
                 
@@ -289,12 +289,12 @@ class GDPRCommands(commands.Cog):
                     )
                     
                     embed = discord.Embed(
-                        title="✅ Data úspěšně smazána",
+                        title="Všechno smazáno",
                         description=(
-                            f"Všechna tvá data byla trvale smazána z databáze.\n\n"
-                            f"**Smazáno klíčů:** {len(deleted_keys)}\n"
+                            f"Tvoje data byla smazána z databáze.\n\n"
+                            f"**Počet smazaných klíčů:** {len(deleted_keys)}\n"
                             f"**Čas:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-                            f"ℹ️ Pokud budeš na serveru opět aktivní, bot začne sbírat nová data."
+                            f"Pokud budeš zase psát, bot začne sbírat data nanovo."
                         ),
                         color=discord.Color.green()
                     )

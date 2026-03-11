@@ -434,13 +434,13 @@ class ActivityMonitor(commands.Cog):
         total_time = chat_t + voice_t + action_time
         
         
-        e = discord.Embed(title=f"📊 Aktivita: {user.display_name}", description=f"📅 **Období:** {date_info}", color=discord.Color.blue())
+        e = discord.Embed(title=f"Aktivita: {user.display_name}", description=f"**Období:** {date_info}", color=discord.Color.blue())
         e.set_thumbnail(url=user.display_avatar.url)
         
-        e.add_field(name="💬 Chat Time", value=self.fmt_time(chat_t), inline=True)
-        e.add_field(name="🎙️ Voice Time", value=self.fmt_time(voice_t), inline=True)
-        e.add_field(name="🛠️ Action Time", value=self.fmt_time(action_time), inline=True)
-        e.add_field(name="📩 Zpráv", value=str(msgs), inline=True)
+        e.add_field(name="Chat Time", value=self.fmt_time(chat_t), inline=True)
+        e.add_field(name="Voice Time", value=self.fmt_time(voice_t), inline=True)
+        e.add_field(name="Action Time", value=self.fmt_time(action_time), inline=True)
+        e.add_field(name="Zpráv", value=str(msgs), inline=True)
         
         bans = int(data["bans"])
         kicks = int(data["kicks"])
@@ -450,16 +450,16 @@ class ActivityMonitor(commands.Cog):
         unbans = int(data["unbans"])
         verifs = int(data["verifications"])
         
-        e.add_field(name="🔨 Bany", value=str(bans), inline=True)
-        e.add_field(name="👢 Kicky", value=str(kicks), inline=True)
-        e.add_field(name="🤐 Timeouts", value=str(timeouts), inline=True)
-        e.add_field(name="🗑️ Smazáno", value=str(dels), inline=True)
-        e.add_field(name="🎭 Role", value=str(roles), inline=True)
-        e.add_field(name="🔓 Unbany", value=str(unbans), inline=True)
-        e.add_field(name="✅ Verifikace", value=str(verifs), inline=True)
+        e.add_field(name="Bany", value=str(bans), inline=True)
+        e.add_field(name="Kicky", value=str(kicks), inline=True)
+        e.add_field(name="Timeouts", value=str(timeouts), inline=True)
+        e.add_field(name="Smazáno", value=str(dels), inline=True)
+        e.add_field(name="Role", value=str(roles), inline=True)
+        e.add_field(name="Unbany", value=str(unbans), inline=True)
+        e.add_field(name="Verifikace", value=str(verifs), inline=True)
         
         total_h = total_time / 3600
-        e.add_field(name="⏱️ Celkový vážený čas", value=f"**{total_h:.1f} hodin**", inline=False)
+        e.add_field(name="Celkový vážený čas", value=f"**{total_h:.1f} hodin**", inline=False)
         
         await itx.followup.send(embed=e)
 
@@ -527,7 +527,7 @@ class ActivityMonitor(commands.Cog):
             
         if not desc: desc = ["Žádná data pro toto období."]
         
-        e = discord.Embed(title=f"🏆 Leaderboard ({date_info})", description="\n".join(desc), color=discord.Color.gold())
+        e = discord.Embed(title=f"Leaderboard ({date_info})", description="\n".join(desc), color=discord.Color.gold())
         e.set_footer(text="Řazeno podle váženého času")
         await itx.followup.send(embed=e)
 

@@ -16,22 +16,18 @@
 
         {% if is_discourse %}
         <button id="syncDiscourseBtn" onclick="triggerDiscourseSync()" class="btn"
-            style="padding: 6px 12px; white-space: nowrap; display: flex; align-items: center; gap: 6px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
-            🔄 Sync Now
+            Synchronizovat
         </button>
         {% endif %}
 
         <button id="editLayoutBtn" onclick="toggleEditMode()" class="btn"
-            style="padding: 6px 12px; white-space: nowrap; display: flex; align-items: center; gap: 8px; background: var(--bg-card);">
-            🖊️ Upravit rozložení
+            Upravit rozložení
         </button>
         <button id="saveLayoutBtn" onclick="saveLayout()" class="btn"
-            style="padding: 6px 12px; white-space: nowrap; display: none; align-items: center; gap: 8px; background: var(--success-gradient); color: white;">
-            💾 Uložit
+            Uložit
         </button>
         <button id="resetLayoutBtn" onclick="resetLayout()" class="btn"
-            style="padding: 6px 12px; white-space: nowrap; display: none; align-items: center; gap: 8px; background: var(--danger-gradient); color: white;">
-            🔄 Reset
+            Resetovat
         </button>
 
         <form method="GET" action="/"
@@ -119,7 +115,7 @@
 {% elif id == 'security_score' %}
 <div class="card stat-card" data-id="security_score" id="security-score-card">
     <div class="stat-label">
-        🏠 Skóre komunity
+        Skóre komunity
         <span class="info-icon dash-tooltip">? <span class="dash-tooltip-text">Celkové hodnocení zdraví
                 a aktivity komunity.</span></span>
     </div>
@@ -157,7 +153,7 @@
 {% elif id == 'chart_growth' %}
 <div class="card" data-id="chart_growth" style="min-height: 350px;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3 style="margin: 0;">📈 Růst členů</h3>
+        <h3 style="margin: 0;">Růst členů</h3>
         <div style="display: flex; gap: 10px;">
             <button class="chart-toggle active" data-chart="growth" data-type="total">Celkem</button>
             <button class="chart-toggle" data-chart="growth" data-type="joins">Přírůstky</button>
@@ -170,27 +166,27 @@
 </div>
 {% elif id == 'chart_hourly' %}
 <div class="card" data-id="chart_hourly" style="min-height: 350px;">
-    <h3>⏰ Hodinová aktivita</h3>
+    <h3>Hodinová aktivita</h3>
     <div style="height: 300px;"><canvas id="hourlyActivityChart"></canvas></div>
 </div>
 {% elif id == 'chart_stickiness' %}
 <div class="card" data-id="chart_stickiness" style="min-height: 300px;">
-    <h3>🧲 Stickiness & Retention</h3>
+    <h3>Věrnost a retence</h3>
     <div style="height: 250px;"><canvas id="stickinessChart"></canvas></div>
 </div>
 {% elif id == 'chart_msglen' %}
 <div class="card" data-id="chart_msglen" style="min-height: 300px;">
-    <h3>📏 Délka zpráv</h3>
+    <h3>Délka zpráv</h3>
     <div style="height: 250px;"><canvas id="msgLenChart"></canvas></div>
 </div>
 {% elif id == 'chart_weekly' %}
 <div class="card" data-id="chart_weekly" style="min-height: 250px;">
-    <h3>📅 Týdenní aktivita</h3>
+    <h3>Týdenní aktivita</h3>
     <div style="height: 200px;"><canvas id="weeklyActivityChart"></canvas></div>
 </div>
 {% elif id == 'chart_heatmap' %}
 <div class="card" data-id="chart_heatmap" style="min-height: 350px;">
-    <h3>🔥 Activity Heatmap</h3>
+    <h3>Teplotní mapa aktivity</h3>
     <div style="display: flex; height: 300px; flex-direction: column;">
         <div
             style="display: flex; justify-content: space-between; margin-bottom: 8px; padding-left: 40px; font-size: 0.8rem; color: var(--text-tertiary);">

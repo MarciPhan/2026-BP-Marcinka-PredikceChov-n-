@@ -22,7 +22,7 @@ CONFIG = {
     "VOICE_MIN_MINUTES": 5,
     "QUEUE_MAXSIZE": 50000,
     "BATCH_MAX": 500,
-    "BATCH_MAX_WChytréT_MS": 50,
+    "BATCH_MAX_WAIT_MS": 50,
     "LOG_INTERVAL_SEC": 60,
     "VERBOSE_LOG": True,       
     "INCIDENT_COOLDOWN_S": 300,
@@ -117,7 +117,7 @@ class ActivityHLLOptCog(commands.Cog):
         self.roll_day_task.start()
 
     async def _collect_dashboard_stats(self, m: discord.Message):
-        """Collect message statistics for dashboard visualization."""
+        # Sbírá statistiky o zprávách pro dashboard
         try:
             
             
@@ -229,7 +229,7 @@ class ActivityHLLOptCog(commands.Cog):
             except Exception: break
             batch = [item]
             start = asyncio.get_event_loop().time()
-            while len(batch) < CONFIG["BATCH_MAX"] and                  (asyncio.get_event_loop().time() - start)*1000 < CONFIG["BATCH_MAX_WChytréT_MS"]:
+            while len(batch) < CONFIG["BATCH_MAX"] and                  (asyncio.get_event_loop().time() - start)*1000 < CONFIG["BATCH_MAX_WAIT_MS"]:
                 try: batch.append(self.queue.get_nowait())
                 except asyncio.QueueEmpty: await asyncio.sleep(0); break
             uniq: List[Tuple[int,int,str]] = list(set(batch))
@@ -341,7 +341,7 @@ class ActivityHLLOptCog(commands.Cog):
             chan = guild.get_channel(int(chan_id))
             if not chan: continue
             dau = await self.r.pfcount(K_DAU(guild.id, today))
-            emb = discord.Embed(title="📊 Analytics", color=0x5865F2, timestamp=now)
+            emb = discord.Embed(title="Analytika", color=0x5865F2, timestamp=now)
             emb.add_field(name="DAU (dnes)", value=str(dau))
             emb.add_field(name="Queue", value=f"{self.queue.qsize()}/{CONFIG['QUEUE_MAXSIZE']}")
             emb.add_field(name="Enq/Written", value=f"{self.stats['enqueued']}/{self.stats['written']}")
@@ -395,7 +395,7 @@ class ActivityHLLOptCog(commands.Cog):
     @commands.has_guild_permissions(manage_guild=True)
     async def cmd_loghere(self, ctx: commands.Context):
         await self.r.set(K_LOGCHAN(ctx.guild.id), str(ctx.channel.id))
-        await ctx.reply("✅ Tento kanál nastaven jako logovací.", mention_author=False)
+        await ctx.reply("Tento kanál nastaven jako logovací.", mention_author=False)
 
     @commands.command(name="topusers", help="Top N uživatelé dnes (approx heavy hitters, RAM only)")
     @commands.has_guild_permissions(manage_guild=True)

@@ -2,13 +2,13 @@ import discord
 from discord.ext import commands
 from typing import List, Optional
 
-TITLE = "📘 Metricord - Analytics Bot"
-FOOTER = "Metricord Bot – Analytics & Predictions"
+TITLE = "Metricord - Analytika serveru"
+FOOTER = "Metricord – Analýza a predikce"
 
 
 PAGE_DATA = [
     {
-        "name": "⚙️ Základní příkazy",
+        "name": "Základní příkazy",
         "desc": (
             "**Ping** – `*ping` nebo `/ping`\n"
             "Zobrazí latenci bota a stav připojení\n\n"
@@ -18,7 +18,7 @@ PAGE_DATA = [
         ),
     },
     {
-        "name": "📊 Analytics - Activity Tracking",
+        "name": "Aktivita a sledování",
         "desc": (
             "**Real-time sledování aktivity uživatelů**\n\n"
             "Bot automaticky trackuje:\n"
@@ -30,7 +30,7 @@ PAGE_DATA = [
         ),
     },
     {
-        "name": "� Analytics - HyperLogLog Stats",
+        "name": "HyperLogLog statistiky",
         "desc": (
             "**Efektivní counting pomocí HyperLogLog algoritmu**\n\n"
             "**Metriky:**\n"
@@ -45,7 +45,7 @@ PAGE_DATA = [
         ),
     },
     {
-        "name": "🎯 Analytics - Predictions",
+        "name": "Predikce a trendy",
         "desc": (
             "**Predikce chování uživatelů (pro bakalářskou práci)**\n\n"
             "Bot sbírá data pro:\n"
@@ -61,7 +61,7 @@ PAGE_DATA = [
         ),
     },
     {
-        "name": "📈 Analytics - Community Score",
+        "name": "Skóre komunity",
         "desc": (
             "**Detailní výpočet skóre zdraví komunity (0-100)**\n\n"
             "Skóre se skládá ze 4 vážených složek (každá 25%):\n\n"
@@ -84,7 +84,7 @@ PAGE_DATA = [
         ),
     },
     {
-        "name": "� Web Dashboard",
+        "name": "Webový dashboard",
         "desc": (
             "**Přístup:** http://localhost:8092\n\n"
             "**Funkce:**\n"
@@ -132,17 +132,17 @@ class HelpPaginator(discord.ui.View):
         self.prev_button.disabled = (self.index <= 0)
         self.next_button.disabled = (self.index >= len(self.pages) - 1)
 
-    @discord.ui.button(label="◀ Prev", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Předchozí", style=discord.ButtonStyle.secondary)
     async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.index = max(0, self.index - 1)
         await self._update(interaction)
 
-    @discord.ui.button(label="Next ▶", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Další", style=discord.ButtonStyle.secondary)
     async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.index = min(len(self.pages) - 1, self.index + 1)
         await self._update(interaction)
 
-    @discord.ui.button(label="✖ Close", style=discord.ButtonStyle.danger)
+    @discord.ui.button(label="Zavřít", style=discord.ButtonStyle.danger)
     async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.author.id:
             return await interaction.response.send_message("Zavřít může jen autor nápovědy.", ephemeral=True)
@@ -171,7 +171,7 @@ class HelpPaginator(discord.ui.View):
 
 
 class HelpCustom(commands.Cog):
-    """Zobrazí přehled Metricord analytics bota."""
+    # Cog pro nápovědu
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot

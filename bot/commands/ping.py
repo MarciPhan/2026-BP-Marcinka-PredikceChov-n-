@@ -35,10 +35,10 @@ QUOTES: list[tuple[str, str]] = [
 
 def format_quote() -> str:
     text, author = random.choice(QUOTES)
-    return f'📖 „{text}“ — *{author}*'
+    return f'„{text}“ — *{author}*'
 
 class Ping(commands.Cog):
-    """Ping/latency utility s náhodným citátem."""
+    # Jednoduchý ping s citátem
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -62,11 +62,11 @@ class Ping(commands.Cog):
 
         
         start_send = time.perf_counter()
-        msg = await ctx.send("⏱️ Měřím odezvu…", ephemeral=hide) if is_slash else await ctx.send("⏱️ Měřím odezvu…")
+        msg = await ctx.send("Měřím odezvu...", ephemeral=hide) if is_slash else await ctx.send("Měřím odezvu...")
         send_ms = (time.perf_counter() - start_send) * 1000
 
         start_edit = time.perf_counter()
-        await msg.edit(content="⏱️ Dokončuji měření…")
+        await msg.edit(content="Dokončuji měření...")
         edit_ms = (time.perf_counter() - start_edit) * 1000
 
         ws_ms = self.bot.latency * 1000
@@ -75,7 +75,7 @@ class Ping(commands.Cog):
 
         if detailed:
             content = (
-                f"🏓 **Pong!**\n"
+                f"**Pong!**\n"
                 f"{quote}\n\n"
                 f"### Detaily měření\n"
                 f"• WebSocket: **{ws_ms:.2f} ms**\n"
@@ -84,7 +84,7 @@ class Ping(commands.Cog):
             )
         else:
             avg = (send_ms + edit_ms) / 2.0
-            content = f"🏓 **Pong!** Odezva: ~{avg:.2f} ms (WS {ws_ms:.2f} ms)\n{quote}"
+            content = f"**Pong!** Odezva: ~{avg:.2f} ms (WS {ws_ms:.2f} ms)\n{quote}"
 
         try:
             await msg.edit(content=content)

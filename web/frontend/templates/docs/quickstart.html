@@ -1,0 +1,56 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Rychlý start{% endblock %}
+
+{% block docs_content %}
+<section id="quickstart">
+    <h1>Predikce chování uživatelů</h1>
+    <p>Chcete Metricord zprovoznit co nejrychleji? Postupujte podle těchto 4 jednoduchých kroků a začněte sbírat data ještě dnes.</p>
+
+    <div class="info-box">
+        <b>Důležité:</b>
+        Pro nastavení bota musíte mít na daném Discord serveru oprávnění <b>"Manage Server"</b> nebo <b>"Administrator"</b>.
+    </div>
+
+    <h2>Stručný postup zprovoznění</h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 32px;">
+        <div style="background: var(--bg-secondary); padding: 24px; border-radius: 12px; border: 1px solid var(--glass-border);">
+            <div style="font-size: 2rem; margin-bottom: 16px;">1.</div>
+            <h3 style="margin-top: 0;">Pozvání bota</h3>
+            <p>Klikněte na tlačítko <b>"Přidat na Discord"</b> na úvodní stránce a vyberte svůj server. Povolte botovi všechna doporučená oprávnění.</p>
+        </div>
+
+        <div style="background: var(--bg-secondary); padding: 24px; border-radius: 12px; border: 1px solid var(--glass-border);">
+            <div style="font-size: 2rem; margin-bottom: 16px;">2.</div>
+            <h3 style="margin-top: 0;">Přihlášení</h3>
+            <p>V horním menu dashboardu klikněte na <b>"Přihlásit se"</b>. Použijte svůj Discord účet k bezpečné autorizaci.</p>
+        </div>
+
+        <div style="background: var(--bg-secondary); padding: 24px; border-radius: 12px; border: 1px solid var(--glass-border);">
+            <div style="font-size: 2rem; margin-bottom: 16px;">3.</div>
+            <h3 style="margin-top: 0;">Výběr serveru</h3>
+            <p>Po přihlášení uvidíte seznam svých serverů. Klikněte na ten, kam jste právě bota přidali, a vstupte do jeho administrace.</p>
+        </div>
+
+        <div style="background: var(--bg-secondary); padding: 24px; border-radius: 12px; border: 1px solid var(--glass-border);">
+            <div style="font-size: 2rem; margin-bottom: 16px;">4.</div>
+            <h3 style="margin-top: 0;">Hotovo!</h3>
+            <p>Bot okamžitě začne sledovat aktivitu. První data se v grafech objeví, jakmile na serveru proběhne první interakce.</p>
+        </div>
+    </div>
+
+    <div class="info-box" style="background: rgba(16, 185, 129, 0.1); border-left-color: #10b981;">
+        <b>Co teď?</b>
+        Pokud chcete analyzovat i starší zprávy (historii), přejděte do sekce <b><a href="/docs/backfill" style="color: #10b981;">Backfill Systém</a></b>.
+    </div>
+
+    <div style="margin-top: 48px; border-top: 1px solid var(--glass-border); padding-top: 24px;">
+        <h3>Kam dál?</h3>
+        <ul>
+            <li>Potřebujete podrobnější návod? <a href="/docs/setup">Průvodce instalací</a></li>
+            <li>Zajímají vás příkazy? <a href="/docs/commands">Seznam slash příkazů</a></li>
+        </ul>
+    </div>
+</section>
+{% endblock %}

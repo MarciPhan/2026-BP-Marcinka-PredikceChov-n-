@@ -1,11 +1,10 @@
-# Metricord Dashboard Backend
-# FastAPI server for analytics dashboard
+# Backend pro Metricord Dashboard
 
 from fastapi import FastAPI, Request, Form, Cookie, Response, Depends, HTTPException
 from fastapi.staticfiles import StaticFiles
 import os
 
-# same .env hack as in bot
+# Načtení environment proměnných z .env
 env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env")
 if os.path.exists(env_path):
     with open(env_path) as f:
@@ -40,7 +39,7 @@ except ImportError:
 
 from shared.redis_client import get_redis_client
 
-# load secrets from config or generate temp ones
+# Načtení tajných klíčů
 try:
     from config.dashboard_secrets import (
         SECRET_KEY, ACCESS_TOKEN, SESSION_EXPIRY_HOURS,
@@ -57,7 +56,7 @@ except ImportError:
     DISCORD_REDIRECT_URI = "http://localhost:8093/auth/callback"
     ADMIN_USER_IDS = []
     BOT_TOKEN = ""
-    print(f"WARNING: Using generated secrets.")
+    print("VAROVÁNÍ: Používají se generované klíče (dev mode).")
 
 
 
@@ -86,7 +85,8 @@ try:
 except ImportError:
     get_demo_stats = lambda *args: {}
 
-app = FastAPI(title="Metricord", docs_url=None, redoc_url=None)
+app = FastAPI(title="Metricord")
+# Vypneme automatickou dokumentaci pro čistotu
 
 
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, max_age=SESSION_EXPIRY_HOURS * 3600, same_site="lax", https_only=False)
@@ -100,7 +100,7 @@ async def log_requests(request: Request, call_next):
 
 @app.get("/login/demo")
 async def demo_login(request: Request):
-    """Login as a demo user with offline data."""
+    # Přihlášení pro demo verzi
     request.session["authenticated"] = True
     request.session["discord_user"] = {
         "id": "demo",
@@ -123,7 +123,7 @@ async def favicon():
 
 @app.get("/select-server", response_class=HTMLResponse)
 async def select_server_page(request: Request):
-    """Page to select which server to manage."""
+    # Výběr serveru pro správu
     user = request.session.get("discord_user")
     if not user:
         return RedirectResponse(url="/")
@@ -155,7 +155,7 @@ async def select_server_page(request: Request):
 
 @app.get("/select-server/{guild_id}")
 async def set_active_server(request: Request, guild_id: str):
-    """Set the active guild in session and redirect to dashboard."""
+    # Nastavení aktivního serveru v session
     user = request.session.get("discord_user")
     if not user:
         return RedirectResponse(url="/")
@@ -196,7 +196,7 @@ async def set_active_server(request: Request, guild_id: str):
 
 @app.get("/add-discourse", response_class=HTMLResponse)
 async def add_discourse_page(request: Request):
-    """Page to add a new Discourse server."""
+    # Přidání nového Discourse fóra
     user = request.session.get("discord_user")
     if not user:
         return RedirectResponse(url="/")
@@ -209,7 +209,7 @@ async def api_add_discourse(
     api_key: str = Form(...),
     api_user: str = Form(...)
 ):
-    """API endpoint to add a Discourse server."""
+    # API pro přidání Discourse
     user = request.session.get("discord_user")
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -346,7 +346,7 @@ async def support_page(request: Request):
 
 @app.post("/api/discourse/sync")
 async def api_trigger_sync(request: Request, guild_id: str = Form(...)):
-    """Trigger manual Discourse sync."""
+    # Ruční spuštění synchronizace s Discoursem
     user = request.session.get("discord_user")
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -374,7 +374,7 @@ async def api_trigger_sync(request: Request, guild_id: str = Form(...)):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 async def _dashboard_logic(request: Request, start_date: str = None, end_date: str = None, role_id: str = None):
-    """Main Dashboard Overview."""
+    # Hlavní logika dashboardu
     
     user = request.session.get("discord_user")
     
@@ -641,7 +641,7 @@ async def _dashboard_logic(request: Request, start_date: str = None, end_date: s
 
 
 async def require_auth(request: Request):
-    """Check if user is authenticated."""
+    # Kontrola, jestli je uživatel přihlášen
     
     allowed_paths = ["/login", "/auth/callback", "/logout", "/request-otp", "/verify-otp", "/resend-otp"]
     if request.url.path.startswith("/static") or request.url.path in allowed_paths:
@@ -660,7 +660,7 @@ async def require_auth(request: Request):
             raise HTTPException(status_code=401, detail="Session expired")
 
 async def require_admin(request: Request):
-    """Check if user is admin (for protected routes)."""
+    # Kontrola admin práv
     await require_auth(request)
     if request.session.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Přístup pouze pro administrátory")
@@ -780,11 +780,11 @@ DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token"
 @app.get("/docs", response_class=HTMLResponse)
 @app.get("/docs/{page_name}", response_class=HTMLResponse)
 async def docs_page(request: Request, page_name: str = "index"):
-    """Serve documentation pages with safety check."""
+    # Zobrazení dokumentace
     allowed_pages = {
         "index", "setup", "commands", "security", "analytics", "export",
         "faq", "support", "ai", "backfill", "roles", "insights",
-        "privacy", "terms", "changelog", "predictions"
+        "privacy", "terms", "changelog", "predictions", "quickstart"
     }
     
     if page_name not in allowed_pages:

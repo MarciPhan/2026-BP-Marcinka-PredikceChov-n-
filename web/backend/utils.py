@@ -22,8 +22,8 @@ DATA_DIR = Path("data")
 CONFIG_PATH = DATA_DIR / "challenge_config.json"
 
 
-async def get_redis_client() -> redis.Redis:
-    """Get Redis client from centralized pool."""
+def get_redis_client():
+    # Pomocná funkce pro získání Redis klienta z poolu
     return await get_redis()
 
 def K_DAU(gid: int, d: str) -> str: 
@@ -162,7 +162,7 @@ async def get_activity_stats(guild_id: int, start_date: str = None, end_date: st
             debug_keys.append(k)
         
         results = await pipe.execute()
-        print(f"[DEBUG] get_activity_stats: Guild={guild_id}, Keys={debug_keys[:3]}...{debug_keys[-1]}, Results={results}, Sum={sum(results)}")
+        # print(f"DEBUG: {guild_id}, {results}")
         
         dau_data = results
         dau_labels = [d.strftime("%Y-%m-%d") for d in date_list]
@@ -187,10 +187,7 @@ async def get_activity_stats(guild_id: int, start_date: str = None, end_date: st
     
 
 async def get_deep_stats_redis(guild_id: int, start_date: str = None, end_date: str = None, role_id: str = "all") -> Dict[str, Any]:
-    """
-    Get deep statistics for the dashboard, including activity leaderboard and engagement metrics.
-    Uses configurable weights for scoring.
-    """
+    # Detailní statistiky pro dashboard, počítáme skóre podle vah
     r = await get_redis()
     
     
@@ -366,7 +363,7 @@ async def get_deep_stats_redis(guild_id: int, start_date: str = None, end_date: 
         final_leaderboard.sort(key=lambda x: x["weighted_h"], reverse=True)
         
         
-        print(f"[DEBUG v5] Period: {start_date}-{end_date}. Found {len(staff_stats)} raw users. Leaderboard: {len(final_leaderboard)}")
+        # print(f"DEBUG: Načteno {len(staff_stats)} uživatelů.")
 
         active_staff_count = len(final_leaderboard)
         top_action = "-"
@@ -502,9 +499,7 @@ async def get_deep_stats_redis(guild_id: int, start_date: str = None, end_date: 
 
 
 async def get_redis_dashboard_stats(guild_id: int, start_date: str = None, end_date: str = None, role_id: str = None) -> Dict[str, Any]:
-    """
-    Fetch dashboard statistics directly from Redis (Real-time).
-    """
+    # Základní statistiky pro dashboard přímo z Redis
     r = await get_redis()
     cache_key = f"stats:cache:dashboard:{guild_id}:{start_date}:{end_date}:{role_id}:v4"
     
@@ -705,10 +700,7 @@ def save_challenge_config(new_config: Dict[str, Any]):
     CONFIG_PATH.write_text(json.dumps(new_config, ensure_ascii=False, indent=2), encoding="utf-8")
 
 async def get_realtime_online_count(guild_id: int = None) -> int:
-    """
-    Get REAL count of currently online members from Discord.
-    Connects to bot data stored via bot presence updates.
-    """
+    # Aktuální počet členů online přes bota v Redis
     
     r = await get_redis()
     try:
@@ -735,9 +727,7 @@ async def get_realtime_online_count(guild_id: int = None) -> int:
     except: return 0
 
 async def save_user_guilds(user_id: str, guilds_data: List[Dict[str, Any]], expiry_seconds: int = 86400):
-    """
-    Save user guilds to Redis to avoid large session cookies.
-    """
+    # Uložení serverů uživatele do Redis pro zmenšení session cookies
     r = await get_redis()
     try:
         key = f"session:guilds:{user_id}"
@@ -750,9 +740,7 @@ async def save_user_guilds(user_id: str, guilds_data: List[Dict[str, Any]], expi
 
 
 async def get_user_guilds(user_id: str) -> List[Dict[str, Any]]:
-    """
-    Retrieve user guilds from Redis (Discord + Discourse).
-    """
+    # Načtení serverů uživatele z Redis (Discord i Discourse)
     r = await get_redis()
     final_guilds = []
     
@@ -785,7 +773,7 @@ async def get_user_guilds(user_id: str) -> List[Dict[str, Any]]:
         pass
     
 async def get_bot_guilds() -> List[str]:
-    """Retrieve list of guild IDs where bot is present."""
+    # Seznam ID guild, kde je bot přítomen
     r = await get_redis()
     try:
         return list(await r.smembers("bot:guilds"))
@@ -797,7 +785,7 @@ async def get_bot_guilds() -> List[str]:
     
 
 async def get_cached_roles(guild_id: int) -> List[Dict[str, str]]:
-    """Retrieve roles from Redis cache or fallback to Discord API."""
+    # Načtení rolí z Redis cache nebo Discord API
     r = await get_redis()
     try:
         role_map = await r.hgetall(f"guild:roles:{guild_id}")

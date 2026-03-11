@@ -9,6 +9,7 @@ from datetime import datetime
 import time
 
 class AnalyticsTrackingCog(commands.Cog):
+    # Cog pro sledování hlasové aktivity a reakcí
     def __init__(self, bot):
         self.bot = bot
         self.voice_join_times = {}
