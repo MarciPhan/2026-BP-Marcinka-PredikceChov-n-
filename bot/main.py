@@ -24,7 +24,7 @@ if os.path.exists(env_path):
 import discord
 
 from discord.ext import commands, tasks 
-from config import bot_token
+from config.dashboard_secrets import BOT_TOKEN
 from config import config
 import redis.asyncio as redis 
 from shared.redis_client import get_redis_client
@@ -68,7 +68,7 @@ async def log_start_info():
     await send_console_log(f"Platforma: {platform.platform()} | Python: {sys.version.replace(chr(10), ' ')}")
     await send_console_log(f"discord.py: {discord.__version__}")
     await send_console_log(f"PID: {os.getpid()} | CWD: {os.getcwd()}")
-    await send_console_log(f"Token v souboru: {'ANO' if hasattr(bot_token, 'TOKEN') else 'NE'}")
+    await send_console_log(f"Token nalezen: {'ANO' if BOT_TOKEN else 'NE'}")
     await send_console_log(f"Prefix: {config.BOT_PREFIX!r}")
     await send_console_log(f"CONSOLE_CHANNEL_ID: {config.CONSOLE_CHANNEL_ID}")
     await send_console_log(f"'commands' existuje: {os.path.exists('commands')}")
@@ -267,7 +267,7 @@ async def on_guild_join(guild: discord.Guild):
     await send_console_log(f"🆕 PŘIPOJEN NA GUIDLU: {guild.name} ({guild.id})")
     
     
-    token = getattr(bot_token, "TOKEN", None)
+    token = BOT_TOKEN
     if token:
         import subprocess
         import sys
@@ -397,7 +397,7 @@ async def main():
     await log_start_info()
     await send_console_log("Inicializace…")
     
-    token = os.getenv("BOT_TOKEN") or getattr(bot_token, "TOKEN", None)
+    token = os.getenv("BOT_TOKEN") or BOT_TOKEN
     
     if not token or len(token) < 30:
         await send_console_log("[FATAL] Chybí validní bot token")

@@ -1,98 +1,71 @@
 #!/bin/bash
+set -euo pipefail
 
+# Config
+PORT=${DASHBOARD_PORT:-8092}
+LOG_BOT="bot.log"
+LOG_WEB="web.log"
 
+# Colors
+B='\033[1;34m'
+G='\033[0;32m'
+R='\033[0;31m'
+N='\033[0m'
 
-echo -e "Metricord start"
+echo -e "${B}Starting Metricord...${N}"
 
-echo -e "[1/3] Kontrola Redis/Valkey..."
-if pgrep -x "redis-server" > /dev/null || pgrep -x "valkey-server" > /dev/null; then
-    echo -e "Database již běží."
-else
-    echo -e "Spouštím Redis..."
-    redis-server --daemonize yes
-    sleep 2
-    if pgrep -x "redis-server" > /dev/null || pgrep -x "valkey-server" > /dev/null; then
-        echo -e "Database úspěšně spuštěna."
+# 1. Env & Deps
+if [ ! -d ".venv" ]; then
+    python3 -m venv .venv
+fi
+source .venv/bin/activate
+pip install -q -r requirements.txt
+
+# 2. Check .env
+if [ ! -f ".env" ]; then
+    echo -e "${R}Error: .env missing${N}"
+    [ -f ".env.example" ] && echo "Copy .env.example to .env and fill in BOT_TOKEN"
+    exit 1
+fi
+set -a; source .env; set +a
+[ -z "${BOT_TOKEN:-}" ] && echo "Error: BOT_TOKEN not set in .env" && exit 1
+
+# 3. Redis
+if ! pgrep -x "redis-server" >/dev/null && ! pgrep -x "valkey-server" >/dev/null; then
+    if command -v redis-server &>/dev/null; then
+        redis-server --daemonize yes
+    elif command -v valkey-server &>/dev/null; then
+        valkey-server --daemonize yes
     else
-        echo -e "Chyba: Nepodařilo se spustit Database server!"
-        exit 1
+        echo "Error: Redis/Valkey not found" && exit 1
     fi
-fi
-
-echo -e "[2/3] Konfigurace prostředí..."
-if [ -f ".env" ]; then
-    export $(grep -v '^#' .env | xargs)
-fi
-echo -e "Detekuji port..."
-DASH_PORT=${DASHBOARD_PORT}
-if [ -z "$DASH_PORT" ]; then
-    # Zkusime 8092
-    if ! lsof -i :8092 > /dev/null 2>&1; then
-        DASH_PORT=8092
-    else
-        # Je to nas proces?
-        OUR_PID=$(lsof -t -i :8092)
-        if ps -p $OUR_PID -o cmd= | grep -q "uvicorn"; then
-            echo -e "Port 8092 obsazen naší aplikací, restartuji..."
-            kill -9 $OUR_PID 2>/dev/null
-            DASH_PORT=8092
-        else
-            echo -e "Port 8092 obsazen systémem (antigravity?), používám 8093..."
-            DASH_PORT=8093
-        fi
-    fi
-fi
-export DASHBOARD_PORT=$DASH_PORT
-
-export PYTHONPATH=$(pwd)
-PYTHON_CMD="python3"
-
-if [ -d ".venv" ]; then
-    echo -e "Aktivuji virtuální prostředí (.venv)..."
-    source .venv/bin/activate
-    PYTHON_CMD="python"
-fi
-
-echo -e "[3/3] Spouštění služeb...${NC}"
-
-echo -e "Uklízím staré procesy..."
-pkill -f "bot/main.py" 2>/dev/null
-# Force kill if port is still busy by our uvicorn (in case of 8093 or explicit port)
-BUSY_PID=$(lsof -t -i :$DASH_PORT)
-if [ ! -z "$BUSY_PID" ]; then
-    kill -9 $BUSY_PID 2>/dev/null
     sleep 1
 fi
 
-echo -e "Spouštím Discord bota..."
-nohup $PYTHON_CMD bot/main.py > bot_std.log 2>&1 &
+# 4. Clean up old runs
+pkill -f "bot/main.py" 2>/dev/null || true
+BUSY_PID=$(lsof -t -i :"$PORT" 2>/dev/null || true)
+[ -n "$BUSY_PID" ] && kill -9 "$BUSY_PID" && sleep 1
+
+# 5. Run
+export PYTHONPATH=$PWD
+export DASHBOARD_PORT=$PORT
+
+echo "Launching services..."
+nohup python3 bot/main.py > "$LOG_BOT" 2>&1 &
 BOT_PID=$!
 
-echo -e "Spouštím Dashboard na portu $DASH_PORT..."
-nohup $PYTHON_CMD -m uvicorn web.backend.main:app --host 0.0.0.0 --port $DASH_PORT > dashboard_std.log 2>&1 &
-DASH_PID=$!
+nohup python3 -m uvicorn web.backend.main:app --host 0.0.0.0 --port "$PORT" > "$LOG_WEB" 2>&1 &
+WEB_PID=$!
 
-sleep 3
-
-FAIL=0
-if ps -p $BOT_PID > /dev/null; then
-    echo -e "Discord Bot běží (PID: $BOT_PID)"
+sleep 2
+if ps -p $BOT_PID >/dev/null && ps -p $WEB_PID >/dev/null; then
+    echo -e "${G}Metricord is up!${N}"
+    echo "  Dashboard: http://localhost:$PORT"
+    echo "  Logs: tail -f $LOG_BOT $LOG_WEB"
 else
-    echo -e "Discord Bot se nepodařilo spustit! Podívej se do bot_std.log"
-    FAIL=1
-fi
-
-if ps -p $DASH_PID > /dev/null; then
-    echo -e "Dashboard běží (PID: $DASH_PID)"
-    echo -e "Dashboard dostupný na: http://localhost:$DASH_PORT"
-else
-    echo -e "Dashboard se nepodařilo spustit! Podívej se do dashboard_std.log"
-    FAIL=1
-fi
-
-if [ $FAIL -eq 0 ]; then
-    echo -e "Všechny služby byly úspěšně spuštěny"
-else
-    echo -e "Některé služby se nepodařilo spustit "
+    echo -e "${R}Startup failed. Check logs.${N}"
     exit 1
 fi
+
+

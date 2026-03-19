@@ -6,141 +6,100 @@ Projekt vznikl jako součást bakalářské práce zaměřené na **predikci cho
 
 ---
 
-## Obsah
-1. [Příprava (Před instalací)](#1-příprava-před-instalací)
-2. [Instalace (Krok za krokem)](#2-instalace-krok-za-krokem)
-3. [Používání systému](#3-používání-systému)
-4. [Údržba a Monitoring](#4-údržba-a-monitoring)
-5. [Odstranění systému](#5-odstranění-systému)
+## Rychlý start (3 kroky)
 
----
-
-## 1. Příprava (Před instalací)
-
-Před samotným spuštěním bota musíte připravit externí služby:
-
-### A. Discord Developer Portal
-1. Jděte na [Discord Developer Portal](https://discord.com/developers/applications).
-2. Vytvořte novou aplikaci (**New Application**) a pojmenujte ji (např. "Metricord").
-3. V sekci **Bot**:
-    - Vygenerujte si token (**Reset Token**) a bezpečně si ho uložte.
-    - Zapněte všechny **Privileged Gateway Intents** (Presence, Server Members, Message Content).
-4. V sekci **OAuth2**:
-    - Vytvořte si URL pro pozvání bota s oprávněním `Administrator` (pro testování) nebo minimálně `Manage Server`, `View Audit Log` a `Read Messages/View Channels`.
-
-### B. Redis Database
-Metricord využívá Redis pro real-time analytiku.
-- **Linux (Ubuntu/Debian)**: `sudo apt install redis-server`
-- **Ostatní**: Doporučujeme využít Docker (viz níže).
-
----
-
-## 2. Instalace (Krok za krokem)
-
-### Krok 1: Klonování a příprava složky
+### 1. Klonování
 ```bash
 git clone https://github.com/MarciPhan/2026-BP-Marcinka-PredikceChov-n-.git
-cd Discord-bot-main
+cd 2026-BP-Marcinka-PredikceChov-n-
 ```
 
-### Krok 2: Virtuální prostředí
-Vždy doporučujeme používat virtuální prostředí, aby nedošlo ke konfliktům v balíčcích:
+### 2. Konfigurace
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+cp .env.example .env
+nano .env          # vyplň BOT_TOKEN
 ```
 
-### Krok 3: Instalace závislostí
-```bash
-pip install -r requirements.txt
-```
+> **Kde vzít BOT_TOKEN?**
+> 1. Jdi na [Discord Developer Portal](https://discord.com/developers/applications)
+> 2. Vytvořit novou aplikaci → sekce **Bot** → **Reset Token**
+> 3. Zapni všechny **Privileged Gateway Intents** (Presence, Server Members, Message Content)
+> 4. Pozvi bota na server s oprávněním `Administrator`
 
-### Krok 4: Konfigurace `.env`
-Vytvořte v root složce soubor `.env` a vložte do něj:
-```env
-BOT_TOKEN=váš_discord_token_z_portálu
-DASHBOARD_TOKEN=náhodný_dlouhý_string_pro_zabezpečení
-REDIS_URL=redis://localhost:6379/0
-REDIS_HOST=localhost
-```
-
----
-
-## 3. Používání systému
-
-### Spuštění
-Nejjednodušší způsob je použít přiložený startovací skript:
+### 3. Spuštění
 ```bash
 ./start.sh
 ```
-Tento skript:
-1. Zkontroluje, zda běží Redis (pokud ne, pokusí se ho spustit).
-2. Aktivuje virtuální prostředí.
-3. Spustí bota i dashboard jako procesy na pozadí.
+
+Skript automaticky:
+- ✓ Vytvoří virtuální prostředí (`.venv`)
+- ✓ Nainstaluje závislosti
+- ✓ Zkontroluje konfiguraci
+- ✓ Spustí Redis, Discord bota i Dashboard
+
+Dashboard je po spuštění dostupný na **http://localhost:8092**
+
+---
+
+## Požadavky
+
+- **Python 3.9+**
+- **Redis** nebo **Valkey** (`sudo dnf install redis` / `sudo apt install redis-server`)
+
+---
+
+## Používání
 
 ### Dashboard (Webové rozhraní)
 Po spuštění je dashboard dostupný na: `http://localhost:8092`
-- **Demo režim**: Pokud se nechcete přihlašovat, stačí v URL použít `?guild_id=demo-guild` nebo kliknout na "Demo" v přihlašovací obrazovce.
-- **Interaktivní prvky**: Widgety na dashboardu můžete přesouvat nebo měnit jejich velikost (změny se ukládají v prohlížeči).
+- **Demo režim**: Klikni na "Demo" v přihlašovací obrazovce
+- **Interaktivní prvky**: Widgety můžeš přesouvat a měnit jejich velikost
 
 ### Bot Příkazy
-- `/stats`: Zobrazí aktuální přehled serveru (členové, aktivita).
-- `/verify`: Spustí process verifikace nového uživatele.
-- `/report`: Vygeneruje podrobný měsíční report (pouze pro administrátory).
-- `/help`: Zobrazí nápovědu ke všem dostupným funkcím.
+- `/stats` – Přehled serveru (členové, aktivita)
+- `/verify` – Verifikace nového uživatele
+- `/report` – Měsíční report (pouze pro administrátory)
+- `/help` – Nápověda
 
 ---
 
-## 4. Údržba a Monitoring
+## Údržba
 
 ### Sledování logů
-Pokud systém nefunguje podle představ, zkontrolujte logy:
-- **Bot**: `tail -f bot_std.log`
-- **Dashboard**: `tail -f dashboard_std.log`
+```bash
+tail -f bot_std.log        # Bot
+tail -f dashboard_std.log  # Dashboard
+```
 
-### Záloha dat
-Veškerá data jsou v Redisu. Pro zálohu stačí zkopírovat soubor `dump.rdb` (obvykle v `/var/lib/redis/` nebo v lokální složce, pokud spouštíte Redis ručně).
-
----
-
-## 5. Odstranění systému
-
-Pokud si přejete Metricord kompletně odstranit ze svého stroje, postupujte takto:
-
-### Krok 1: Zastavení procesů
-Nejprve ukončete běžící bota a dashboard:
+### Zastavení
 ```bash
 pkill -f "bot/main.py"
 pkill -f "uvicorn"
 ```
 
-### Krok 2: Odstranění dat z Redisu
-Pokud chcete smazat i nashromážděné statistiky:
-```bash
-redis-cli FLUSHALL
-```
-
-### Krok 3: Smazání souborů
-```bash
-cd ..
-rm -rf Discord-bot-main
-```
-
-### Krok 4: Odstranění z Discordu
-V Discord aplikaci stačí bota vyhodit (Kick) ze serveru a na [Developer Portalu](https://discord.com/developers/applications) aplikaci smazat v sekci **Settings** -> **Delete Application**.
+### Záloha dat
+Zkopíruj soubor `dump.rdb` (obvykle `/var/lib/redis/`).
 
 ---
 
-## 6. Technická analýza a predikce
+## Docker (alternativa)
+```bash
+cp .env.example .env
+nano .env
+docker-compose up -d
+```
 
-Metricord není jen sběrač dat, ale pokročilý analytický nástroj. Mezi klíčové funkce patří:
-- **Engagement Score**: Komplexní hodnocení zapojení komunity (0-100).
-- **Security Audit**: Automatické vyhodnocování bezpečnosti serveru a moderátorské zátěže.
-- **Prediktivní modely**: Odhady budoucího růstu a aktivity pomocí lineární regrese a sezónních indexů.
-- **Smart Insights**: AI-ready interpretace dat pro správce serveru.
+---
 
-Podrobný technický popis algoritmů a metodiky naleznete v samostatném dokumentu:
-[**Technická dokumentace analýzy a predikce**](docs/TECHNICAL_DESCRIPTION.md)
+## Technická analýza a predikce
+
+Metricord poskytuje:
+- **Engagement Score** – Hodnocení zapojení komunity (0–100)
+- **Security Audit** – Vyhodnocování bezpečnosti serveru
+- **Prediktivní modely** – Odhady růstu pomocí lineární regrese a sezónních indexů
+- **Smart Insights** – AI-ready interpretace dat
+
+Podrobnosti: [Technická dokumentace](docs/TECHNICAL_DESCRIPTION.md)
 
 ---
 

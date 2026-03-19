@@ -22,7 +22,7 @@ DATA_DIR = Path("data")
 CONFIG_PATH = DATA_DIR / "challenge_config.json"
 
 
-def get_redis_client():
+async def get_redis_client():
     # Pomocná funkce pro získání Redis klienta z poolu
     return await get_redis()
 
