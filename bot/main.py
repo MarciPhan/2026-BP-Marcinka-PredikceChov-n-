@@ -395,28 +395,50 @@ async def globally_block_commands(ctx: commands.Context):
 
 async def main():
     await log_start_info()
-    await send_console_log("Inicializace…")
-    
-    token = os.getenv("BOT_TOKEN") or BOT_TOKEN
-    
-    if not token or len(token) < 30:
-        await send_console_log("[FATAL] Chybí validní bot token")
-        print(ts(), "[FATAL] Chybí validní bot token")
-        return
-    await send_console_log("Token OK, startuji…")
-    
-    
+    await send_console_log("Inicializace bota…")
+
+    # Start independent tasks
     if not member_stats_task.is_running():
         member_stats_task.start()
-        print(ts(), "✅ Background task: Member stats sync started (from main)")
-
     if not heartbeat_task.is_running():
         heartbeat_task.start()
-        print(ts(), "✅ Background task: Heartbeat started (from main)")
-    
-    
-    
-    await bot.start(token)
+
+    while True:
+        token = os.getenv("BOT_TOKEN") or BOT_TOKEN
+        
+        # Check Redis if not in env
+        if not token or len(token) < 30:
+            try:
+                r = await get_redis_client()
+                token = await r.get("bot:token")
+                await r.close()
+            except:
+                pass
+
+        if token and len(token) >= 30:
+            await send_console_log("Token nalezen, startuji bota…")
+            try:
+                # bot.run internally does loop work, bot.start is for when we manage loop
+                await bot.start(token)
+            except discord.LoginFailure:
+                await send_console_log("[ERROR] Neplatný bot token v Redis/ENV!")
+                # reset token in redis if it was invalid
+                try:
+                    r = await get_redis_client()
+                    await r.delete("bot:token")
+                    await r.close()
+                except: pass
+                token = None
+            except Exception as e:
+                await send_console_log(f"[ERROR] Chyba při běhu bota: {e}")
+                token = None
+        
+        if not token or len(token) < 30:
+            await send_console_log("[IDLE] Čekám na vložení bot tokenu přes dashboard…")
+            print(ts(), "[IDLE] Čekám na vložení bot tokenu přes dashboard…")
+            await asyncio.sleep(30) # Poll every 30s
+
+
 
 if __name__ == "__main__":
     try:

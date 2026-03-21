@@ -124,10 +124,105 @@
     <div class="container">
         <h1>Select a Server</h1>
 
-        <div style="text-align: right; margin-bottom: 20px;">
+        {% if is_admin %}
+        <!-- Token Prompt Overlay -->
+        <div id="token-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                    background: rgba(0,0,0,0.85); z-index: 1000; 
+                    display: {{ 'flex' if token_required else 'none' }}; 
+                    align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+            <div style="background: var(--bg-card); padding: 40px; border-radius: 20px; 
+                        max-width: 500px; width: 90%; border: 1px solid var(--primary);
+                        box-shadow: 0 0 50px rgba(88, 101, 242, 0.2); text-align: center;
+                        position: relative;">
+                
+                <!-- Close Button -->
+                <button onclick="document.getElementById('token-modal').style.display='none'"
+                        style="position: absolute; top: 15px; right: 15px; background: none; border: none; 
+                               color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+
+
+                <div style="font-size: 3rem; margin-bottom: 20px;">🔑</div>
+                <h2 style="margin-top: 0; color: white;">Vložte Discord Bot Token</h2>
+                <p style="color: var(--text-muted); margin-bottom: 30px;">
+                    Pro správné fungování analytiky je nutné vložit bot token z Discord Developer Portálu.
+                </p>
+                
+                <form id="token-form">
+                    <input type="password" name="token" id="bot-token-input" placeholder="OTQ3Mj..." 
+                           required autocomplete="off"
+                           style="width: 100%; padding: 15px; border-radius: 10px; border: 1px solid #333;
+                                  background: #000; color: white; font-family: monospace; margin-bottom: 20px;
+                                  box-sizing: border-box; outline: none;">
+                    
+                    <div id="token-error" style="color: #ff4d4d; margin-bottom: 15px; display: none; font-size: 0.9rem;"></div>
+                    
+                    <button type="submit" id="submit-token"
+                            style="width: 100%; padding: 15px; border-radius: 10px; border: none;
+                                   background: var(--primary); color: white; font-weight: 600; cursor: pointer;
+                                   transition: filter 0.2s;">
+                        Uložit a pokračovat
+                    </button>
+                    
+                    <p style="font-size: 0.8rem; color: #555; margin-top: 15px;">
+                        Token bude bezpečně uložen do souboru .env na serveru.
+                    </p>
+                </form>
+            </div>
+        </div>
+        
+        <script>
+            document.getElementById('token-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('submit-token');
+                const errorDiv = document.getElementById('token-error');
+                const token = document.getElementById('bot-token-input').value;
+                
+                btn.disabled = true;
+                btn.innerText = 'Ukládám...';
+                errorDiv.style.display = 'none';
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('token', token);
+                    
+                    const response = await fetch('/api/admin/config/bot-token', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        // Success - reload page
+                        window.location.reload();
+                    } else {
+                        errorDiv.innerText = result.error || 'Chyba při ukládání tokenu';
+                        errorDiv.style.display = 'block';
+                        btn.disabled = false;
+                        btn.innerText = 'Uložit a pokračovat';
+                    }
+                } catch (err) {
+                    errorDiv.innerText = 'Chyba sítě: ' + err.message;
+                    errorDiv.style.display = 'block';
+                    btn.disabled = false;
+                    btn.innerText = 'Uložit a pokračovat';
+                }
+            });
+        </script>
+        {% endif %}
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
+            {% if is_admin %}
+            <a href="javascript:void(0)" onclick="document.getElementById('token-modal').style.display = 'flex'" 
+               class="server-status" style="text-decoration: none; font-weight: 500; border: 1px solid #333;">
+               ⚙️ Change Bot Token
+            </a>
+            {% endif %}
             <a href="/add-discourse" class="server-status status-invite"
                 style="text-decoration: none; font-weight: 500;">+ Add Discourse Forum</a>
         </div>
+
+
 
         <div class="server-grid">
             {% for guild in guilds %}

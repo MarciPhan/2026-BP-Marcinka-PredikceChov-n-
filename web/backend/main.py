@@ -77,8 +77,10 @@ from .utils import (
     get_voice_leaderboard, get_command_stats, get_traffic_stats, get_channel_distribution,
     get_time_comparisons, get_leaderboard_data,
     get_dashboard_team, add_dashboard_user, remove_dashboard_user, get_dashboard_permissions,
-    get_daily_stats, get_action_weights
+    get_daily_stats, get_action_weights,
+    is_bot_token_set, update_env_token
 )
+
 
 try:
     from .demo_data import get_demo_stats
@@ -221,12 +223,30 @@ async def select_server_page(request: Request):
         # Check if bot is in guild OR if it is a virtual Discourse guild
         g["bot_in_guild"] = (str(g["id"]) in bot_guilds) or g.get("is_discourse", False)
         
+    token_required = not (await is_bot_token_set())
+    is_admin = request.session.get("role") == "admin"
+        
     return templates.TemplateResponse("select_server.html", {
         "request": request, 
         "guilds": user_guilds,
         "user": user,
-        "client_id": DISCORD_CLIENT_ID
+        "client_id": DISCORD_CLIENT_ID,
+        "token_required": token_required,
+        "is_admin": is_admin
     })
+
+
+@app.post("/api/admin/config/bot-token")
+async def set_bot_token(request: Request, token: str = Form(...)):
+    # Nastavení Discord bot tokenu administrátorem
+    await require_admin(request)
+    
+    if not token or len(token) < 30:
+        return JSONResponse({"error": "Neplatný token"}, status_code=400)
+        
+    await update_env_token(token)
+    return JSONResponse({"success": True, "message": "Token byl úspěšně uložen. Bot se brzy spustí."})
+
 
 @app.get("/select-server/{guild_id}")
 async def set_active_server(request: Request, guild_id: str):

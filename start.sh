@@ -28,7 +28,8 @@ if [ ! -f ".env" ]; then
     exit 1
 fi
 set -a; source .env; set +a
-[ -z "${BOT_TOKEN:-}" ] && echo "Error: BOT_TOKEN not set in .env" && exit 1
+[ -z "${BOT_TOKEN:-}" ] && echo -e "${R}Warning: BOT_TOKEN not set in .env. Bot will start in idle mode.${N}"
+
 
 # 3. Redis
 if ! pgrep -x "redis-server" >/dev/null && ! pgrep -x "valkey-server" >/dev/null; then

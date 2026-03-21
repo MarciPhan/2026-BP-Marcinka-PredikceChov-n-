@@ -1,4 +1,6 @@
 import json
+import os
+
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, List, Any
@@ -1919,3 +1921,50 @@ async def get_daily_stats(r: redis.Redis, gid: int, uid: int, day: datetime.date
     await r.hset(cache_key, mapping={k: str(v) for k, v in cache_data.items()})
     
     return dict(stats)
+
+async def update_env_token(token: str):
+    """
+    Updates the BOT_TOKEN in .env file and in-memory.
+    """
+    env_path = ROOT / ".env"
+    lines = []
+    found = False
+    
+    if env_path.exists():
+        with open(env_path, "r") as f:
+            for line in f:
+                if line.startswith("BOT_TOKEN="):
+                    lines.append(f"BOT_TOKEN={token}\n")
+                    found = True
+                else:
+                    lines.append(line)
+    
+    if not found:
+        lines.append(f"BOT_TOKEN={token}\n")
+        
+    with open(env_path, "w") as f:
+        f.writelines(lines)
+        
+    # Update in-memory
+    os.environ["BOT_TOKEN"] = token
+    # Also update in Redis so the bot can pick it up
+    r = await get_redis_client()
+    await r.set("bot:token", token)
+    await r.close()
+    
+    return True
+
+async def is_bot_token_set() -> bool:
+    """Checks if a valid token is set in env or redis"""
+    token = os.getenv("BOT_TOKEN")
+    if token and len(token) > 30 and "sem_vloz" not in token:
+        return True
+    
+    r = await get_redis_client()
+    token = await r.get("bot:token")
+    await r.close()
+    
+    if token and len(token) > 30:
+        return True
+        
+    return False
