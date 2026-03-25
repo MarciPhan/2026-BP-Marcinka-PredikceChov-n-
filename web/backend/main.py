@@ -78,7 +78,7 @@ from .utils import (
     get_time_comparisons, get_leaderboard_data,
     get_dashboard_team, add_dashboard_user, remove_dashboard_user, get_dashboard_permissions,
     get_daily_stats, get_action_weights,
-    is_bot_token_set, update_env_token
+    is_bot_token_set, update_env_token, get_health_research_data
 )
 
 
@@ -3192,11 +3192,11 @@ async def api_time_comparisons(request: Request, start_date: Optional[str] = Non
             # Simulate comparison data to match frontend expectations
             return {
                 "week_over_week": {
-                    "this_week": s["activity_stats"]["avg_dau"],
+                    "this_week": int(s["activity_stats"]["avg_dau"]),
                     "change_percent": 15.4
                 },
                 "month_over_month": {
-                    "this_month": s["stats"]["discord"]["mau"],
+                    "this_month": int(s["activity_stats"]["avg_dau"] * 0.92),
                     "change_percent": 45.2
                 }
             }
@@ -3357,4 +3357,19 @@ async def api_channel_distribution(request: Request, start_date=None, end_date=N
         }
     return await get_channel_stats(request, start_date, end_date, role_id)
 
-
+@app.get("/api/health-research")
+async def api_health_research(request: Request):
+    """API endpoint pro výzkumná data (Markov, Survival)."""
+    gid = get_guild_id(request)
+    if gid == "demo-guild":
+        return {
+            "success": True,
+            "activity_rate_pct": 14.5,
+            "toxicity_index_pct": 0.8,
+            "rec_mods": 4,
+            "retention_pct": 82.3,
+            "churn_risk_pct": 17.7,
+            "life_expectancy_days": 42.5,
+            "half_life_days": 29.3
+        }
+    return await get_health_research_data(gid)

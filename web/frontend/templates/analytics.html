@@ -19,15 +19,15 @@
 
     <div style="display: flex; gap: 12px; align-items: center;">
         <button id="editLayoutBtn" class="btn" onclick="toggleEditMode()" style="background: var(--bg-card);">
-            🖊️ Upravit rozložení
+            Upravit rozložení
         </button>
         <button id="saveLayoutBtn" class="btn" onclick="saveLayout()"
             style="display: none; background: var(--success-gradient); color: white;">
-            💾 Uložit
+            Uložit
         </button>
         <button id="resetLayoutBtn" class="btn" onclick="resetLayout()"
             style="display: none; background: var(--danger-gradient); color: white;">
-            🔄 Reset
+            Reset
         </button>
     </div>
 </div>
@@ -64,24 +64,23 @@
 
 
 {% set all_widgets = [
-('wow_card', '📈 Trends (WoW)'),
-('mom_card', '📊 Trends (MoM)'),
-('top_channels', '🏆 Top Channels'),
-('leaderboard', '👑 Leaderboard'),
-('peak_analysis', '🔥 Peak Time'),
-('channel_dist', '📢 Channel Dist'),
-('commands', '🤖 Commands'),
-('voice_stats', '🎙️ Voice Stats'),
-('traffic', '🚦 Traffic'),
-('trend_analysis', '📈 Growth Trend'),
-('engagement', '🎯 Community Score'),
-('export', '📤 Export Tools'),
-('insights', '💡 Insights'),
-('growth_chart', '📈 Member Growth'),
-('hourly_chart', '⏰ Hourly Activity'),
-('weekday_chart', '📅 Weekday Activity'),
-('msg_len_chart', '📏 Msg Lengths'),
-('weekend_chart', '🎉 Weekend Ratio')
+('wow_card', 'Trends (WoW)'),
+('mom_card', 'Trends (MoM)'),
+('top_channels', 'Top Channels'),
+('leaderboard', 'Leaderboard'),
+('peak_analysis', 'Peak Time'),
+('channel_dist', 'Channel Dist'),
+('commands', 'Commands'),
+('voice_stats', 'Voice Stats'),
+('traffic', 'Traffic'),
+('trend_analysis', 'Growth Trend'),
+('engagement', 'Community Score'),
+('insights', 'Insights'),
+('growth_chart', 'Member Growth'),
+('hourly_chart', 'Hourly Activity'),
+('weekday_chart', 'Weekday Activity'),
+('msg_len_chart', 'Msg Lengths'),
+('weekend_chart', 'Weekend Ratio')
 ] %}
 
 {% macro render_widget(id) %}
@@ -113,7 +112,7 @@
 
 {% macro render_wow() %}
 <div class="card widget-item" data-id="wow_card">
-    <h3 style="margin-bottom: 12px;">📈 Week-over-Week <span class="info-icon dash-tooltip">? <span
+    <h3 style="margin-bottom: 12px;">Week-over-Week <span class="info-icon dash-tooltip">? <span
                 class="dash-tooltip-text">Srovnání DAU tento týden vs minulý.</span></span></h3>
     <div class="stat-value" id="wow-value">Loading...</div>
     <div class="stat-diff" id="wow-change">Calculating...</div>
@@ -122,7 +121,7 @@
 
 {% macro render_mom() %}
 <div class="card widget-item" data-id="mom_card">
-    <h3 style="margin-bottom: 12px;">📊 Month-over-Month <span class="info-icon dash-tooltip">? <span
+    <h3 style="margin-bottom: 12px;">Month-over-Month <span class="info-icon dash-tooltip">? <span
                 class="dash-tooltip-text">Srovnání aktivity tento měsíc vs minulý.</span></span></h3>
     <div class="stat-value" id="mom-value">Loading...</div>
     <div class="stat-diff" id="mom-change">Calculating...</div>
@@ -131,7 +130,7 @@
 
 {% macro render_top_channels() %}
 <div class="card widget-item" data-id="top_channels">
-    <h3 style="margin-bottom: 16px;">🏆 Top Channels <span class="info-icon dash-tooltip">? <span
+    <h3 style="margin-bottom: 16px;">Top Channels <span class="info-icon dash-tooltip">? <span
                 class="dash-tooltip-text">Nejaktivnější kanály.</span></span></h3>
     <div class="chart-container" style="position: relative;">
         <div id="channelChartLoader"
@@ -153,7 +152,7 @@
 
 {% macro render_leaderboard() %}
 <div class="card widget-item" data-id="leaderboard">
-    <h3 style="margin-bottom: 16px;">👑 Leaderboard <span class="info-icon dash-tooltip">? <span
+    <h3 style="margin-bottom: 16px;">Leaderboard <span class="info-icon dash-tooltip">? <span
                 class="dash-tooltip-text">Nejaktivnější uživatelé.</span></span></h3>
     <div id="leaderboard-container" style="max-height: 400px; overflow-y: auto;">
         <table>
@@ -178,7 +177,7 @@
 
 {% macro render_peak() %}
 <div class="card widget-item" data-id="peak_analysis">
-    <h3 style="margin-bottom: 20px;">🔥 Analýza špičky <span class="info-icon dash-tooltip">? <span
+    <h3 style="margin-bottom: 20px;">Analýza špičky <span class="info-icon dash-tooltip">? <span
                 class="dash-tooltip-text">Časy s nejvyšší aktivitou.</span></span></h3>
     <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
         <div>
@@ -203,21 +202,21 @@
 
 {% macro render_channel_dist() %}
 <div class="card widget-item" data-id="channel_dist">
-    <h3 style="margin-bottom: 16px;">📢 Rozložení (Kanály)</h3>
+    <h3 style="margin-bottom: 16px;">Rozložení (Kanály)</h3>
     <div class="chart-container" style="height: 300px;"><canvas id="channelDistChart"></canvas></div>
 </div>
 {% endmacro %}
 
 {% macro render_commands() %}
 <div class="card widget-item" data-id="commands">
-    <h3 style="margin-bottom: 16px;">🤖 Příkazy</h3>
+    <h3 style="margin-bottom: 16px;">Příkazy</h3>
     <div class="chart-container" style="height: 300px;"><canvas id="commandChart"></canvas></div>
 </div>
 {% endmacro %}
 
 {% macro render_voice() %}
 <div class="card widget-item" data-id="voice_stats">
-    <h3 style="margin-bottom: 16px;">🎙️ Voice Top 10</h3>
+    <h3 style="margin-bottom: 16px;">Voice Top 10</h3>
     <div style="overflow-y: auto; max-height: 300px;">
         <table style="width: 100%;">
             <thead>
@@ -238,14 +237,14 @@
 
 {% macro render_traffic() %}
 <div class="card widget-item" data-id="traffic">
-    <h3 style="margin-bottom: 16px;">🚦 Traffic</h3>
+    <h3 style="margin-bottom: 16px;">Traffic</h3>
     <div class="chart-container" style="height: 300px;"><canvas id="trafficChart"></canvas></div>
 </div>
 {% endmacro %}
 
 {% macro render_trend() %}
 <div class="card widget-item" data-id="trend_analysis">
-    <h3 style="margin-bottom: 16px;">📈 Trend Analýza</h3>
+    <h3 style="margin-bottom: 16px;">Trend Analýza</h3>
     <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
         <div style="background:var(--bg-tertiary);padding:16px;border-radius:12px;text-align:center;">
             <div style="font-size:12px;color:var(--text-secondary);">Růst 7d</div>
@@ -269,7 +268,7 @@
 
 {% macro render_engagement() %}
 <div class="card widget-item" data-id="engagement">
-    <h3 style="margin-bottom: 16px;">🎯 Community Score</h3>
+    <h3 style="margin-bottom: 16px;">Community Score</h3>
     <div style="display: flex; align-items: center; gap: 24px;">
         <div
             style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; background: conic-gradient(#8b5cf6 0deg, #8b5cf6 var(--engagement-deg, 0deg), var(--bg-tertiary) var(--engagement-deg, 0deg)); border-radius: 50%;">
@@ -332,7 +331,7 @@
 
 {% macro render_insights() %}
 <div class="card widget-item" data-id="insights">
-    <h3 style="margin-bottom: 16px;">💡 Postřehy</h3>
+    <h3 style="margin-bottom: 16px;">Postřehy</h3>
     <div id="insights-container" style="font-size: 14px;">
         <div style="padding: 12px; background: var(--bg-tertiary); border-radius: 8px;">⏳ Načítám...</div>
     </div>
@@ -341,7 +340,7 @@
 
 {% macro render_growth() %}
 <div class="card widget-item" data-id="growth_chart">
-    <h3 style="margin-bottom: 16px;">📈 Růst členů <span class="info-icon dash-tooltip">? <span
+    <h3 style="margin-bottom: 16px;">Růst členů <span class="info-icon dash-tooltip">? <span
                 class="dash-tooltip-text">Celkový počet členů v čase. Ukazuje trend růstu nebo poklesu
                 komunity.</span></span></h3>
     <div class="chart-container" style="height: 300px;"><canvas id="growthChart"></canvas></div>
@@ -350,7 +349,7 @@
 
 {% macro render_hourly() %}
 <div class="card widget-item" data-id="hourly_chart">
-    <h3 style="margin-bottom: 16px;">⏰ Denní aktivita (0-24h) <span class="info-icon dash-tooltip">? <span
+    <h3 style="margin-bottom: 16px;">Denní aktivita (0-24h) <span class="info-icon dash-tooltip">? <span
                 class="dash-tooltip-text">Rozložení aktivity podle hodin v den. Pomáhá identifikovat špičku
                 aktivity.</span></span></h3>
     <div class="chart-container" style="height: 300px;"><canvas id="hourlyChart"></canvas></div>
@@ -359,7 +358,7 @@
 
 {% macro render_weekday() %}
 <div class="card widget-item" data-id="weekday_chart">
-    <h3 style="margin-bottom: 16px;">📅 Aktivita v týdnu <span class="info-icon dash-tooltip">? <span
+    <h3 style="margin-bottom: 16px;">Aktivita v týdnu <span class="info-icon dash-tooltip">? <span
                 class="dash-tooltip-text">Aktivita rozložená po jednotlivých dnech v týdnu. Ukazuje, kdy je komunita
                 nejaktivnější.</span></span></h3>
     <div class="chart-container" style="height: 300px;"><canvas id="weekdayChart"></canvas></div>
@@ -368,7 +367,7 @@
 
 {% macro render_msg_len() %}
 <div class="card widget-item" data-id="msg_len_chart">
-    <h3 style="margin-bottom: 16px;">📏 Délka zpráv <small style="color:var(--text-secondary);">(znaky)</small> <span
+    <h3 style="margin-bottom: 16px;">Délka zpráv <small style="color:var(--text-secondary);">(znaky)</small> <span
             class="info-icon dash-tooltip">? <span class="dash-tooltip-text">Distribuce délek zpráv. Kratší zprávy mohou
                 znamenat spam, delší zprávy kvalitní diskuze.</span></span></h3>
     <div class="chart-container" style="height: 300px;"><canvas id="msgLenChart"></canvas></div>
@@ -377,7 +376,7 @@
 
 {% macro render_weekend_ratio() %}
 <div class="card widget-item" data-id="weekend_chart">
-    <h3 style="margin-bottom: 16px;">🎉 Víkend vs Týden <span class="info-icon dash-tooltip">? <span
+    <h3 style="margin-bottom: 16px;">Víkend vs Týden <span class="info-icon dash-tooltip">? <span
                 class="dash-tooltip-text">Porovnání aktivity v pracovních dnech vs. víkend. Ukazuje charakter
                 komunity.</span></span></h3>
     <div class="chart-container" style="height: 300px;"><canvas id="weekendChart"></canvas></div>
@@ -386,7 +385,7 @@
 
 {% macro render_xp_leaderboard() %}
 <div class="card widget-item" data-id="xp_leaderboard">
-    <h3 style="margin-bottom: 16px;">🏆 XP Leaderboard</h3>
+    <h3 style="margin-bottom: 16px;">XP Leaderboard</h3>
     <div id="xp-leaderboard-container" style="max-height: 400px; overflow-y: auto;">
         <table style="width: 100%;">
             <thead>
@@ -434,8 +433,7 @@
 
 <div id="hidden-drawer"
     style="display: none; background: rgba(0,0,0,0.3); border: 2px dashed var(--glass-border); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
-    <h3 style="margin-bottom: 12px; color: var(--text-secondary);">🚫 Skryté widgety (Přetáhněte zpět pro zobrazení)
-    </h3>
+    <h3 style="margin-bottom: 12px; color: var(--text-secondary);">Skryté widgety (Přetáhněte zpět pro zobrazení)
     <div id="hidden-widgets-grid" class="grid">
 
     </div>
@@ -563,7 +561,7 @@
             sortableHidden.destroy();
             sortableMain = null;
             sortableHidden = null;
-            editBtn.innerHTML = '🖊️ Upravit rozložení';
+            editBtn.innerHTML = 'Upravit rozložení';
             editBtn.style.background = 'var(--bg-card)';
             saveBtn.style.display = 'none';
             resetBtn.style.display = 'none';
@@ -585,7 +583,7 @@
 
             sortableMain = new Sortable(grid, { group: 'dashboard', animation: 150, ghostClass: 'sortable-ghost', handle: '.card' });
             sortableHidden = new Sortable(hiddenGrid, { group: 'dashboard', animation: 150, ghostClass: 'sortable-ghost', handle: '.card' });
-            editBtn.innerHTML = '❌ Zrušit úpravy';
+            editBtn.innerHTML = 'Zrušit úpravy';
             editBtn.style.background = 'var(--bg-tertiary)';
             saveBtn.style.display = 'inline-block';
             resetBtn.style.display = 'inline-block';

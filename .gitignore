@@ -4,6 +4,7 @@ __pycache__/
 *.log
 *.db
 config/bot_token.py
+config/dashboard_secrets.py
 data/*.json
 bot_data/
 venv/

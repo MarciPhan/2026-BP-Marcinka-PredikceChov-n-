@@ -34,12 +34,7 @@
 
                     <tr class="{{ row_class }}">
                         <td style="text-align: center; font-weight: 700; font-size: 1.1rem;">
-                            {% if u.rank == 1 %}🥇
-                            {% elif u.rank == 2 %}🥈
-                            {% elif u.rank == 3 %}🥉
-                            {% else %}
                             {{ u.rank }}
-                            {% endif %}
                         </td>
                         <td>
                             <div style="display: flex; align-items: center; gap: 12px;">

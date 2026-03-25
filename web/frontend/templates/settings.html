@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="page-header">
-    <h1 class="title">⚙️ Nastavení</h1>
+    <h1 class="title">Nastavení</h1>
 </div>
 
 <div class="card" style="margin-bottom: 24px;">
@@ -62,7 +62,7 @@
                 <div>
                     <button type="button" id="backfillBtn" onclick="triggerBackfill()"
                         style="padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--glass-border); color: var(--text-primary); border-radius: 6px; cursor: pointer; transition: 0.2s;">
-                        📥 Spustit
+                        Spustit
                     </button>
                 </div>
             </div>
@@ -115,99 +115,10 @@
 </div>
 
 
-<div class="card" style="margin-bottom: 24px; margin-top: 24px;">
-    <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-        📤 Export Centrum <span style="font-size: 12px; opacity: 0.7; font-weight: 400;">(Všechna data v
-            CSV/JSON)</span>
-    </h3>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px;">
-        <div
-            style="grid-column: 1/-1; margin-top: 8px; font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">
-            🏆 Žebříčky & Top Listy</div>
-
-        <button onclick="exportData('leaderboard', 'Top Uživatelé (Zprávy)')" class="btn export-btn">👥 Top
-            Zprávy</button>
-        <button onclick="exportData('voice_top', 'Top Uživatelé (Voice)')" class="btn export-btn">🎙️ Top
-            Voice</button>
-        <button onclick="exportData('commands_top', 'Nejpoužívanější Příkazy')" class="btn export-btn">🤖 Top
-            Příkazy</button>
-        <button onclick="exportData('emojis_top', 'Nejoblíbenější Emoji')" class="btn export-btn">😃 Top
-            Emoji</button>
-        <button onclick="exportData('channels_top', 'Nejaktivnější Kanály')" class="btn export-btn">📊 Top
-            Kanály</button>
-
-        <div
-            style="grid-column: 1/-1; margin-top: 16px; font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">
-            ⏳ Časová Analýza</div>
-
-        <button onclick="exportData('activity', 'Denní Aktivita (DAU/Msg)')" class="btn export-btn">📈 Denní Trend
-            (DAU)</button>
-        <button onclick="exportData('hourly_heatmap', 'Hodinová Aktivita')" class="btn export-btn">🔥 Hodinový
-            Heatmap</button>
-        <button onclick="exportData('weekday_stats', 'Dny v týdnu')" class="btn export-btn">📅 Dny v týdnu</button>
-        <button onclick="exportData('traffic', 'Nábory a Odchody')" class="btn export-btn">🚦 Traffic
-            (Join/Leave)</button>
-        <button onclick="exportData('peak_log', 'Záznam Špiček')" class="btn export-btn">🏔️ Log Špiček
-            (Peak)</button>
-
-        <div
-            style="grid-column: 1/-1; margin-top: 16px; font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">
-            📝 Obsah & Kvalita</div>
-
-        <button onclick="exportData('msg_lengths', 'Délka Zpráv')" class="btn export-btn">📏 Distribuce
-            Délky</button>
-        <button onclick="exportData('interaction_types', 'Typy Interakcí')" class="btn export-btn">🖱️ Interakce vs
-            Zprávy</button>
-        <button onclick="exportData('attach_stats', 'Přílohy a Média')" class="btn export-btn">🖼️ Media
-            Stats</button>
-        <button onclick="exportData('word_cloud', 'Klíčová Slova')" class="btn export-btn">☁️ Word Cloud
-            Data</button>
-
-        <div
-            style="grid-column: 1/-1; margin-top: 16px; font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">
-            📂 Detailní Data</div>
-
-        <button onclick="exportData('users', 'Kompletní Seznam Uživatelů')" class="btn export-btn"
-            style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3);">👤 Full User
-            List</button>
-        <button onclick="exportData('channels_full', 'Seznam Kanálů')" class="btn export-btn">📺 Full Channel
-            List</button>
-        <button onclick="exportData('roles_dist', 'Distribuce Rolí')" class="btn export-btn">🎭 Distribuce
-            Rolí</button>
-        <button onclick="exportData('raw_logs', 'Poslední Logy')" class="btn export-btn">📜 Raw Server Logs</button>
-        <button onclick="exportData('bans_kicks', 'Moderace (Bans/Kicks)')" class="btn export-btn">🛡️ Moderační
-            Log</button>
-    </div>
-    <style>
-        .export-btn {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--glass-border);
-            transition: all 0.2s;
-            text-align: left;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 500;
-            font-size: 13px;
-            padding: 12px;
-            color: var(--text-primary);
-            cursor: pointer;
-        }
-
-        .export-btn:hover {
-            background: var(--bg-card);
-            border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-    </style>
-
-</div>
 
 <div class="card" style="margin-bottom: 24px; margin-top: 48px; border: 1px solid rgba(239, 68, 68, 0.3);">
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
-        <div style="font-size: 24px;">⚠️</div>
+        <div style="font-size: 24px;"></div>
         <h2 style="color: var(--danger); margin: 0;">Nebezpečná zóna</h2>
     </div>
 
@@ -221,7 +132,7 @@
         </div>
         <button onclick="confirmAction('delete_data')" class="btn"
             style="background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger);">
-            🗑️ Smazat data
+            Smazat data
         </button>
     </div>
 
@@ -233,7 +144,7 @@
                 přidání použijte pozvánkový odkaz.</p>
         </div>
         <button onclick="confirmAction('leave_server')" class="btn" style="background: var(--danger); color: white;">
-            🚪 Odebrat bota
+            Odebrat bota
         </button>
     </div>
 </div>
@@ -258,112 +169,7 @@
 </div>
 
 
-<div id="exportModal" class="modal"
-    style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
-    <div class="card" style="width: 100%; max-width: 450px; animation: modalSlideIn 0.3s ease-out;">
-        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 24px;">
-            <div>
-                <h2 style="margin: 0; display: flex; align-items: center; gap: 12px;">📤 Export Data</h2>
-                <div id="exportModalTitle"
-                    style="color: var(--primary); font-size: 14px; font-weight: 600; margin-top: 4px;">--</div>
-            </div>
-            <button onclick="closeExportModal()" class="btn" style="background: transparent; padding: 8px;">✕</button>
-        </div>
 
-        <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Časové
-                období</label>
-            <select id="exportRange" class="btn" style="width: 100%; justify-content: space-between;"
-                onchange="toggleCustomDate()">
-                <option value="7">Posledních 7 dní</option>
-                <option value="30" selected>Posledních 30 dní</option>
-                <option value="90">Posledních 90 dní</option>
-                <option value="all">Celá historie (All Time)</option>
-                <option value="custom">Vlastní rozsah...</option>
-            </select>
-            <div id="exportCustomDate" style="display: none; gap: 8px; margin-top: 8px;">
-                <input type="date" id="exportStart" class="btn" style="flex:1">
-                <input type="date" id="exportEnd" class="btn" style="flex:1">
-            </div>
-        </div>
-
-        <div style="margin-bottom: 24px;">
-            <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Formát</label>
-            <div style="display: flex; gap: 12px;">
-                <label class="radio-label"
-                    style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px; background: var(--bg-tertiary); border-radius: 8px; flex: 1;">
-                    <input type="radio" name="exportFormat" value="csv" checked>
-                    <span style="font-weight: 600;">CSV (Excel)</span>
-                </label>
-                <label class="radio-label"
-                    style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px; background: var(--bg-tertiary); border-radius: 8px; flex: 1;">
-                    <input type="radio" name="exportFormat" value="json">
-                    <span style="font-weight: 600;">JSON (Raw)</span>
-                </label>
-            </div>
-        </div>
-
-        <div style="display: flex; justify-content: flex-end; gap: 12px;">
-            <button onclick="closeExportModal()" class="btn"
-                style="background: var(--bg-tertiary); border: 1px solid var(--glass-border);">Zrušit</button>
-            <button onclick="confirmExport()" class="btn"
-                style="background: var(--primary-gradient); color: white;">Stáhnout Export</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    let currentExportType = 'leaderboard';
-
-    function exportData(type, title) {
-        currentExportType = type || 'leaderboard';
-        document.getElementById('exportModal').style.display = 'flex';
-        document.getElementById('exportModalTitle').textContent = title || type;
-
-        // Pre-fill dates if custom
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('exportEnd').value = today;
-    }
-
-    function closeExportModal() {
-        document.getElementById('exportModal').style.display = 'none';
-    }
-
-    function toggleCustomDate() {
-        const val = document.getElementById('exportRange').value;
-        const customDiv = document.getElementById('exportCustomDate');
-        customDiv.style.display = val === 'custom' ? 'flex' : 'none';
-    }
-
-    function confirmExport() {
-        const range = document.getElementById('exportRange').value;
-        const format = document.querySelector('input[name="exportFormat"]:checked').value;
-
-        let start = '', end = '';
-
-        if (range === 'custom') {
-            start = document.getElementById('exportStart').value;
-            end = document.getElementById('exportEnd').value;
-        } else if (range !== 'all') {
-            const d = new Date();
-            end = d.toISOString().split('T')[0];
-            d.setDate(d.getDate() - parseInt(range));
-            start = d.toISOString().split('T')[0];
-        }
-
-        let url = `/api/export/${currentExportType}?format=${format}`;
-        if (start) url += `&start_date=${start}`;
-        if (end) url += `&end_date=${end}`;
-
-        if (format === 'json') {
-            window.open(url, '_blank');
-        } else {
-            window.location.href = url;
-        }
-
-        closeExportModal();
-    }
-</script>
 
 <script>
     // Modal Logic
@@ -422,12 +228,12 @@
 
                 if (resp.status === 200 && data.status === 'ok') {
                     status.style.display = 'block';
-                    btn.innerText = "⏳ Probíhá stahování...";
+                    btn.innerText = "Probíhá stahování...";
                     startBackfillPolling();
                 } else {
                     showModal("Chyba", data.message || "Neznámá chyba");
                     btn.disabled = false;
-                    btn.innerText = "📥 Spustit Backfill";
+                    btn.innerText = "Spustit Backfill";
                 }
             } catch (e) {
                 showModal("Chyba Komunikace", "Nepodařilo se spojit se serverem: " + e);
@@ -463,23 +269,23 @@
                     progressBar.style.width = (currentWidth + 0.5) + '%';
                 }
 
-                statusText.innerText = "📊 Stahování historie...";
+                statusText.innerText = "Stahování historie...";
                 countText.innerText = data.total_messages.toLocaleString() + " zpráv";
                 channelText.innerText = "Skenuji channel: #" + data.current_channel;
             } else if (data.status === 'completed') {
                 progressBar.style.width = '100%';
                 progressBar.style.background = '#43b581';
-                statusText.innerText = "✅ Hotovo!";
+                statusText.innerText = "Hotovo!";
                 countText.innerText = "Celkem " + data.total_messages.toLocaleString() + " zpráv";
                 channelText.innerText = "Historie byla úspěšně stažena.";
-                btn.innerText = "✅ Dokončeno";
+                btn.innerText = "Dokončeno";
                 clearInterval(backfillTimer);
                 showModal("Hotovo", "Všechna historická data byla úspěšně načtena.");
             } else if (data.status === 'error') {
                 statusText.innerText = "❌ Chyba";
                 channelText.innerText = data.message;
                 btn.disabled = false;
-                btn.innerText = "📥 Spustit znovu";
+                btn.innerText = "Spustit znovu";
                 clearInterval(backfillTimer);
             }
         } catch (e) {
@@ -504,7 +310,7 @@
                 } else {
                     showModal("Chyba", data.message || "Neznámá chyba");
                     btn.disabled = false;
-                    btn.innerText = "🗑️ Smazat data";
+                    btn.innerText = "Smazat data";
                 }
             } catch (e) {
                 showModal("Chyba", "Nepodařilo se spojit se serverem: " + e);
@@ -532,7 +338,7 @@
                 } else {
                     showModal("Chyba", data.message || "Neznámá chyba");
                     btn.disabled = false;
-                    btn.innerText = "🚪 Odebrat bota";
+                    btn.innerText = "Odebrat bota";
                 }
             } catch (e) {
                 showModal("Chyba", "Nepodařilo se spojit se serverem: " + e);
@@ -612,7 +418,7 @@
 
 <div class="card" style="margin-top: 24px;">
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-        <div style="font-size: 24px;">✨</div>
+        <div style="font-size: 24px;"></div>
         <h2 style="margin: 0;">XP Vzorec</h2>
     </div>
     <p style="color: var(--text-secondary); margin-bottom: 24px;">
@@ -678,14 +484,14 @@
         <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
             <button type="submit"
                 style="padding: 10px 24px; background: var(--primary-gradient); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">
-                💾 Uložit Vzorec
+                Uložit Vzorec
             </button>
         </div>
     </form>
 </div>
 <div class="card" style="margin-top: 24px;">
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-        <div style="font-size: 24px;">🛡️</div>
+        <div style="font-size: 24px;"></div>
         <h2 style="margin: 0;">Skóre bezpečnosti</h2>
     </div>
     <p style="color: var(--text-secondary); margin-bottom: 24px;">
@@ -842,7 +648,7 @@
         <div style="margin-top: 32px; display: flex; justify-content: flex-end;">
             <button type="submit"
                 style="padding: 10px 24px; background: linear-gradient(135deg, #10B981, #059669); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-                🛡️ Uložit nastavení bezpečnosti
+                Uložit nastavení bezpečnosti
             </button>
         </div>
     </form>

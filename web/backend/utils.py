@@ -1968,3 +1968,53 @@ async def is_bot_token_set() -> bool:
         return True
         
     return False
+
+async def get_health_research_data(guild_id: int) -> dict:
+    import numpy as np
+    from datetime import datetime
+    r = await get_redis_client()
+    try:
+        today_str = datetime.now().strftime("%Y%m%d")
+        
+        # 1. Total Members
+        total_members_str = await r.get(f"presence:total:{guild_id}")
+        total_members = int(total_members_str) if total_members_str else 0
+        
+        # 2. DAU
+        dau = await r.pfcount(f"hll:dau:{guild_id}:{today_str}")
+        
+        # 3. Activity Rate
+        activity_rate = (dau / total_members) if total_members > 0 else 0
+        
+        # 4. Toxicity Calculation
+        total_actions = 0
+        async for key in r.scan_iter(f"events:action:{guild_id}:*"):
+            actions = await r.zcard(key)
+            total_actions += actions
+            
+        total_msgs_str = await r.get(f"stats:total_msgs:{guild_id}")
+        total_msgs = int(total_msgs_str) if total_msgs_str else 1
+        toxicity_index = (total_actions / total_msgs)
+        
+        # 5. Recommended mods
+        rec_mods = int(np.ceil((dau * (1 + toxicity_index * 10)) / 150 + 2))
+        
+        # 6. Advanced Markov & Survival Setup
+        p_stay_active = 0.6 + (activity_rate * 0.5)
+        p_churn = 0.05 + (toxicity_index * 2)
+        life_exp = round(1 / max(0.01, p_churn / 30), 1)
+        half_life = round(life_exp * 0.69, 1)
+
+        return {
+            "success": True,
+            "activity_rate_pct": round(activity_rate * 100, 1),
+            "toxicity_index_pct": round(toxicity_index * 100, 2),
+            "rec_mods": rec_mods,
+            "retention_pct": round(p_stay_active * 100, 1),
+            "churn_risk_pct": round(p_churn * 100, 1),
+            "life_expectancy_days": life_exp,
+            "half_life_days": half_life
+        }
+    except Exception as e:
+        print(f"Error computing health research data: {e}")
+        return {"success": False, "error": str(e)}

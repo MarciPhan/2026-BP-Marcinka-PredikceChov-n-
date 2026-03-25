@@ -46,7 +46,7 @@ fi
 # 4. Clean up old runs
 pkill -f "bot/main.py" 2>/dev/null || true
 BUSY_PID=$(lsof -t -i :"$PORT" 2>/dev/null || true)
-[ -n "$BUSY_PID" ] && kill -9 "$BUSY_PID" && sleep 1
+[ -n "$BUSY_PID" ] && kill -9 $BUSY_PID 2>/dev/null && sleep 1
 
 # 5. Run
 export PYTHONPATH=$PWD

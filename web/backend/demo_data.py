@@ -185,7 +185,7 @@ def get_demo_stats(start_date: str = None, end_date: str = None) -> Dict[str, An
             "dau_labels": date_list_str,
             "dau_data": dau_data,
             "mau_data": mau_data,
-            "avg_dau": round(avg_dau, 1)
+            "avg_dau": int(avg_dau)
         },
         "deep_stats": {
             "weekly_labels": ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"],
@@ -223,7 +223,7 @@ def get_demo_stats(start_date: str = None, end_date: str = None) -> Dict[str, An
         "end_date": end_date or date_list_str[-1],
         "guild_id": "demo-guild",
         "total_members": totals[-1],
-        "avg_dau": round(avg_dau, 1),
+        "avg_dau": int(avg_dau),
         "avg_msg_len": 42.5,
         "reply_ratio": 24.3,
         "peak_day": "Sobota",

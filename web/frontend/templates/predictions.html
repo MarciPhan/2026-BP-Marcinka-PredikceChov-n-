@@ -4,7 +4,7 @@
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
     <div>
-        <h1 class="title">🔮 Predikce</h1>
+        <h1 class="title">Predikce</h1>
         <p style="color: var(--text-secondary);">Odhad budoucího vývoje na základě historických dat serveru. 
             <a href="/docs/predictions" style="color: var(--accent); text-decoration: none; margin-left: 8px; font-size: 13px; font-weight: 600;">
                 <i class="fas fa-question-circle"></i> Jak to funguje?
@@ -15,15 +15,15 @@
     <div style="display: flex; gap: 16px; align-items: center;">
         <button id="editLayoutBtn" onclick="toggleEditMode()" class="btn"
             style="padding: 6px 12px; white-space: nowrap; display: flex; align-items: center; gap: 8px; background: var(--bg-card);">
-            🖊️ Upravit rozložení
+            Upravit rozložení
         </button>
         <button id="saveLayoutBtn" onclick="saveLayout()" class="btn"
             style="padding: 6px 12px; white-space: nowrap; display: none; align-items: center; gap: 8px; background: var(--success-gradient); color: white;">
-            💾 Uložit
+            Uložit
         </button>
         <button id="resetLayoutBtn" onclick="resetLayout()" class="btn"
             style="padding: 6px 12px; white-space: nowrap; display: none; align-items: center; gap: 8px; background: var(--danger-gradient); color: white;">
-            🔄 Reset
+            Reset
         </button>
     </div>
 </div>
@@ -47,7 +47,7 @@
     <div class="stat-diff" id="pred-members-diff">Počítám...</div>
     <div
         style="font-size: 11px; color: var(--text-tertiary); margin-top: 8px; border-top: 1px solid var(--glass-border); padding-top: 8px;">
-        📊 Průměrný měsíční růst: <strong id="avg-growth">--</strong> členů | Aktuálně: <strong
+        Průměrný měsíční růst: <strong id="avg-growth">--</strong> členů | Aktuálně: <strong
             id="current-members">--</strong>
     </div>
 </div>
@@ -60,18 +60,18 @@
 </div>
 {% elif id == 'chart_main_pred' %}
 <div class="card" data-id="chart_main_pred" style="min-height: 350px;">
-    <h3 style="margin-bottom: 16px;">📈 Výhled: Růst členů (6 měsíců)</h3>
+    <h3 style="margin-bottom: 16px;">Výhled: Růst členů (6 měsíců)</h3>
     <div style="height: 300px;"><canvas id="predictionChart"></canvas></div>
 </div>
 {% elif id == 'chart_activity_forecast' %}
 <div class="card" data-id="chart_activity_forecast">
-    <h3 style="margin-bottom: 16px;">📅 Predikce aktivity (7 dní)</h3>
+    <h3 style="margin-bottom: 16px;">Predikce aktivity (7 dní)</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Očekávaný objem zpráv.</p>
     <div style="height: 220px;"><canvas id="activityForecastChart"></canvas></div>
 </div>
 {% elif id == 'chart_dau_pred' %}
 <div class="card" data-id="chart_dau_pred">
-    <h3 style="margin-bottom: 16px;">👤 Predikce DAU (7 dní)</h3>
+    <h3 style="margin-bottom: 16px;">Predikce DAU (7 dní)</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Denně aktivní uživatelé. Trend:
         <strong id="dau-trend">--</strong>
     </p>
@@ -79,7 +79,7 @@
 </div>
 {% elif id == 'widget_mau' %}
 <div class="card" data-id="widget_mau">
-    <h3 style="margin-bottom: 16px;">📊 Predikce MAU (3 měsíce)</h3>
+    <h3 style="margin-bottom: 16px;">Predikce MAU (3 měsíce)</h3>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
         <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
             <div style="font-size: 24px; font-weight: 700; color: #3b82f6;" id="mau-value">--</div>
@@ -92,9 +92,45 @@
     </div>
     <div style="height: 180px;"><canvas id="mauChart"></canvas></div>
 </div>
+{% elif id == 'widget_research' %}
+<div class="card" data-id="widget_research">
+    <h3 style="margin-bottom: 16px;">Analýza a Výzkum</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: #8b5cf6;" id="res-retention">--%</div>
+            <div style="font-size: 11px; color: var(--text-secondary);">
+                Markov: Retence uživatelů
+                <span class="info-icon dash-tooltip" style="margin-left: 4px;">? <span class="dash-tooltip-text">Pravděpodobnost namodelovaná pomocí Markovových řetězců (stavy New, Active, atd.), že náhodný uživatel trvale setrvá v komunitě.</span></span>
+            </div>
+        </div>
+        <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: #ec4899;" id="res-life">-- d</div>
+            <div style="font-size: 11px; color: var(--text-secondary);">
+                Survival: Očekávaná aktivita
+                <span class="info-icon dash-tooltip" style="margin-left: 4px;">? <span class="dash-tooltip-text">Kaplan-Meierův statistický odhad počítající zbývající délku aktivního zapojení uživatele na serveru (ve dnech).</span></span>
+            </div>
+        </div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 20px; font-weight: 700; color: #10b981;" id="res-tox">--%</div>
+            <div style="font-size: 11px; color: var(--text-secondary);">
+                Index Toxicity serveru
+                <span class="info-icon dash-tooltip" style="margin-left: 4px;">? <span class="dash-tooltip-text">MII (Moderator Intervention Index) - procentuální poměr mezi moderovanými/toxickými projevy a celkovým objemem komunikace.</span></span>
+            </div>
+        </div>
+        <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 20px; font-weight: 700; color: #10b981;" id="res-mods">--</div>
+            <div style="font-size: 11px; color: var(--text-secondary);">
+                Doporučený počet moderátorů
+                <span class="info-icon dash-tooltip" style="margin-left: 4px;">? <span class="dash-tooltip-text">Algoritmický výpočet doporučeného počtu aktivních lidských moderátorů nutných pro udržení zdravé komunity (na základě DAU a indexu toxicity).</span></span>
+            </div>
+        </div>
+    </div>
+</div>
 {% elif id == 'widget_stability' %}
 <div class="card" data-id="widget_stability">
-    <h3 style="margin-bottom: 16px;">🚦 Predikce stability</h3>
+    <h3 style="margin-bottom: 16px;">Predikce stability</h3>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
         <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; text-align: center;">
             <div style="font-size: 24px; font-weight: 700; color: var(--success);" id="churn-risk-val">--%</div>
@@ -106,28 +142,28 @@
         </div>
     </div>
     <div id="risk-details" style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px;">
-        <div style="font-weight: 600; margin-bottom: 8px;" id="risk-title">📊 Analýza</div>
+        <div style="font-weight: 600; margin-bottom: 8px;" id="risk-title">Analýza</div>
         <p id="risk-explanation" style="font-size: 13px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
             Načítám data...</p>
     </div>
 </div>
 {% elif id == 'chart_peak' %}
 <div class="card" data-id="chart_peak">
-    <h3 style="margin-bottom: 16px;">⏰ Predikce vrcholových hodin</h3>
+    <h3 style="margin-bottom: 16px;">Predikce vrcholových hodin</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Kdy očekávat nejvyšší aktivitu
         zítra.</p>
     <div style="height: 200px;"><canvas id="peakHoursChart"></canvas></div>
 </div>
 {% elif id == 'chart_seasonal' %}
 <div class="card" data-id="chart_seasonal">
-    <h3 style="margin-bottom: 16px;">📆 Sezónní predikce</h3>
+    <h3 style="margin-bottom: 16px;">Sezónní predikce</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Očekávaná aktivita podle dne v
         týdnu.</p>
     <div style="height: 200px;"><canvas id="seasonalChart"></canvas></div>
 </div>
 {% elif id == 'chart_engagement' %}
 <div class="card" data-id="chart_engagement">
-    <h3 style="margin-bottom: 16px;">💬 Predikce engagementu</h3>
+    <h3 style="margin-bottom: 16px;">Predikce engagementu</h3>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
         <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
             <div style="font-size: 20px; font-weight: 700; color: #8b5cf6;" id="eng-current">--</div>
@@ -142,19 +178,19 @@
 </div>
 {% elif id == 'chart_new_returning' %}
 <div class="card" data-id="chart_new_returning">
-    <h3 style="margin-bottom: 16px;">👥 Predikce: Noví vs Vracející</h3>
+    <h3 style="margin-bottom: 16px;">Predikce: Noví vs Vracející</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Očekávaný poměr.</p>
     <div style="height: 200px;"><canvas id="newVsReturningChart"></canvas></div>
 </div>
 {% elif id == 'chart_voice' %}
 <div class="card" data-id="chart_voice">
-    <h3 style="margin-bottom: 16px;">🎤 Predikce voice aktivity</h3>
+    <h3 style="margin-bottom: 16px;">Predikce voice aktivity</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Očekávané minuty (7 dní).</p>
     <div style="height: 200px;"><canvas id="voiceChart"></canvas></div>
 </div>
 {% elif id == 'chart_channels' %}
 <div class="card" data-id="chart_channels">
-    <h3 style="margin-bottom: 16px;">📊 Predikce top kanálů</h3>
+    <h3 style="margin-bottom: 16px;">Predikce top kanálů</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Očekávaná aktivita (zítra).</p>
     <div style="height: 200px;"><canvas id="channelsChart"></canvas></div>
 </div>
@@ -162,7 +198,7 @@
 {% endmacro %}
 
 {% set default_order = ['card_pred_members', 'card_pred_msgs', 'chart_main_pred', 'chart_activity_forecast',
-'chart_dau_pred', 'widget_mau', 'widget_stability', 'chart_peak', 'chart_seasonal', 'chart_engagement',
+'chart_dau_pred', 'widget_mau', 'widget_research', 'widget_stability', 'chart_peak', 'chart_seasonal', 'chart_engagement',
 'chart_new_returning', 'chart_voice', 'chart_channels'] %}
 {% set active_order = widget_order if widget_order else default_order %}
 
@@ -181,7 +217,7 @@
 
     {% set default_span = 1 %}
     {% if widget_id in ['chart_main_pred', 'chart_activity_forecast', 'chart_dau_pred', 'widget_mau',
-    'widget_stability'] %}{% set default_span = 2 %}{% endif %}
+    'widget_stability', 'widget_research'] %}{% set default_span = 2 %}{% endif %}
     {% set span_val = saved_spans.get(widget_id, default_span) %}
 
     <div class="widget-wrapper span-{{span_val}}" data-id="{{widget_id}}" data-span="{{span_val}}"
@@ -225,7 +261,7 @@
 
         {% set default_span = 1 %}
         {% if widget_id in ['chart_main_pred', 'chart_activity_forecast', 'chart_dau_pred', 'widget_mau',
-        'widget_stability', 'chart_voice', 'chart_channels'] %}{% set default_span = 2 %}{% endif %}
+        'widget_stability', 'widget_research', 'chart_voice', 'chart_channels'] %}{% set default_span = 2 %}{% endif %}
         {% set span_val = saved_spans.get(widget_id, default_span) %}
 
         <div class="widget-wrapper span-{{span_val}}" data-id="{{widget_id}}" data-span="{{span_val}}"
@@ -309,7 +345,7 @@
             sortableMain = null;
             sortableHidden = null;
 
-            editBtn.innerHTML = '🖊️ Upravit rozložení';
+            editBtn.innerHTML = 'Upravit rozložení';
             editBtn.classList.remove('btn-active');
             editBtn.style.background = '';
             saveBtn.style.display = 'none';
@@ -345,7 +381,7 @@
                 handle: '.card'
             });
 
-            editBtn.innerHTML = '❌ Zrušit';
+            editBtn.innerHTML = 'Zrušit';
             editBtn.style.background = 'var(--bg-tertiary)';
             saveBtn.style.display = 'flex';
             resetBtn.style.display = 'flex';
@@ -487,7 +523,7 @@
             }
 
             if (document.getElementById('dauChart') && data.dau) {
-                safeSetText('dau-trend', data.dau.trend === 'up' ? '📈 Rostoucí' : data.dau.trend === 'down' ? '📉 Klesající' : '➡️ Stabilní');
+                safeSetText('dau-trend', data.dau.trend === 'up' ? 'Rostoucí' : data.dau.trend === 'down' ? 'Klesající' : 'Stabilní');
                 new Chart(document.getElementById('dauChart'), {
                     type: 'line',
                     data: { labels: [...data.dau.history_labels, ...data.dau.forecast_labels], datasets: [{ label: 'Historie', data: [...data.dau.history, ...Array(data.dau.forecast.length).fill(null)], borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4 }, { label: 'Predikce', data: [...Array(data.dau.history.length - 1).fill(null), data.dau.history[data.dau.history.length - 1], ...data.dau.forecast], borderColor: '#ec4899', borderDash: [5, 5], backgroundColor: 'rgba(236, 72, 153, 0.05)', fill: true, tension: 0.4 }] },
@@ -575,7 +611,7 @@
                 );
             } else if (document.getElementById('channelsChart')) {
                 const container = document.getElementById('channelsChart').parentElement;
-                container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);"><div style="font-size:48px;margin-bottom:12px;">📈</div><p>Žádná data pro predikci kanálů</p></div>';
+                container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);"><div style="font-size:48px;margin-bottom:12px;"></div><p>Žádná data pro predikci kanálů</p></div>';
             }
 
             // Risk Analysis
@@ -598,6 +634,26 @@
                 titleEl.textContent = stability >= 90 ? '✅ Výborná stabilita' : '⚠️ Pozor na odchody';
                 explEl.textContent = explanation;
             }
+
+            // --- Research API Fetch ---
+            try {
+                const resResp = await fetch('/api/health-research');
+                const resData = await resResp.json();
+                if (resData.success) {
+                    safeSetText('res-retention', resData.retention_pct + '%');
+                    safeSetText('res-life', resData.life_expectancy_days + ' d');
+                    safeSetText('res-tox', resData.toxicity_index_pct + '%');
+                    safeSetText('res-mods', resData.rec_mods);
+                    
+                    const toxEl = document.getElementById('res-tox');
+                    if(toxEl){
+                        toxEl.style.color = resData.toxicity_index_pct > 2.0 ? '#ef4444' : (resData.toxicity_index_pct > 1.0 ? '#f59e0b' : '#10b981');
+                    }
+                }
+            } catch(e) {
+                console.error("Research load error", e);
+            }
+
         } catch (e) {
             console.error("Prediction load error", e);
         }

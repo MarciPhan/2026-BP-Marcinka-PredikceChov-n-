@@ -16,18 +16,22 @@
 
         {% if is_discourse %}
         <button id="syncDiscourseBtn" onclick="triggerDiscourseSync()" class="btn"
-            Synchronizovat
+            style="padding: 6px 12px; white-space: nowrap; display: flex; align-items: center; gap: 8px; background: var(--bg-card);">
+            Synchronizovat Discourse
         </button>
         {% endif %}
 
         <button id="editLayoutBtn" onclick="toggleEditMode()" class="btn"
+            style="padding: 6px 12px; white-space: nowrap; display: flex; align-items: center; gap: 8px; background: var(--bg-card);">
             Upravit rozložení
         </button>
         <button id="saveLayoutBtn" onclick="saveLayout()" class="btn"
+            style="padding: 6px 12px; white-space: nowrap; display: none; align-items: center; gap: 8px; background: var(--success-gradient); color: white;">
             Uložit
         </button>
         <button id="resetLayoutBtn" onclick="resetLayout()" class="btn"
-            Resetovat
+            style="padding: 6px 12px; white-space: nowrap; display: none; align-items: center; gap: 8px; background: var(--danger-gradient); color: white;">
+            Reset
         </button>
 
         <form method="GET" action="/"
@@ -410,7 +414,7 @@
             sortableMain = null;
             sortableHidden = null;
 
-            editBtn.innerHTML = '🖊️ Upravit rozložení';
+            editBtn.innerHTML = 'Upravit rozložení';
             editBtn.classList.remove('btn-active');
             editBtn.style.background = '';
             saveBtn.style.display = 'none';
@@ -446,7 +450,7 @@
                 handle: '.card'
             });
 
-            editBtn.innerHTML = '❌ Zrušit';
+            editBtn.innerHTML = 'Zrušit';
             editBtn.style.background = 'var(--bg-tertiary)';
             saveBtn.style.display = 'flex';
             resetBtn.style.display = 'flex';
