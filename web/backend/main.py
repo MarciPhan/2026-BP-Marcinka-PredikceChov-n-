@@ -18,6 +18,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from starlette.middleware.sessions import SessionMiddleware
 import uvicorn
+import urllib.parse
 from pathlib import Path
 import redis.asyncio as redis
 from datetime import datetime, timedelta
@@ -915,7 +916,7 @@ async def login_page(request: Request):
         "scope": "identify guilds",
         "state": state_str
     }
-    auth_url = f"{DISCORD_AUTH_URL}?" + "&".join(f"{k}={v}" for k, v in params.items())
+    auth_url = f"{DISCORD_AUTH_URL}?" + urllib.parse.urlencode(params)
     return RedirectResponse(url=auth_url)
 
 @app.get("/auth/callback")
@@ -3188,18 +3189,19 @@ async def api_time_comparisons(request: Request, start_date: Optional[str] = Non
     try:
         guild_id = request.session.get("guild_id")
         if guild_id == "demo-guild":
-            s = get_demo_stats(start_date, end_date)
-            # Simulate comparison data to match frontend expectations
-            return {
+            # Realističtější a stabilnější hodnoty pro obhajobu
+            data = {
                 "week_over_week": {
-                    "this_week": int(s["activity_stats"]["avg_dau"]),
-                    "change_percent": 15.4
+                    "this_week": 24.0,
+                    "change_percent": 2.4
                 },
                 "month_over_month": {
-                    "this_month": int(s["activity_stats"]["avg_dau"] * 0.92),
-                    "change_percent": 45.2
+                    "this_month": 24.0,
+                    "change_percent": 6.8
                 }
             }
+            print(f"DEBUG: Returning demo comparison data: {data}")
+            return data
         
         guild_id = get_guild_id(request)
         return await get_time_comparisons(guild_id, start_date=start_date, end_date=end_date)

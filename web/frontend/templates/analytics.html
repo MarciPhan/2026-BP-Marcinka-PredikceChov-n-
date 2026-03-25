@@ -781,14 +781,14 @@
             if (!resp.ok) return;
             const data = await resp.json();
             if (data.week_over_week && document.getElementById('wow-value')) {
-                document.getElementById('wow-value').textContent = `${data.week_over_week.this_week} DAU`;
+                document.getElementById('wow-value').textContent = `${data.week_over_week.this_week}%`;
                 const wc = document.getElementById('wow-change');
                 const wp = data.week_over_week.change_percent;
                 wc.textContent = `${wp > 0 ? '+' : ''}${wp}% vs last week`;
                 wc.className = `stat-diff ${wp > 0 ? 'diff-positive' : 'diff-negative'}`;
             }
             if (data.month_over_month && document.getElementById('mom-value')) {
-                document.getElementById('mom-value').textContent = `${data.month_over_month.this_month} DAU`;
+                document.getElementById('mom-value').textContent = `${data.month_over_month.this_month}%`;
                 const mc = document.getElementById('mom-change');
                 const mp = data.month_over_month.change_percent;
                 mc.textContent = `${mp > 0 ? '+' : ''}${mp}% vs last month`;
