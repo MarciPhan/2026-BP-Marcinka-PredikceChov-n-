@@ -1,0 +1,71 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Srovnání s konkurencí{% endblock %}
+
+{% block docs_content %}
+<section id="comparison">
+    <h1>Metricord vs. Carl-bot vs. Mee6</h1>
+    <p>Proč zvolit Metricord pro hloubkovou analýzu vaší komunity?</p>
+
+    <div style="overflow-x: auto; margin-top: 40px;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Funkce</th>
+                    <th>Metricord</th>
+                    <th>Mee6 / Dyno</th>
+                    <th>Carl-bot</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>Prediktivní AI</b></td>
+                    <td>✅ (Markov, KM)</td>
+                    <td>❌ Ne</td>
+                    <td>❌ Ne</td>
+                </tr>
+                <tr>
+                    <td><b>In-memory Analytika</b></td>
+                    <td>✅ Redis (Real-time)</td>
+                    <td>⚠️ SQL (Zpoždění)</td>
+                    <td>⚠️ SQL</td>
+                </tr>
+                <tr>
+                    <td><b>Privacy (GDPR)</b></td>
+                    <td>✅ Export & Smazání</td>
+                    <td>⚠️ Omezené</td>
+                    <td>⚠️ Omezené</td>
+                </tr>
+                <tr>
+                    <td><b>Vážené XP skóre</b></td>
+                    <td>✅ Plně upravitelné</td>
+                    <td>⚠️ Fixní/Jednoduché</td>
+                    <td>❌ Není primární</td>
+                </tr>
+                <tr>
+                    <td><b>Discourse Integrace</b></td>
+                    <td>✅ Nativní</td>
+                    <td>❌ Ne</td>
+                    <td>❌ Ne</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Klíčové rozdíly</h2>
+    
+    <h3>1. Data nad příkazy</h3>
+    <p>Zatímco většina botů se soustředí na moderaci (bany, kicky), Metricord se soustředí na <b>datovou vědu</b>. Neříkáme vám jen, že někdo porušil pravidla, ale říkáme vám, kdo se chystá odejít dříve, než to udělá.</p>
+
+    <h3>2. Nulová latence s Redisem</h3>
+    <p>Díky architektuře založené na Redisu vidíte změny v dashboardu okamžitě. Žádné čekání 10 minut na synchronizaci statistik.</p>
+
+    <h3>3. Akademické základy</h3>
+    <p>Každá metrika v Metricord má matematický základ v oblasti analýzy chování a prediktivního modelování, což z něj dělá nástroj vhodný pro seriózní správu komunit i vědecký výzkum.</p>
+
+    <div class="info-box" style="background: rgba(16, 185, 129, 0.1); border-left-color: #10b981;">
+        <b>Verdikt:</b>
+        Pokud potřebujete komplexní přehled o zdraví komunity a chcete data využívat pro růst, Metricord je bezkonkurenční volba.
+    </div>
+</section>
+{% endblock %}

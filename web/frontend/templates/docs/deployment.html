@@ -1,0 +1,110 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Nasazení a údržba{% endblock %}
+
+{% block docs_content %}
+<section id="deployment">
+    <h1>Nasazení a údržba</h1>
+    <p>Metricord je kontejnerizovaná aplikace. Doporučený způsob nasazení je pomocí <b>Docker Compose</b>.</p>
+
+    <h2>1. Požadavky na systém</h2>
+    <ul>
+        <li><b>OS:</b> Linux (Ubuntu 22.04+ doporučeno).</li>
+        <li><b>CPU:</b> Minimálně 1 jádro (pro malé servery), 4+ jádra (pro velké komunity).</li>
+        <li><b>RAM:</b> 2 GB+ (Redis potřebuje místo pro in-memory data).</li>
+        <li><b>Software:</b> Docker 20.10+ a Docker Compose 2.0+.</li>
+    </ul>
+
+    <h2>2. Instalace (Krok za krokem)</h2>
+    <div class="step-container">
+        <div class="step-number">1</div>
+        <div class="step-content">
+            <h3>Klonování repozitáře</h3>
+            <pre>git clone https://github.com/marcipan/metricord.git
+cd metricord</pre>
+        </div>
+    </div>
+
+    <div class="step-container">
+        <div class="step-number">2</div>
+        <div class="step-content">
+            <h3>Konfigurace prostředí</h3>
+            <p>Zkopírujte vzorový soubor a vyplňte své údaje.</p>
+            <pre>cp .env.example .env
+nano .env</pre>
+            <p>Nezapomeňte vyplnit <code>BOT_TOKEN</code>, <code>DISCORD_CLIENT_ID</code> a <code>DISCORD_CLIENT_SECRET</code>.</p>
+        </div>
+    </div>
+
+    <div class="step-container">
+        <div class="step-number">3</div>
+        <div class="step-content">
+            <h3>Spuštění kontejnerů</h3>
+            <pre>docker-compose up -d --build</pre>
+            <p>Tento příkaz spustí Redis, Bot proces a Dashboard. Aplikace bude dostupná na portu <code>8093</code>.</p>
+        </div>
+    </div>
+
+    <h2>3. Údržba a debugování</h2>
+    <p>Pro kontrolu stavu systému používejte následující příkazy:</p>
+    <ul>
+        <li><b>Zobrazení logů:</b> <code>docker-compose logs -f</code></li>
+        <li><b>Restart systému:</b> <code>docker-compose restart</code></li>
+        <li><b>Čištění dat:</b> <code>docker exec -it metricord-redis redis-cli FLUSHALL</code> (Varování: Smaže všechna
+            data!).</li>
+    </ul>
+
+    <h2>4. Zálohování (Redis Persistence)</h2>
+    <p>Metricord využívá Redis <b>RDB</b> snapshots každých 60 sekund a <b>AOF</b> logging pro maximální bezpečnost dat.
+        Zálohy naleznete v adresáři <code>./redis_data/</code>. Doporučujeme tento adresář pravidelně zálohovat mimo server.
+    </p>
+
+    <div class="info-box" style="background: rgba(245, 158, 11, 0.1); border-left-color: #f59e0b;">
+        <b>⚠️ Aktualizace</b>
+        Před každou aktualizací (<code>git pull</code>) doporučujeme vytvořit snapshot Redisu pomocí příkazu
+        <code>redis-cli SAVE</code>.
+    </div>
+
+    <style>
+        .step-container {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        .step-container:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 50px;
+            bottom: -20px;
+            width: 2px;
+            background: var(--glass-border);
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-g);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            flex-shrink: 0;
+            z-index: 1;
+        }
+
+        .step-content {
+            flex: 1;
+            padding-top: 4px;
+        }
+
+        .step-content h3 {
+            margin-top: 0;
+            color: white;
+        }
+    </style>
+</section>
+{% endblock %}

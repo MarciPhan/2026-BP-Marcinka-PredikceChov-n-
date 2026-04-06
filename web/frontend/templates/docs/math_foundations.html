@@ -1,0 +1,78 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Matematické základy{% endblock %}
+
+{% block docs_content %}
+<section id="math-foundations">
+    <h1>Matematické základy Metricord</h1>
+    <p>Tato sekce slouží jako teoretický podklad pro bakalářskou práci a zájemce o datovou vědu v oblasti komunitního managementu.</p>
+
+    <h2>1. Markovovy řetězce prvního řádu</h2>
+    <p>Pro predikci stavu uživatele využíváme diskrétní Markovovy řetězce (DTMC). Stavový prostor $S$ obsahuje:</p>
+    <ul>
+        <li>$S_1$: Aktivní (Active)</li>
+        <li>$S_2$: Ohrožený (At-Risk)</li>
+        <li>$S_3$: Inaktivní (Inactive)</li>
+        <li>$S_4$: Churn (Odešel)</li>
+    </ul>
+    <p>Matice přechodu $P$ je definována jako:</p>
+    <div class="math-box">
+        $$P = \begin{pmatrix} p_{11} & p_{12} & p_{13} & p_{14} \\ p_{21} & p_{22} & p_{23} & p_{24} \\ p_{31} & p_{32} & p_{33} & p_{34} \\ p_{41} & p_{42} & p_{43} & p_{44} \end{pmatrix}$$
+    </div>
+    <p>Kde $p_{ij} = P(X_{n+1} = j | X_n = i)$. Pravděpodobnosti jsou odhadovány metodou maximální věrohodnosti z historických dat sezení.</p>
+
+    <h2>2. Kaplan-Meierův odhad (Survival Analysis)</h2>
+    <p>Pro výpočet pravděpodobnosti setrvání člena na serveru využíváme funkci přežití $S(t)$:</p>
+    <div class="math-box">
+        $$\hat{S}(t) = \prod_{i: t_i \le t} \left( 1 - \frac{d_i}{n_i} \right)$$
+    </div>
+    <p>Kde $t_i$ je čas, kdy došlo k odchodu aspoň jednoho člena, $d_i$ je počet odchodů v čase $t_i$ a $n_i$ je počet členů "v riziku" těsně před časem $t_i$.</p>
+
+    <h2>4. Analýza časové složitosti (Big O)</h2>
+    <p>Metricord je optimalizován pro real-time zpracování milionů událostí. Zde jsou klíčové parametry výkonu:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Operace</th>
+                <th>Složitost</th>
+                <th>Datová struktura</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Zápis zprávy</td>
+                <td>$O(1)$</td>
+                <td>Redis HyperLogLog (PFADD)</td>
+            </tr>
+            <tr>
+                <td>Výpočet žebříčku</td>
+                <td>$O(\log N)$</td>
+                <td>Redis Sorted Set (ZREVRANGE)</td>
+            </tr>
+            <tr>
+                <td>Predikce Churnu</td>
+                <td>$O(S^2)$</td>
+                <td>Maticové násobení ($S$ = počet stavů)</td>
+            </tr>
+        </tbody>
+    </table>
+    <p>Díky $O(1)$ složitosti zápisu do HyperLogLogu můžeme sledovat neomezený počet unikátních uživatelů bez CPU overheadu.</p>
+
+    <!-- MathJax pro krásné vzorce -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        .math-box {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            overflow-x: auto;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+    </style>
+</section>
+{% endblock %}

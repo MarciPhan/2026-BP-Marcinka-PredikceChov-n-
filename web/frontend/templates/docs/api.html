@@ -1,0 +1,111 @@
+{% extends "docs_base.html" %}
+
+{% block title %}API Reference{% endblock %}
+
+{% block docs_content %}
+<section id="api-reference">
+    <h1>API Reference</h1>
+    <p>Metricord poskytuje RESTful rozhraní pro integraci s dalšími systémy. Většina endpointů vyžaduje autentizaci pomocí
+        sezení (session) nebo API klíče.</p>
+
+    <div class="info-box">
+        <b>Base URL:</b> <code>https://dashboard.metricord.app/api/v1</code>
+    </div>
+
+    <h2>1. Autentizace (Auth API)</h2>
+    <p>Slouží pro přihlašování uživatelů bez nutnosti Discord OAuth2 (např. přes firemní e-mail).</p>
+
+    <div class="endpoint-card">
+        <div class="method-tag post">POST</div>
+        <code>/auth/request-otp</code>
+        <p>Zašle jednorázový kód (OTP) na zadaný e-mail.</p>
+        <pre>
+Payload: { "email": "user@domain.com" }
+Response: 200 OK { "success": true }
+        </pre>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="method-tag post">POST</div>
+        <code>/auth/verify-otp</code>
+        <p>Ověří kód a vytvoří aktivní sezení.</p>
+        <pre>
+Payload: { "email": "user@domain.com", "otp": "123456" }
+Response: 303 Redirect -> /select-server
+        </pre>
+    </div>
+
+    <h2>2. Správa Discourse (Discourse API)</h2>
+    <p>Umožňuje propojení s diskuzními fóry typu Discourse.</p>
+
+    <div class="endpoint-card">
+        <div class="method-tag post">POST</div>
+        <code>/discourse/add</code>
+        <p>Přidá nové fórum k účtu uživatele.</p>
+        <pre>
+Payload: { "url": "https://forum.example.com", "api_key": "...", "api_user": "system" }
+Response: 200 OK { "success": true, "guild_id": "-123456" }
+        </pre>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="method-tag post">POST</div>
+        <code>/discourse/sync</code>
+        <p>Vynutí okamžitou synchronizaci dat z fóra do Metricord databáze.</p>
+        <pre>
+Payload: { "guild_id": "-123456" }
+Response: 200 OK { "success": true }
+        </pre>
+    </div>
+
+    <h2>3. Administrace systému (Admin API)</h2>
+    <p>Dostupné pouze pro uživatele s rolí <code>admin</code>.</p>
+
+    <div class="endpoint-card">
+        <div class="method-tag post">POST</div>
+        <code>/admin/config/bot-token</code>
+        <p>Aktualizuje Discord Bot Token bez nutnosti restartu celého serveru.</p>
+        <pre>
+Payload: { "token": "MTI..." }
+Response: 200 OK
+        </pre>
+    </div>
+
+    <style>
+        .endpoint-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .method-tag {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 800;
+            font-size: 0.75rem;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        .method-tag.post { background: #10b981; color: white; }
+        .method-tag.get { background: #3b82f6; color: white; }
+
+        .endpoint-card code {
+            font-size: 1.1rem;
+            color: white;
+            background: none;
+            padding: 0;
+        }
+
+        .endpoint-card pre {
+            margin-bottom: 0;
+            background: #000;
+            font-size: 0.9rem;
+        }
+    </style>
+</section>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Whitepaper{% endblock %}
+
+{% block docs_content %}
+<section id="whitepaper">
+    <h1>Metricord Whitepaper: Budoucnost digitálních komunit</h1>
+    <p class="subtitle">Teoretický fundament a vize decentralizované analytiky (Verze 1.0)</p>
+
+    <h2>1. Abstrakt</h2>
+    <p>Metricord řeší problém "tiché eroze" v digitálních komunitách. Tento whitepaper popisuje, jak kombinace in-memory analytiky a pravděpodobnostních modelů umožňuje reagovat na krize dříve, než se stanou nevratnými.</p>
+
+    <h2>2. Architektonické paradigma</h2>
+    <p>Na rozdíl od tradičních systémů využívajících relační databáze pro transakční logování, Metricord využívá <b>Stream-centric Architecture</b>. Data jsou vnímána jako nekonečný proud událostí, které jsou agregovány v reálném čase pomocí matematických aproximací (HLL).</p>
+
+    <h2>3. Prediktivní etika</h2>
+    <p>Využívání AI pro sledování chování uživatelů nese etická rizika. Metricord striktně odděluje <i>Behaviorální strukturu</i> (kdy a jak moc uživatel píše) od <i>Obsahové podstaty</i> (co píše). Naše predikce vycházejí výhradně ze struktury, čímž chráníme soukromí členů.</p>
+
+    <h2>4. Evoluce k decentralizaci</h2>
+    <p>Dlouhodobým cílem projektu je umožnit komunitám vlastnit svá analytická data prostřednictvím end-to-end šifrování a distribuovaných databází, kde i majitel bota nemá k surovým datům přístup.</p>
+
+    <div class="math-box" style="margin: 40px 0; border: 2px solid var(--primary);">
+        "Data jsou novým hlasem komunity. Metricord je jejich tlumočníkem."
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Labs & Experiments{% endblock %}
+
+{% block docs_content %}
+<section id="labs">
+    <h1>Metricord "Labs": Experimentální funkce</h1>
+    <p>Nahlédněte pod pokličku vývoje. Tyto funkce jsou v beta režimu a vyžadují aktivaci v <code>config.py</code>.</p>
+
+    <div class="lab-card">
+        <h3>1. Voice Sentiment Detection (VoiceAI)</h3>
+        <p>Analýza tónu hlasu (nikoliv obsahu) pro detekci agrese nebo radosti ve voice kanálech.</p>
+        <span class="status-badge">In Alpha</span>
+    </div>
+
+    <div class="lab-card">
+        <h3>2. Image Pattern Recognition</h3>
+        <p>Detekce vizuálního spamu (stejné memy, QR kódy) pomocí lehkých neuronových sítí přímo u bota.</p>
+        <span class="status-badge">R&D Stage</span>
+    </div>
+
+    <div class="lab-card">
+        <h3>3. Multi-platform Sync (Matrix/Telegram)</h3>
+        <p>Propojení statistik z Discordu se statistikami z Telegramu pro "Omni-community" přehled.</p>
+        <span class="status-badge">Planning</span>
+    </div>
+
+    <style>
+        .lab-card {
+            background: rgba(139, 92, 246, 0.03);
+            border: 1px solid var(--glass-border);
+            padding: 25px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .lab-card::after {
+            content: "LABS";
+            position: absolute;
+            top: 20px;
+            right: -30px;
+            background: var(--primary);
+            color: white;
+            padding: 5px 40px;
+            transform: rotate(45deg);
+            font-size: 0.7rem;
+            font-weight: 800;
+        }
+        .status-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.05);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+    </style>
+</section>
+{% endblock %}

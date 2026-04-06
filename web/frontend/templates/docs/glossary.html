@@ -1,0 +1,89 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Glosář pojmů{% endblock %}
+
+{% block docs_content %}
+<section id="glossary">
+    <h1>Glosář pojmů</h1>
+    <p>Kompletní přehled termínů a zkratek, se kterými se v Metricord setkáte.</p>
+
+    <div style="margin-top: 40px;">
+        <h2>A</h2>
+        <div class="glossary-item">
+            <b>Aktivní uživatel (Active User)</b>
+            Uživatel, který v daném období (24h nebo 30d) provedl alespoň jednu "aktivní akci" (zpráva, voice, reakce).
+        </div>
+        <div class="glossary-item">
+            <b>Anti-Spam XP</b>
+            Mechanismus omezující zisk bodů na maximálně jednou za 60 sekund za účelem férovosti žebříčku.
+        </div>
+
+        <h2>D</h2>
+        <div class="glossary-item">
+            <b>DAU (Daily Active Users)</b>
+            Počet unikátních aktivních uživatelů za posledních 24 hodin.
+        </div>
+        <div class="glossary-item">
+            <b>DQS (Data Quality Score)</b>
+            Index od 0.0 do 1.0 udávající spolehlivost analytických modelů na základě objemu dat.
+        </div>
+
+        <h2>E</h2>
+        <div class="glossary-item">
+            <b>Engagement Score</b>
+            Kompozitní metrika zdraví serveru složená z aktivity, bezpečnosti a správy týmu.
+        </div>
+
+        <h2>H</h2>
+        <div class="glossary-item">
+            <b>HyperLogLog (HLL)</b>
+            Pravděpodobnostní algoritmus pro efektivní počítání unikátních prvků (uživatelů) v milionech záznamů.
+        </div>
+
+        <h2>K</h2>
+        <div class="glossary-item">
+            <b>Kaplan-Meier</b>
+            Statistický model pro odhad pravděpodobnosti přežití (retence) uživatelů v čase.
+        </div>
+
+        <h2>M</h2>
+        <div class="glossary-item">
+            <b>MAU (Monthly Active Users)</b>
+            Počet unikátních aktivních uživatelů za posledních 30 dní.
+        </div>
+        <div class="glossary-item">
+            <b>Markovovy řetězce</b>
+            Matematický model předpovídající budoucí stav uživatele na základě jeho aktuální aktivity.
+        </div>
+        <div class="glossary-item">
+            <b>MII (Moderator Intervention Index)</b>
+            Index toxicity měřící poměr moderátorských zásahů k celkovému objemu zpráv.
+        </div>
+
+        <h2>S</h2>
+        <div class="glossary-item">
+            <b>Stickiness (Lepivost)</b>
+            Poměr DAU / MAU, vyjádřený v procentech. Indikuje loajalitu komunity.
+        </div>
+        <div class="glossary-item">
+            <b>Survival Curve (Křivka přežití)</b>
+            Grafický výstup Kaplan-Meierova modelu ukazující úbytek uživatelů v čase.
+        </div>
+    </div>
+
+    <style>
+        .glossary-item {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .glossary-item b {
+            display: block;
+            color: var(--primary);
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+    </style>
+</section>
+{% endblock %}

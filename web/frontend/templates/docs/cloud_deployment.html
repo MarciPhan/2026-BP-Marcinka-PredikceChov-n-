@@ -1,0 +1,66 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Cloud Deployment{% endblock %}
+
+{% block docs_content %}
+<section id="cloud-deployment">
+    <h1>Cloud Deployment (AWS, GCP, Azure)</h1>
+    <p>Metricord je plně "Cloud Ready". Zde jsou konfigurace pro profesionální nasazení v cloudu.</p>
+
+    <h2>1. Terraform (Infrastruktura jako kód)</h2>
+    <p>Použijte tento Terraform snippet pro vytvoření t3.medium instance na AWS s předinstalovaným Dockerem.</p>
+    <pre><code class="language-hcl">resource "aws_instance" "metricord_prod" {
+  ami           = "ami-0c55b159cbfafe1f0" # Ubuntu 24.04
+  instance_type = "t3.medium"
+  
+  tags = {
+    Name = "Metricord-Production"
+  }
+
+  user_data = <<-EOF
+              #!/bin/bash
+              apt-get update
+              apt-get install -y docker.io docker-compose
+              EOF
+}</code></pre>
+
+    <h2>2. Ansible (Konfigurace OS)</h2>
+    <p>Automatizujte instalaci závislostí a stažení bota na vašem serveru.</p>
+    <pre><code class="language-yaml">- name: Setup Metricord Node
+  hosts: all
+  tasks:
+    - name: Install Docker
+      apt: name=docker.io state=present
+    - name: Copy .env
+      copy: src=.env dest=/opt/metricord/.env
+    - name: Launch Metricord
+      docker_service:
+        project_src: /opt/metricord
+        state: present</code></pre>
+
+    <h2>3. Kubernetes (Vysoká dostupnost)</h2>
+    <p>Pro deployment v GKE nebo EKS využijte tento manifest pro cluster s Redisem.</p>
+    <pre><code class="language-yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metricord-bot
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+      - name: bot
+        image: metricord/bot:latest
+        envFrom:
+        - dotEnv: .env</code></pre>
+    <p>Pro profesionální provoz doporučujeme přidat do <code>docker-compose.yml</code> exportér pro Redis a sledovat metriky v Grafaně.</p>
+    <ul>
+        <li><b>Klíčová metrika:</b> <code>redis_memory_used_bytes</code></li>
+        <li><b>Alert:</b> Pokud paměť přesáhne 90 %, automaticky škálujeme instanci.</li>
+    </ul>
+
+    <div class="info-box" style="background: rgba(59, 130, 246, 0.1); border-left-color: #3b82f6;">
+        <b>💡 Tip:</b> Pro nejlevnější provoz doporučujeme <i>Hetzner Cloud</i> nebo <i>DigitalOcean</i>, kde získáte dedikovanou RAM pro Redis za zlomek ceny velkých cloudů.
+    </div>
+</section>
+{% endblock %}

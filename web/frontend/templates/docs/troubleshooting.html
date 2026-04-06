@@ -1,0 +1,144 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Řešení potíží{% endblock %}
+
+{% block docs_content %}
+<section id="troubleshooting">
+    <h1>Řešení potíží (Troubleshooting)</h1>
+    <p>Narazili jste na problém? Zde jsou nejčastější technické komplikace a návod, jak je během pár vteřin opravit.</p>
+
+    <h2>Běžné problémy a řešení</h2>
+    
+    <div class="error-grid">
+        <div class="error-item">
+            <h3><code>E001: REDIS_CONN_ERROR</code></h3>
+            <p><b>Symptom:</b> Bot neodpovídá na příkazy, dashboard ukazuje "Internal Server Error".</p>
+            <p><b>Řešení:</b> Zkontrolujte, zda běží kontejner s Redisem (<code>docker ps</code>). Pokud ano, ověřte shodu hesla v <code>.env</code> a v konfiguraci Redisu.</p>
+        </div>
+
+        <div class="error-item">
+            <h3><code>E002: OAUTH_MISMATCH</code></h3>
+            <p><b>Symptom:</b> Po přihlášení přes Discord dashboard napíše "Invalid Redirect URI".</p>
+            <p><b>Řešení:</b> V Discord Developer Portalu musí být v sekci OAuth2 přidána přesná URL vašeho dashboardu zakončená <code>/auth/callback</code>.</p>
+        </div>
+
+        <div class="error-item">
+            <h3><code>E003: BOT_MISSING_PERMS</code></h3>
+            <p><b>Symptom:</b> Bot nesbírá data z některých kanálů.</p>
+            <p><b>Řešení:</b> Bot musí mít v daném kanálu oprávnění <code>View Channel</code> a <code>Read Message History</code>. Zkontrolujte "Channel Overrides".</p>
+        </div>
+    </div>
+
+    <style>
+        .error-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .error-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            padding: 20px;
+            border-radius: 12px;
+        }
+        .error-item h3 {
+            margin-top: 0;
+            color: #ef4444;
+            font-family: monospace;
+        }
+    </style>
+
+    <h2>1. Problémy s botem</h2>
+    
+    <div class="trouble-card">
+        <h3>🔴 Bot nereaguje na příkazy</h3>
+        <p><b>Možné příčiny:</b></p>
+        <ul>
+            <li>Bot nemá zapnutý <code>Message Content Intent</code> v Discord Developer Portálu.</li>
+            <li>Bot nemá roli, která mu umožňuje číst daný kanál.</li>
+        </ul>
+        <p><b>Řešení:</b> Zkontrolujte oprávnění bota. Musí mít roli <i>"Metricord"</i> nad všemi ostatními rolemi pro
+            správnou synchronizaci.</p>
+    </div>
+
+    <div class="trouble-card">
+        <h3>🟡 Statistiky se neaktualizují</h3>
+        <p><b>Možné příčiny:</b></p>
+        <ul>
+            <li>Výpadek spojení s Redisem.</li>
+            <li>Bot je v režimu "Rate Limit" od Discordu.</li>
+        </ul>
+        <p><b>Řešení:</b> Restartujte bota příkazem <code>docker-compose restart bot</code>. Pokud status v dashboardu
+            stále svítí červeně, zkontrolujte logy pomocí <code>docker logs metricord-bot</code>.</p>
+    </div>
+
+    <h2>2. Problémy s Dashboardem</h2>
+
+    <div class="trouble-card">
+        <h3>⚪ "Unauthorized" při přihlášení</h3>
+        <p><b>Řešení:</b> Vymažte cookies prohlížeče pro doménu metricord.app nebo zkuste Incognito režim. Vaše sezení
+            pravděpodobně vypršelo, ale token zůstal v paměti.</p>
+    </div>
+
+    <div class="trouble-card">
+        <h3>⚪ Grafy jsou prázdné</h3>
+        <p><b>Řešení:</b> Počkejte alespoň 15-30 minut od pozvání bota. Pokud jsou prázdné i po dni, ujistěte se, že bot
+            není v kanálech na "Blacklistu" v nastavení.</p>
+    </div>
+
+    <h2>3. Chybové kódy</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Kód</th>
+                <th>Význam</th>
+                <th>Akce</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>ERR_REDIS_CONN</code></td>
+                <td>Nelze se připojit k databázi.</td>
+                <td>Zkontrolujte <code>REDIS_URL</code> v <code>.env</code>.</td>
+            </tr>
+            <tr>
+                <td><code>ERR_DISCORD_403</code></td>
+                <td>Chybějící oprávnění (Forbidden).</td>
+                <td>Zkuste bota pozvat znovu s administrátorskými právy.</td>
+            </tr>
+            <tr>
+                <td><code>ERR_DQS_LOW</code></td>
+                <td>Nízká kvalita dat pro predikci.</td>
+                <td>Sbírejte data déle (min. 7 dní).</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="info-box" style="background: rgba(239, 68, 68, 0.1); border-left-color: #ef4444;">
+        <b>Stále nefunguje?</b>
+        Spusťte diagnostický skript: <code>python3 check_health.py</code>. Výstup pošlete našemu týmu na Discordu.
+    </div>
+
+    <style>
+        .trouble-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .trouble-card h3 {
+            margin-top: 0;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .trouble-card ul {
+            margin: 10px 0;
+            color: var(--text-muted);
+        }
+    </style>
+</section>
+{% endblock %}

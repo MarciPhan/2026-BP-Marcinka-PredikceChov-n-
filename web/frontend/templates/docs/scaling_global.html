@@ -1,0 +1,27 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Global Scaling{% endblock %}
+
+{% block docs_content %}
+<section id="scaling-global">
+    <h1>Global Scaling & High Availability</h1>
+    <p>Jak provozovat Metricord pro miliony uživatelů napříč kontinenty.</p>
+
+    <h2>1. Redis Sentinel (HA)</h2>
+    <p>Pro zajištění běhu i při výpadku hlavního databázového uzlu využijte Redis Sentinel. Ten automaticky zvolí nového Mastera, pokud hlavní uzel selže.</p>
+    <pre><code class="language-yaml"># Příklad sentinel.conf
+sentinel monitor mymaster 127.0.0.1 6379 2
+sentinel down-after-milliseconds mymaster 5000
+sentinel failover-timeout mymaster 60000</code></pre>
+
+    <h2>2. Redis Sharding (Cluster)</h2>
+    <p>Pokud se data (events) nevejdou do RAM jednoho serveru, využijte Redis Cluster pro horizontální škálování. Data budou rozdělena do 16,384 slotů napříč uzly.</p>
+
+    <h2>3. Geo-Distributed Monitoring</h2>
+    <p>Pro servery s globální komunitou doporučujeme nasadit "Edge" boty v různých regionech (US-East, EU-Central, ASIA-South), kteří budou data posílat do centrálního Redis clusteru.</p>
+
+    <div class="info-box" style="background: rgba(59, 130, 246, 0.1); border-left-color: #3b82f6;">
+        <b>Architektonický tip:</b> Pro globální škálování je klíčová latence k Redisu. Vždy se snažte mít bota i Redis v rámci stejného regionu a stejné VPC.
+    </div>
+</section>
+{% endblock %}

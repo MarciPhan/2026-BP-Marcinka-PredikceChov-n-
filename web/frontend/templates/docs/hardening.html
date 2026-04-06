@@ -1,0 +1,32 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Security Hardening{% endblock %}
+
+{% block docs_content %}
+<section id="hardening">
+    <h1>Security Hardening (Zabezpečení serveru)</h1>
+    <p>Metricord je bezpečný, ale váš server musí být také. Tento průvodce ukazuje, jak ochránit systém na úrovni OS.</p>
+
+    <h2>1. Firewall (UFW)</h2>
+    <p>Povolte pouze nezbytné porty. Redis by neměl být nikdy přístupný zvenčí.</p>
+    <pre><code>ufw default deny incoming
+ufw allow 22/tcp # SSH
+ufw allow 80/tcp # HTTP
+ufw allow 443/tcp # HTTPS
+ufw enable</code></pre>
+
+    <h2>2. Redis ACL (Access Control Lists)</h2>
+    <p>Pokud používáte Redis 6.0+, zaveďte uživatelské účty s omezenými právy pro bota a dashboard.</p>
+    <pre><code>user bot on >password ~events:* ~stats:* +@all -@admin
+user dashboard on >password ~stats:* +get +set</code></pre>
+
+    <h2>3. Fail2Ban</h2>
+    <p>Nainstalujte Fail2Ban pro ochranu SSH a dashboardu (pokud zaznamenáte bruteforce útoky na login).</p>
+    <pre><code>apt install fail2ban
+# Konfigurace v /etc/fail2ban/jail.local</code></pre>
+
+    <div class="warning-box" style="background: rgba(239, 68, 68, 0.1); border-left-color: #ef4444; padding: 15px; border-radius: 8px;">
+        <b>⚠️ Pozor:</b> Nikdy nepoužívejte výchozí hesla pro Redis nebo Docker API. Vždy generujte silné 32-znakové řetězce do <code>.env</code>.
+    </div>
+</section>
+{% endblock %}

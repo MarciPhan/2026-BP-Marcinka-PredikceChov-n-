@@ -1,0 +1,119 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Průvodce pro moderátory{% endblock %}
+
+{% block docs_content %}
+<section id="moderators">
+    <h1>Průvodce pro moderátory (Extenzivní edice)</h1>
+    <p>Tato příručka je navržena jako ultimátní zdroj pro tým Metricord moderátorů. Pokrývá vše od základních příkazů až po
+        pokročilou psychologii komunit a interpretaci prediktivních modelů.</p>
+
+    <div class="info-box">
+        <b>💡 Filozofie Metricord: Data-Driven Moderace</b>
+        V běžných systémech moderátor reaguje pouze na incidenty (reaktivní moderace). Metricord vám umožňuje
+        <b>proaktivní moderaci</b> – identifikaci problémů dříve, než se stanou kritickými.
+    </div>
+
+    <h2>1. Životní cyklus uživatele a vaše role</h2>
+    <p>Každý uživatel prochází pěti stavy. Vaším úkolem je ovlivňovat pravděpodobnosti přechodů mezi nimi:</p>
+    <ul>
+        <li><b>New (Nový):</b> Prvních 24 hodin. Kritická fáze pro onboarding.</li>
+        <li><b>Active (Aktivní):</b> Jádro komunity. Udržujte je zapojené zajímavým obsahem.</li>
+        <li><b>Passive (Pasivní):</b> "Lurkers". Čtou, ale nepíšou. Potřebují "postrčit" k první zprávě.</li>
+        <li><b>Inactive (Neaktivní):</b> Hazardní zóna. Pokud se nevrátí do 7 dnů, pravděpodobně odejdou navždy.</li>
+        <li><b>Churned (Odešel):</b> Uživatel je ztracen. Analýza těchto dat pomáhá zabránit odchodu ostatních.</li>
+    </ul>
+
+    <h2>2. Hloubkový rozbor metrik Dashboardu</h2>
+
+    <h3>Engagement Score (Vážený index zapojení)</h3>
+    <p>Tento index není jen průměr, ale vážený výpočet <code>(W1*Activity + W2*Security + W3*Team)</code>.</p>
+    <ul>
+        <li><b>Kritická mez (<30):</b> Server je v klinické smrti. Moderátoři by měli iniciovat diskuzi nebo eventy.</li>
+        <li><b>Optimální zóna (65-85):</b> Zdravá komunita s vyváženým poměrem šumu a kvality.</li>
+        <li><b>Hyperaktivní (>90):</b> Pozor na spam a toxicitu. Vysoký engagement často provází hádky.</li>
+    </ul>
+
+    <h3>Stickiness vs. Churn Rate</h3>
+    <p>Pokud Stickiness klesá a Churn Rate roste současně, máte <b>strukturální problém</b> (např. toxické jádro starších
+        členů, které odrazuje nováčky).</p>
+
+    <h2>3. Krizové scénáře a jejich řešení</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 30px 0;">
+        <div class="info-box" style="margin: 0; background: rgba(239, 68, 68, 0.1); border-left-color: #ef4444;">
+            <b>🚨 Scénář: "Náhlý úbytek DAU"</b>
+            <b>Příčina:</b> Výpadek obsahu, konkurenční server, nebo interní konflikt.<br>
+            <b>Řešení:</b> Podívejte se na <code>/activity stats</code> nejaktivnějších členů. Pokud přestali psát ti,
+            co dělali 50% aktivity, kontaktujte je soukromě.
+        </div>
+        <div class="info-box" style="margin: 0; background: rgba(245, 158, 11, 0.1); border-left-color: #f59e0b;">
+            <b>⚠️ Scénář: "Vysoký MII (Toxicitu)"</b>
+            <b>Příčina:</b> Nedostatečná pravidla nebo absence moderátorů ve špičce.<br>
+            <b>Řešení:</b> Zkontrolujte Heatmapu. Pokud špička toxicity sedí na 22:00, posilte noční směnu moderátorů.
+        </div>
+    </div>
+
+    <h2>4. Kompletní katalog moderátorských příkazů</h2>
+    <p>Metricord zavádí hybridní příkazy (Slash i Prefix <code>*</code>).</p>
+
+    <div style="background: var(--glass); padding: 20px; border-radius: 12px; border: 1px solid var(--glass-border);">
+        <h3>🛡️ Moderátorské (Admin Only)</h3>
+        <ul>
+            <li><code>/activity report</code>: Vygeneruje PDF/Embed s aktivitou týmu. Ukazuje <i>Weighted Moderation
+                    Points</i>.</li>
+            <li><code>/activity sync_names</code>: Opraví nesoulad mezi Discordem a Redis databází.</li>
+            <li><code>/activity backfill [days]</code>: Pozor! Tento příkaz je náročný na CPU. Používejte jen po
+                přidání bota na starší server k načtení historie.</li>
+        </ul>
+
+        <h3>📊 Analytické (Public/Staff)</h3>
+        <ul>
+            <li><code>/activity stats [user]</code>: Neocenitelné při "ban appeal". Uvidíte, zda byl uživatel dříve
+                přínosem.</li>
+            <li><code>/activity leaderboard</code>: Neslouží jen k egu, ale k identifikaci budoucích moderátorů.</li>
+            <li><code>/help [modul]</code>: Rychlý odkaz na konkrétní část této dokumentace.</li>
+        </ul>
+    </div>
+
+    <h2>5. MII: Jak systém počítá toxicitu?</h2>
+    <p>Index MII není binární. Počítá se jako:</p>
+    <pre>MII = (Bány*10 + Timeouty*3 + Smazané zprávy*1) / Celkový počet zpráv</pre>
+    <p>To znamená, že smazání 10 zpráv má stejnou váhu jako jeden Ban. Systém vám v dashboardu doporučí, kolik modů je
+        potřeba pro udržení rozumného MII.</p>
+
+    <h2>6. Práce s prediktivními modely</h2>
+    <p>Jako moderátor byste měli sledovat kartu <b>"Predictions"</b>:</p>
+    <ul>
+        <li><b>Markov Churn Expectancy:</b> Pokud model očekává odchod 15% členů do 3 dnů, je to signál k aktivaci
+            "Retention Eventu" (např. giveaway nebo anketa).</li>
+        <li><b>Survival Curve:</b> Sledujte bod zlomu. Pokud 50% lidí odejde po 5 dnech, zkuste v 4. den poslat hromadnou
+            notifikaci nebo zajímavý obsah.</li>
+    </ul>
+
+    <h2>7. GDPR a povinnosti týmu</h2>
+    <p>V systému Metricord jsou data anonymizována po 90 dnech. Jako moderátoři však nesmíte uživatelská data (např.
+        historii aktivity) šířit mimo tým. </p>
+    <div class="info-box" style="background: rgba(16, 185, 129, 0.1); border-left-color: #10b981;">
+        <b>Právo na smazání:</b> Pokud uživatel napíše "Smažte moje data", stačí mu říct, ať použije <code>/privacy
+            delete</code>. O zbytek se postará bot automaticky.
+    </div>
+
+    <h2>8. FAQ pro moderátory</h2>
+    <details style="margin-bottom: 10px; cursor: pointer; background: var(--glass); padding: 10px; border-radius: 8px;">
+        <summary style="font-weight: 600;">Proč bot nepočítá zprávy v některých kanálech?</summary>
+        <p style="margin-top: 10px;">Bot ignoruje kanály, ke kterým nemá právo <code>View Channel</code> nebo jsou na
+            Blacklistu v konfiguraci (např. NSFW sekce nebo Staff kanály).</p>
+    </details>
+    <details style="margin-bottom: 10px; cursor: pointer; background: var(--glass); padding: 10px; border-radius: 8px;">
+        <summary style="font-weight: 600;">Jak se liší "Voice Time" a "Weighted Time"?</summary>
+        <p style="margin-top: 10px;">Voice Time jsou čisté sekundy. Weighted Time zohledňuje aktivitu. Sedění v AFK
+            kanálu dává 0 bodů do Weighted Time.</p>
+    </details>
+    <details style="margin-bottom: 30px; cursor: pointer; background: var(--glass); padding: 10px; border-radius: 8px;">
+        <summary style="font-weight: 600;">Může bot odhalit "Alty"?</summary>
+        <p style="margin-top: 10px;">Ano, v sekci Security dashboardu bot porovnává Join-time a vzorce chování. Pokud dva
+            účty píší ve stejné časy a mají podobnou délku zpráv, dostanou varování "Potential Alt".</p>
+    </details>
+
+</section>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Developer Guide{% endblock %}
+
+{% block docs_content %}
+<section id="dev-guide">
+    <h1>Developer Guide: Rozšiřování Metricord</h1>
+    <p>Chcete přidat vlastní metriku nebo nový AI model? Tento průvodce vás provede architekturou modulů.</p>
+
+    <h2>1. Struktura Analytics Modulu</h2>
+    <p>Všechny výpočty metrik probíhají v <code>bot/commands/activity.py</code> a jsou agregovány v <code>bot/commands/stats_hll.py</code>.</p>
+    
+    <h3>Přidání nové metriky (Kroky):</h3>
+    <ol>
+        <li>Definujte nový klíč v Redisu (např. <code>stats:custom:{gid}</code>).</li>
+        <li>Implementujte listener v <code>bot/main.py</code> nebo jako nový Cog.</li>
+        <li>Přidejte API endpoint do <code>web/backend/main.py</code> pro zobrazení v dashboardu.</li>
+    </ol>
+
+    <h2>2. Vlastní AI Modely</h2>
+    <p>Predikční engine v <code>web/backend/utils.py</code> je navržen jako modulární. Můžete přidat vlastní funkci <code>predict_X</code>, která bere data z Redisu a vrací pravděpodobnost.</p>
+
+    <pre><code class="language-python"># Příklad nového prediktoru
+async def predict_participation(r, guild_id):
+    history = await r.zrange(f"events:msg:{guild_id}:*", 0, -1)
+    # Vaše logika (např. pomocí scikit-learn)
+    return 0.95</code></pre>
+
+    <h2>3. Frontend komponenty</h2>
+    <p>Dashboard používá <b>Chart.js</b> a <b>Tailwind-like Vanilla CSS</b>. Pokud přidáváte nový graf, stačí vytvořit nový <code>&lt;canvas&gt;</code> a inicializovat jej v <code>dashboard.html</code> pomocí dat z vašeho nového API endpointu.</p>
+
+    <div class="info-box" style="background: rgba(139, 92, 246, 0.1); border-left-color: #8b5cf6;">
+        <b>Důležité:</b> Vždy zachovávejte asynchronní povahu kódu (async/await) kvůli vysoké propustnosti bota.
+    </div>
+</section>
+{% endblock %}

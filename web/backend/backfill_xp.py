@@ -24,11 +24,10 @@ async def backfill_xp():
     xp_key = f"levels:xp:{guild_id}"
     print(f"Starting XP backfill for Guild {guild_id}...")
     
-    
-    
-    
-    
-    
+    # Weights for seasonal adjustment
+    NIGHT_START = 2
+    NIGHT_END = 6
+    NIGHT_BOOST = 1.25 # 25% boost to compensate for natural night-time decline
     
     cursor = "0"
     processed_users = 0
@@ -45,9 +44,12 @@ async def backfill_xp():
         for _, score in msgs:
             ts = float(score)
             
+            # Check for night-time (seasonal adjustment)
+            dt = datetime.fromtimestamp(ts)
+            multiplier = NIGHT_BOOST if NIGHT_START <= dt.hour <= NIGHT_END else 1.0
             
             if ts - last_xp_time >= 60:
-                gain = random.randint(15, 25)
+                gain = int(random.randint(15, 25) * multiplier)
                 total_xp += gain
                 last_xp_time = ts
         

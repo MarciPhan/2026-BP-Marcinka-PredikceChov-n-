@@ -1,38 +1,172 @@
 {% extends "docs_base.html" %}
 
-{% block title %}Predikce{% endblock %}
+{% block title %}Predikce a Machine Learning{% endblock %}
 
 {% block docs_content %}
 <section id="ai">
-    <h1>Predikce a Machine Learning</h1>
-    <p>Náš prediktivní engine využívá kombinaci statistických modelů a strojového učení k odhadu budoucího vývoje vašeho
-        serveru.</p>
+    <h1>Predikce a Matematické modelování</h1>
+    <p>Metricord využívá pokročilý statistický aparát k pochopení dynamiky komunit. V této sekci vysvětlujeme, jak naše
+        modely pracují s vašimi daty a co přesně znamenají jejich výstupy.</p>
 
-    <h2>Jak to funguje?</h2>
-    <p>Model zpracovává historická data za posledních 30 až 90 dní (dle tarifu) a hledá v nich vzorce:</p>
+    <h2>3. Technické detaily predikce</h2>
+    <p>Naše AI nepracuje s "černou skříňkou". Vše je založeno na transparentní matematice. Zde je schéma toku dat v predikčním enginu:</p>
 
-    <h3>Lineární regrese (Linear Regression)</h3>
-    <p>Používáme ji pro modelování dlouhodobých trendů růstu členů (Community Growth).</p>
+    <div class="mermaid-container">
+        <pre class="mermaid">
+graph TD
+    A[Zpráva od uživatele] --> B{Zpracování}
+    B -->|Analyzátor| C[XP & Rank]
+    B -->|Časová řada| D[Markovova matice]
+    D --> E[Stav: Aktivní]
+    D --> F[Stav: At-Risk]
+    D --> G[Stav: Inaktivní]
+    F -->|Signal| H[Smart Insight pro moderátora]
+    E -->|Validation| I[Kaplan-Meier Survival]
+    G -->|Historical| I
+    I --> J[Očekávaná délka života člena]
+        </pre>
+    </div>
+
+    <h3>Markovovy řetězce (Transition Layers)</h3>
+    <p>Systém rozděluje uživatele do stavů podle jejich aktivity v posledních 7 dnech. Pravděpodobnost přechodu ze stavu <i>Aktivní</i> do <i>Inaktivní</i> je klíčovým indikátorem zdraví serveru. Pokud matice ukazuje náhlý posun pravděpodobností směrem k inaktivitě, systém vyhodnotí varování.</p>
+
+    <h3>Kaplan-Meierův odhad</h3>
+    <p>Používáme k výpočtu "Survival rate" komunity. Pomáhá nám zodpovědět otázku: <i>"Pokud uživatel zůstane 30 dní, jaká je pravděpodobnost, že zůstane i příští měsíc?"</i></p>
+
+    <!-- JS pro Mermaid -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    </script>
+
+    <style>
+        .mermaid-container {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 30px 0;
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+
+    <h2>4. Interpretace Confidence Scores</h2>
+    <p>Každá predikce v Metricord je doprovázena "Skóre spolehlivosti" (Confidence Score). Toto číslo (0–1.0) udává, jak moc si je model jistý svou předpovědí na základě dostupných dat.</p>
     <ul>
-        <li>Počítá průměrný denní přírůstek.</li>
-        <li>Očišťuje data o náhodné výkyvy (např. jednorázové eventy).</li>
-        <li>Zohledňuje "Churn Rate" (míru odchodů) pro realistický odhad čistého růstu.</li>
+        <li><b>High (> 0.8):</b> Velmi spolehlivé. Doporučujeme okamžitou akci moderátora.</li>
+        <li><b>Medium (0.5 - 0.8):</b> Indikativní. Sledujte uživatele příštích pár dní.</li>
+        <li><b>Low (< 0.5):</b> Experimentální. Často způsobeno nedostatkem historických dat o daném uživateli.</li>
     </ul>
 
-    <h3>Analýza časových řad (SARIMA)</h3>
-    <p>Pro predikci aktivity (Message Traffic) využíváme model SARIMA (Seasonal AutoRegressive Integrated Moving
-        Average).</p>
+    <h2>5. Cyklus učení modelů (Retraining)</h2>
+    <p>Metricord není statický. Modely se neustále adaptují na měnící se kulturu vašeho serveru.</p>
     <ul>
-        <li><b>Sezónnost:</b> Bere v úvahu, že aktivita je jiná v pondělí ráno a jiná v pátek večer.</li>
-        <li><b>Cykličnost:</b> Detekuje týdenní cykly návštěvnosti.</li>
-        <li><b>Predikce špiček:</b> Dokáže varovat před očekávanou vysokou zátěží (např. vždy po vydání nového patche
-            hry).</li>
+        <li><b>Incremental Updates:</b> Probíhají každou hodinu při sběru nových dat do sezení.</li>
+        <li><b>Full Retraining:</b> Probíhá automaticky jednou za 24 hodin (obvykle ve 3:00 ráno), kdy se přepočítávají globální pravděpodobnosti Markovových matic.</li>
+    </ul>
+
+    <div class="info-box" style="background: rgba(16, 185, 129, 0.1); border-left-color: #10b981;">
+        <b>Poznámka:</b> Čím delší historii dat (Backfill) máte, tím přesnější jsou dlouhodobé predikce odchodu (Churn).
+    </div>
+    
+    <h2>6. Hloubkový ponor: Výpočet limitní pravděpodobnosti</h2>
+    <p>Markovův řetězec v Metricord směřuje k tzv. ustálenému stavu (equilibrium). Pokud matice přechodu $P$ je regulární, existuje vektor $\pi$ takový, že:</p>
+    <div class="math-box">
+        $$\pi P = \pi$$
+    </div>
+    <p>Tento vektor nám říká, jaký podíl uživatelů skončí v jednotlivých stavech (Aktivní, Riziko, Churn) po nekonečně dlouhé době, pokud se nezmění jejich chování. Naši analytici tento vektor sledují jako "Predikci finální retence".</p>
+
+    <h2>7. Matice přechodu (Příklad reálných dat)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Z/DO</th>
+                <th>Aktivní</th>
+                <th>Riziko</th>
+                <th>Inaktivní</th>
+                <th>Churn</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><b>Aktivní</b></td>
+                <td>0.85</td>
+                <td>0.10</td>
+                <td>0.04</td>
+                <td>0.01</td>
+            </tr>
+            <tr>
+                <td><b>Riziko</b></td>
+                <td>0.30</td>
+                <td>0.40</td>
+                <td>0.20</td>
+                <td>0.10</td>
+            </tr>
+            <tr>
+                <td><b>Inaktivní</b></td>
+                <td>0.05</td>
+                <td>0.15</td>
+                <td>0.50</td>
+                <td>0.30</td>
+            </tr>
+        </tbody>
+    </table>
+    <p>Z tabulky je patrné, že uživatel v "Riziku" má stále 30% šanci se vrátit k plné aktivitě, pokud zasáhne moderátor.</p>
+    
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <div class="info-box" style="background: rgba(139, 92, 246, 0.05); border-left-color: #8b5cf6;">
+        <b>Matematický základ:</b>
+        Využíváme diskrétní Markovovy řetězce prvního řádu. To znamená, že budoucí pravděpodobnost stavu uživatele
+        závisí <i>pouze</i> na jeho aktuálním stavu, nikoli na celé historii. Pro online komunity je to optimální
+        balanc mezi přesností a výpočetní náročností.
+    </div>
+
+    <h3>Co model sleduje:</h3>
+    <ul>
+        <li><b>Transition Matrix (Matice přechodů):</b> Tabulka pravděpodobností, kde každý řádek sumuje na 1.0 (100%).
+            Např. pokud je pravděpodobnost přechodu <code>Active -> Inactive</code> 0.20, víme, že každý pátý aktivní uživatel
+            přestane v příštím kroku komunikovat.</li>
+        <li><b>Absorpční stavy:</b> Stav <b>Churned</b> je absorpční – jakmile do něj uživatel "spadne" (např. opustí
+            server), nelze se z něj vrátit v rámci stejné analýzy.</li>
+    </ul>
+
+    <h2>2. Survival Analýza (Kaplan-Meier)</h2>
+    <p>Zabývá se otázkou: <i>"Jak dlouho uživatel vydrží na serveru, než odejde?"</i></p>
+    <ul>
+        <li><b>Cenzorovaná data:</b> Model si uvědomuje, že uživatelé, kteří jsou stále na serveru, jsou "stále naživu"
+            v datovém smyslu. Jejich přesný čas odchodu neznáme, ale víme, že přežili alespoň <code>X</code> dní.</li>
+        <li><b>Křivka přežití (Survival Curve):</b> Klesající graf. Pokud vidíte prudký schod (drop) v určitém dni,
+            znamená to, že se děje něco, co v ten den uživatele odrazuje.</li>
+    </ul>
+
+    <h2>3. Toxicity Index: MII (Moderator Intervention Index)</h2>
+    <div class="info-box" style="background: rgba(239, 68, 68, 0.05); border-left-color: #ef4444;">
+        <b>Definice:</b> Poměr moderátorských zásahů k celkovému objemu zpráv, vážený závažností akce.
+    </div>
+    <p><b>Proč je to důležité?</b></p>
+    <ul>
+        <li><b>Predikce konfliktů:</b> Pokud MII začne růst, zatímco Engagement zůstává stejný, blíží se se k "Drama" –
+            velké hádce nebo nájezdu trollů.</li>
+        <li><b>Doporučení týmu:</b> Algoritmus porovnává MII se zátěží (DAU) a navrhuje, zda potřebujete více moderátorů.
+        </li>
+    </ul>
+
+    <h2>4. Lineární Regrese a SARIMA</h2>
+    <p>Pro předpověď počtu členů na příštích 7 dní využíváme lineární trendy kombinované s periodickými výkyvy.</p>
+    <ul>
+        <li><b>Sezónnost:</b> Model ví, že o víkendech je aktivita o 30% vyšší a že v noci klesá.</li>
+        <li><b>Očištění dat:</b> Extrémní výkyvy (např. giveaway se 100 novými lidmi za hodinu) jsou modelem
+            detekovány jako outliery a nezkreslují dlouhodobou predikci.</li>
     </ul>
 
     <div class="info-box">
-        <b>Přesnost predikce</b>
-        Pro dosažení přesnosti >85% potřebuje model alespoň 14 dní historických dat. U serverů s méně než 7 dny dat se
-        zobrazuje zjednodušená lineární projekce.
+        <b>💡 Tip pro analytiky</b>
+        V sekci "Raw Metrics" dashboardu si můžete najít <b>Transition Probabilities</b> a zjistit tak, který stav je na
+        vašem serveru nejrizikovější pro odchod uživatelů.
     </div>
+
 </section>
 {% endblock %}

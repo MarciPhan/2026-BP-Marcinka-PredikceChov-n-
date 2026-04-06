@@ -4,57 +4,166 @@
 
 {% block docs_content %}
 <section id="roles">
-    <h1>Vážený XP Systém a Správa Rolí</h1>
-    <p>Zapomeňte na jednoduché počítání zpráv. Náš systém oceňuje kvalitu a skutečnou aktivitu, nikoliv spam.</p>
+    <h1>Vážený XP Systém a Správa Rolí (Technický manuál)</h1>
+    <p>Metricord nepoužívá statické body. Náš systém je dynamický a reaguje na kvalitu interakce. Cílem je
+        vytvořit spravedlivé prostředí, kde "kvantita" neznamená automaticky "vliv".</p>
 
-    <h2>Algoritmus výpočtu XP</h2>
-    <p>Každá interakce je ohodnocena podle jejího přínosu pro komunitu.</p>
+    <h2>3. Simulátor výpočtu XP</h2>
+    <p>Vyzkoušejte si, kolik bodů získáte za různé aktivity. Tento simulátor používá stejné váhy jako výchozí nastavení bota.</p>
+    
+    <div class="xp-simulator">
+        <div class="sim-row">
+            <label>Délka zprávy (znaky):</label>
+            <input type="number" id="msg-len" value="50" min="0" max="2000">
+        </div>
+        <div class="sim-row">
+            <label>Je to odpověď na zprávu (Reply)?</label>
+            <input type="checkbox" id="is-reply">
+        </div>
+        <div class="sim-row">
+            <label>Čas ve voice (minuty):</label>
+            <input type="number" id="voice-min" value="0" min="0">
+        </div>
+        <div class="result-box">
+            <span>Odhadovaný zisk:</span>
+            <strong id="xp-result">50 XP</strong>
+        </div>
+    </div>
+
+    <script>
+        const msgLenInput = document.getElementById('msg-len');
+        const isReplyInput = document.getElementById('is-reply');
+        const voiceMinInput = document.getElementById('voice-min');
+        const xpResult = document.getElementById('xp-result');
+
+        // Defaults from code: 1 XP per char, 60 XP for reply, 1 XP per sec for voice (simplified)
+        function calculate() {
+            const len = parseInt(msgLenInput.value) || 0;
+            const reply = isReplyInput.checked ? 60 : 0;
+            const voice = (parseInt(voiceMinInput.value) || 0) * 60; // 1 XP per second
+
+            const total = len + reply + voice;
+            xpResult.textContent = total.toLocaleString() + ' XP';
+        }
+
+        [msgLenInput, isReplyInput, voiceMinInput].forEach(el => {
+            el.addEventListener('input', calculate);
+        });
+    </script>
+
+    <style>
+        .xp-simulator {
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            padding: 30px;
+            border-radius: 16px;
+            margin: 30px 0;
+            max-width: 500px;
+        }
+        .sim-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .sim-row label {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+        .sim-row input[type="number"] {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            width: 100px;
+        }
+        .result-box {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .result-box strong {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+    </style>
+
+    <h2>1. Algoritmus výpočtu XP (Zpřísněná pravidla)</h2>
+    <p>Každá akce uživatele prochází filtrem kvality předtím, než jsou připsány body.</p>
 
     <table>
         <thead>
             <tr>
                 <th>Typ Akce</th>
                 <th>Získané XP</th>
-                <th>Podmínky a Poznámky</th>
+                <th>Podmínky a Bonusy</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td><b>Krátká zpráva</b><br><span style="font-size:0.8em; color:#9ca3af">
-                        < 10 znaků</span>
-                </td>
+                <td><b>Krátká zpráva</b><br><span style="font-size:0.8em; color:#9ca3af">< 15 znaků</span></td>
                 <td>1 bod</td>
-                <td>Např. "ok", "lol", "díky". Zamezuje rychlému expení pomocí jednoslovných odpovědí.</td>
+                <td>Zahrnuje emojis a jednoslovné příkazy. Žádné bonusy.</td>
             </tr>
             <tr>
-                <td><b>Standardní zpráva</b><br><span style="font-size:0.8em; color:#9ca3af">10 - 50 znaků</span></td>
-                <td>2 body</td>
-                <td>Běžná konverzace.</td>
+                <td><b>Standardní zpráva</b><br><span style="font-size:0.8em; color:#9ca3af">15 - 100 znaků</span></td>
+                <td>5 bodů</td>
+                <td>Základní stavební kámen konverzace.</td>
             </tr>
             <tr>
-                <td><b>Hodnotná diskuze</b><br><span style="font-size:0.8em; color:#9ca3af">> 50 znaků</span></td>
-                <td>3 body</td>
-                <td>Odměňujeme promyšlené příspěvky, které rozvíjejí diskuzi.</td>
+                <td><b>Dlouhý příspěvek</b><br><span style="font-size:0.8em; color:#9ca3af">> 100 znaků</span></td>
+                <td>15+ bodů</td>
+                <td>Body rostou lineárně s délkou (max 50 XP za zprávu). <b>Podporuje hlubokou diskuzi.</b></td>
+            </tr>
+            <tr>
+                <td><b>Odpověď (Reply)</b></td>
+                <td>+10 bodů</td>
+                <td>Bonus k základnímu XP za použití funkce 'Reply'. Oceňujeme dialog.</td>
             </tr>
             <tr>
                 <td><b>Voice Aktivita</b></td>
-                <td>2 body / minuta</td>
-                <td>Podmínkou jsou alespoň 2 uživatelé v kanálu (prevence solo-farmení).</td>
+                <td>5 body / min</td>
+                <td>Musí být aktivní mikrofon (ne mute). Solo sezení dává 0 bodů.</td>
             </tr>
         </tbody>
     </table>
 
-    <h2>Anti-Spam Ochrana</h2>
-    <p>Aby byl žebříček fér, implementovali jsme několik ochranných mechanismů:</p>
+    <div class="info-box" style="background: rgba(245, 158, 11, 0.1); border-left-color: #f59e0b;">
+        <b>⚠️ Variable Ratio Reinforcement</b>
+        Systém přidává náhodnou složku (±15%) ke každému XP zisku. Tato metoda zvyšuje psychologickou angažovanost
+        uživatelů a ztěžuje předvídatelnost pro farmící boty.
+    </div>
+
+    <h2>2. Anti-Spam a Fraud Detekce</h2>
     <ul>
-        <li><b>Message Cooldown:</b> XP za zprávu lze získat maximálně jednou za 60 sekund. Spamování 10 zpráv za minutu
-            vám přinese stejné XP jako jedna zpráva.</li>
-        <li><b>Voice AFK Detekce:</b> Pokud je uživatel ve voice kanálu "Deafened" (neslyší) nebo "Muted" (nemluví) déle
-            než 15 minut, přestává dostávat XP.</li>
+        <li><b>Message Cooldown (60s):</b> Omezení na 1 XP-profitující zprávu za minutu.</li>
+        <li><b>Duplicate Check:</b> Odeslání stejné zprávy vícekrát za sebou dává 0 XP.</li>
+        <li><b>Noční korekce (2:00-6:00):</b> Body jsou násobeny koeficientem <code>0.5</code>, aby se předešlo
+            nočnímu farmení v prázdných místnostech (lze vypnout v Premium).</li>
     </ul>
 
-    <h2>Automatické Role (Auto-Roles)</h2>
-    <p>V nastavení dashboardu můžete definovat úrovně XP, při jejichž dosažení bot automaticky přidělí roli na Discordu
-        (např. "Aktivní Člen", "Veterán").</p>
+    <h2>3. Úrovně a Progrese</h2>
+    <p>Výpočet úrovně $L$ z celkových XP $X$ se řídí kvadratickou funkcí:</p>
+    <pre>X(L) = 50*L^2 + 200*L + 100</pre>
+    <p>To znamená, že na 2. úroveň potřebujete 700 XP, ale na 10. úroveň již 7 100 XP. Progrese je schválně náročná, aby
+        role měly svou váhu a prestiž.</p>
+
+    <h2>4. Automatizace rolí (Auto-Levels)</h2>
+    <p>V dashboardu můžete propojit konkrétní úrovně s Discord rolemi. Bot provádí synchronizaci:</p>
+    <ol>
+        <li>Při každém získání nové úrovně.</li>
+        <li>Pravidelně každých 24 hodin (pro případ, že byl bot offline).</li>
+        <li>Manuálně pomocí příkazu <code>/activity sync_names</code>.</li>
+    </ol>
+
+    <div class="info-box">
+        <b>Doporučení pro adminy:</b>
+        Nenastavujte příliš mnoho rolí (např. každou úroveň). Ideální je odměnit úrovně 5, 10, 25, 50 a 100. Příliš mnoho
+        pingů za nové role může uživatele obtěžovat.
+    </div>
 </section>
 {% endblock %}

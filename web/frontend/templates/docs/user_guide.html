@@ -1,0 +1,103 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Uživatelská příručka{% endblock %}
+
+{% block docs_content %}
+<section id="user-guide">
+    <h1>Uživatelská příručka</h1>
+    <p>Vítejte v Metricord! Tato příručka vám pomůže pochopit, jak bot funguje, co o vás ví a jak se můžete zapojit do
+        života komunity.</p>
+
+    <h2>1. Základní příkazy</h2>
+    <p>Bot reaguje na lomítkové příkazy (Slash Commands). Stačí napsat <code>/</code> a vybrat si ze seznamu.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Příkaz</th>
+                <th>Popis</th>
+                <th>Viditelnost</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>/help</code></td>
+                <td>Zobrazí interaktivní nápovědu ke všem modulům.</td>
+                <td>Jen pro vás (ephemeral)</td>
+            </tr>
+            <tr>
+                <td><code>/activity stats</code></td>
+                <td>Ukáže vaši celkovou aktivitu (čas v chatu, voice a počet zpráv).</td>
+                <td>Vidí všichni</td>
+            </tr>
+            <tr>
+                <td><code>/activity leaderboard</code></td>
+                <td>Zobrazí žebříček TOP 10 nejaktivnějších členů serveru.</td>
+                <td>Vidí všichni</td>
+            </tr>
+            <tr>
+                <td><code>/privacy</code></td>
+                <td>Vysvětlí, jaká data o vás bot sbírá a proč.</td>
+                <td>Jen pro vás</td>
+            </tr>
+            <tr>
+                <td><code>/ping</code></td>
+                <td>Rychlý test, zda bot žije a jak rychle reaguje.</td>
+                <td>Vidí všichni</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>2. Vývoj úrovní (Leveling Curve)</h2>
+    <p>Každá úroveň vyžaduje více zkušeností než ta předchozí. Zde je orientační tabulka:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Level</th>
+                <th>Potřebné XP (odhad)</th>
+                <th>Vynaložené úsilí</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1 - 5</td>
+                <td>500 - 3,000</td>
+                <td>Pár hodin aktivního psaní</td>
+            </tr>
+            <tr>
+                <td>10 - 20</td>
+                <td>10k - 50k</td>
+                <td>Několik týdnů v komunitě</td>
+            </tr>
+            <tr>
+                <td>50+</td>
+                <td>500k+</td>
+                <td>Legendární status (měsíce aktivity)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>3. Komunitní soutěže</h2>
+    <p>Využijte <code>/activity leaderboard</code> pro měsíční výzvy! Mnoho serverů odměňuje vítěze žebříčku speciálními barevnými rolemi nebo Nitro dárky.</p>
+
+    <h2>3. Vaše soukromí (GDPR)</h2>
+    <p>Věříme v transparentnost. Máte plnou kontrolu nad svými daty.</p>
+    <h3>Jaká data ukládáme?</h3>
+    <ul>
+        <li><b>Počty a délky:</b> Kolik zpráv jste napsali a jak dlouho jste byli ve voice. **Nikdy** neukládáme text
+            vašich zpráv.</li>
+        <li><b>Časové značky:</b> Kdy jste byli aktivní, abychom mohli tvořit grafy pro moderátory.</li>
+    </ul>
+    <h3>Vaše práva</h3>
+    <p>Příkazem <code>/gdpr export</code> si můžete stáhnout kopii všeho, co o vás víme. Pokud chcete z naší databáze
+        zmizet, použijte <code>/gdpr delete</code>. <i>Pozor: Smazání je nevratné a přijdete o všechny své XP body!</i></p>
+
+    <h2>4. Webový Dashboard</h2>
+    <p>Pokud jste moderátor nebo máte speciální práva, můžete navštívit náš web, kde uvidíte krásné grafy a predikce. Pro
+        běžné uživatele jsou hlavními rozhraním Discord příkazy.</p>
+
+    <div class="info-box" style="background: rgba(59, 130, 246, 0.1); border-left-color: #3b82f6;">
+        <b>Baví vás Metricord?</b>
+        Dejte o tom vědět moderátorům! Vaše aktivita pomáhá serveru růst a být lepším místem pro všechny.
+    </div>
+</section>
+{% endblock %}

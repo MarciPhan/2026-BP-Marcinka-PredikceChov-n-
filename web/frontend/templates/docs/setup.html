@@ -35,6 +35,23 @@ Doporučené nastavení:
 - Minuta ve voice: 2 body (podporuje sociální interakci)
     </pre>
 
+    <h2>Vnitřní tok dat (System Internals)</h2>
+    <pre class="mermaid">
+    graph TD
+        A[Discord API] -->|Events| B(Metricord Bot)
+        B -->|Async Write| C{Redis In-Memory}
+        C -->|HLL/ZSET| D[Analytics Engine]
+        D -->|Predictions| E[AI Engine]
+        F[Web Dashboard] -->|REST API| D
+        F -->|OAuth2| G[Discord Auth]
+        E -->|Alerts| H[Webhook Service]
+    </pre>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    </script>
+
     <h3>Přístup pro moderátory</h3>
     <p>Ve výchozím nastavení má přístup pouze majitel serveru. V sekci <b>Tým</b> můžete přidat role (např. @Moderator),
         které budou mít přístup k prohlížení statistik.</p>

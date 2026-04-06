@@ -1,0 +1,107 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Případové studie{% endblock %}
+
+{% block docs_content %}
+<section id="case-studies">
+    <h1>Případové studie (Analýza v praxi)</h1>
+    <p>Konkrétní scénáře, jak využít data z Metricord k řešení reálných problémů na vašem serveru.</p>
+
+    <div class="case-card">
+        <div class="case-header">
+            <span class="case-tag">Retence</span>
+            <h2>Scénář A: Záchrana odcházející "elity"</h2>
+        </div>
+        <p><b>Problém:</b> Majitel serveru si všiml, že nejaktivnější členové (Level 20+) začínají být méně aktivní. Existuje riziko "dominového efektu" odchodu komunity.</p>
+        <p><b>Řešení s Metricord:</b></p>
+        <ol>
+            <li><b>Identifikace:</b> V sekci <i>Predikce</i> vyfiltrujte uživatele s vysokým <i>Churn Risk</i> (>70 %), kteří mají zároveň vysoké celkové XP.</li>
+            <li><b>Analýza:</b> Model <i>Kaplan-Meier</i> ukázal, že tito uživatelé obvykle odcházejí po 6 měsících.</li>
+            <li><b>Akce:</b> Vytvoření speciálního private kanálu pro tyto "veterány" a zavedení nového systému odměn (Achievements) pro Level 30+.</li>
+        </ol>
+        <p><b>Výsledek:</b> Churn Risk u klíčové skupiny klesl o 45 % během prvního měsíce.</p>
+    </div>
+
+    <div class="case-card">
+        <div class="case-header">
+            <span class="case-tag red">Toxicita</span>
+            <h2>Scénář B: Detekce "Tichého raidu"</h2>
+        </div>
+        <p><b>Problém:</b> Na server přišlo 200 lidí během noci. Nejsou agresivní, ale spamují nesmyslné krátké zprávy, aby "přebili" skutečnou konverzaci.</p>
+        <p><b>Řešení s Metricord:</b></p>
+        <ol>
+            <li><b>Detekce:</b> <i>Smart Insights</i> nahlásily anomálii v <i>Average Message Length</i> (pokles ze 45 na 8 znaků).</li>
+            <li><b>Verifikace:</b> <i>Velocity Stats</i> ukazují 120 zpráv/min, ale <i>DQS Index</i> je nízký, což naznačuje nekvalitní data.</li>
+            <li><b>Akce:</b> Dočasné zpřísnění XP vah pro krátké zprávy a zapnutí 2FA verifikace jen pro nové členy.</li>
+        </ol>
+        <p><b>Výsledek:</b> Spamery to přestalo bavit, protože nezískávali úrovně, a po 2 dnech server opustili.</p>
+    </div>
+
+    <div class="case-card">
+        <div class="case-header">
+            <span class="case-tag green">Růst</span>
+            <h2>Scénář C: Výběr ideálního času pro event</h2>
+        </div>
+        <p><b>Problém:</b> Komunitní kvíz má malou účast, přestože je na serveru 5000 lidí.</p>
+        <p><b>Řešení s Metricord:</b></p>
+        <ol>
+            <li><b>Analýza:</b> <i>Heatmapa aktivity</i> ukázala, že špička počtu zpráv je v 20:00, ale špička <i>Voice aktivity</i> je až ve 22:30.</li>
+            <li><b>Korelace:</b> Lidé v 20:00 jen "píšou u jídla", ale u PC a připraveni na Voice jsou až později.</li>
+            <li><b>Akce:</b> Přesun kvízu z 20:00 na 22:15.</li>
+        </ol>
+        <p><b>Výsledek:</b> Účast na eventu vzrostla o 150 %.</p>
+    </div>
+
+    <style>
+        .case-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 40px;
+        }
+
+        .case-header {
+            margin-bottom: 20px;
+        }
+
+        .case-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--primary-g);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .case-tag.red { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+        .case-tag.green { background: linear-gradient(135deg, #10b981, #059669); }
+
+        .case-card h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .case-card p {
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .case-card ol {
+            margin: 20px 0;
+            padding-left: 20px;
+            color: var(--text-muted);
+        }
+
+        .case-card ol li {
+            margin-bottom: 10px;
+        }
+
+        .case-card b { color: white; }
+    </style>
+</section>
+{% endblock %}

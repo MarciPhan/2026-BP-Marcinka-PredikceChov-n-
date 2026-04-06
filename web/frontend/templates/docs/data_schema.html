@@ -1,0 +1,63 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Redis Datové schéma{% endblock %}
+
+{% block docs_content %}
+<section id="data-schema">
+    <h1>Vnitřní datové schéma (Redis Map)</h1>
+    <p>Metricord využívá Redis jako primární databázi pro in-memory analytiku. Zde je kompletní mapa klíčů a datových typů používaných v systému.</p>
+
+    <h2>1. Uživatelská data a stavy</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Klíč (Pattern)</th>
+                <th>Typ</th>
+                <th>Expirace</th>
+                <th>Popis</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>user:info:{uid}</code></td>
+                <td>Hash</td>
+                <td>7 dní</td>
+                <td>Ukládá <code>name</code>, <code>avatar</code> a <code>roles</code> (IDs).</td>
+            </tr>
+            <tr>
+                <td><code>activity:state:{gid}:{uid}:{key}</code></td>
+                <td>String</td>
+                <td>-</td>
+                <td>Dočasné značky pro start/konec sezení (<code>chat_start</code>, <code>voice_start</code>).</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>2. Analytické eventy (Time-Series)</h2>
+    <p>Pro každou metriku používáme <b>Sorted Sets</b> (ZSET), kde skóre je UNIX timestamp a hodnota je JSON s detaily eventu.</p>
+    <ul>
+        <li><code>events:msg:{gid}:{uid}</code>: Historie zpráv (jen metadata: délka, reply).</li>
+        <li><code>events:voice:{gid}:{uid}</code>: Historie voice sezení (duration, channel).</li>
+        <li><code>events:action:{gid}:{uid}</code>: Moderační akce (type: kick/ban/timeout).</li>
+    </ul>
+
+    <h2>3. Agregované statistiky (HyperLogLog)</h2>
+    <p>Používáme pro extrémně rychlý výpočet unikátních uživatelů (DAU/WAU/MAU).</p>
+    <ul>
+        <li><code>stats:hll:{gid}:day:{YYYY-MM-DD}</code>: Unikátní uživatelé za den.</li>
+        <li><code>stats:hll:{gid}:week:{YYYY-WW}</code>: Unikátní za týden.</li>
+        <li><code>stats:hll:{gid}:month:{YYYY-MM}</code>: Unikátní za měsíc.</li>
+    </ul>
+
+    <h2>4. Systémová konfigurace</h2>
+    <ul>
+        <li><code>bot:guilds</code>: Set všech ID serverů, kde je bot přítomen.</li>
+        <li><code>config:action_weights</code>: Hash uživatelsky definovaných vah pro XP (<code>bans=300</code>, <code>msg=1</code> atd.).</li>
+    </ul>
+
+    <div class="info-box" style="background: rgba(139, 92, 246, 0.1); border-left-color: #8b5cf6;">
+        <b>💡 Tip pro vývojáře:</b>
+        Při přímém přístupu k Redisu doporučujeme používat příkaz <code>SCAN</code> místo <code>KEYS</code>, aby nedošlo k blokování databáze při velkém objemu dat.
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Architektura systému{% endblock %}
+
+{% block docs_content %}
+<section id="architecture">
+    <h1>Architektura systému</h1>
+    <p>Metricord je navržen jako distribuovaný systém s důrazem na extrémní výkon a nízkou latenci při zpracování milionů
+        událostí.</p>
+
+    <h2>1. Technický stack</h2>
+    <ul>
+        <li><b>Backend (Bot):</b> Python 3.10+, discord.py (Asynchronní zpracování událostí).</li>
+        <li><b>Backend (Dashboard):</b> FastAPI (High-performance web server).</li>
+        <li><b>Datové úložiště:</b> Redis (In-memory databáze pro real-time analytiku).</li>
+        <li><b>Analytika:</b> NumPy/SciPy pro matematické modely, Chart.js pro vizualizaci.</li>
+    </ul>
+
+    <h2>2. Tok dat (Data Flow)</h2>
+    <p>Zde je zjednodušený pohled na to, co se děje s vaší zprávou:</p>
+    <ol>
+        <li><b>Event Capture:</b> Bot zachytí událost <code>on_message</code> přes Discord Gateway.</li>
+        <li><b>Pre-processing:</b> Vypočítá se váha zprávy a XP (lokálně v RAM bota).</li>
+        <li><b>Redis Push:</b> Data se atomicky zapíší do Redisu (využíváme <i>Sorted Sets</i> pro časové řady a
+            <i>HyperLogLog</i> pro unikátní uživatele).</li>
+        <li><b>Dashboard Read:</b> Při návštěvě webu FastAPI přečte agregovaná data z Redisu a pošle je do prohlížeče.</li>
+    </ol>
+
+    <h2>3. Proč Redis?</h2>
+    <p>Na rozdíl od tradičních SQL databází nám Redis umožňuje:</p>
+    <ul>
+        <li>Zpracovat tisíce zpráv za sekundu s latencí pod 1ms.</li>
+        <li>Ukládat miliardy unikátních interakcí s minimální spotřebou paměti díky <i>Probabilistic Data Structures</i>.
+        </li>
+        <li>Jednoduchou horizontální škálovatelnost.</li>
+    </ul>
+
+    <h2>4. Bezpečnostní vrstvy</h2>
+    <p>Systém používá víceúrovňovou ochranu:</p>
+    <ul>
+        <li><b>Discord OAuth2:</b> Nikdy nevidíme vaše heslo k Discordu.</li>
+        <li><b>JWT Tokens:</b> Sezení v dashboardu je zabezpečeno kryptograficky podepsanými tokeny.</li>
+        <li><b>Rate Limiting:</b> Ochrana proti DDoS útokům na úrovni API.</li>
+    </ul>
+
+    <div class="info-box">
+        <b>Důležité pro vývojáře:</b>
+        Metricord je navržen tak, aby bot mohl běžet na jiném serveru než dashboard. Jediným pojítkem je přístup k
+        identické instanci Redis.
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Technické zabezpečení{% endblock %}
+
+{% block docs_content %}
+<section id="security-technical">
+    <h1>Technické zabezpečení a soukromí</h1>
+    <p>Jak Metricord chrání vaše data na infrastrukturní úrovni.</p>
+
+    <h2>1. Autentizace a Autorizace</h2>
+    <ul>
+        <li><b>Discord OAuth2:</b> Přihlašování probíhá výhradně přes oficiální bránu Discordu. Metricord nikdy neukládá vaše heslo k Discordu.</li>
+        <li><b>Stateful Sessions:</b> Sezení jsou uložena v Redisu s expirací 24 hodin a jsou podepsána kryptografickým klíčem <code>SECRET_KEY</code>.</li>
+        <li><b>Role-Based Access (RBAC):</b> Přístup k datům serveru je povolen pouze uživatelům s oprávněním <code>Manage Server</code> na dané guildě.</li>
+    </ul>
+
+    <h2>2. Životní cyklus dat</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Typ dat</th>
+                <th>Uložení</th>
+                <th>Expirace</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><b>Session Tokeny</b></td>
+                <td>Redis (Keys)</td>
+                <td>24 Hodin</td>
+            </tr>
+            <tr>
+                <td><b>Uživatelské Info (Jméno, Avatar)</b></td>
+                <td>Redis (Hash)</td>
+                <td>7 Dní</td>
+            </tr>
+            <tr>
+                <td><b>Analytické eventy (Zprávy)</b></td>
+                <td>Redis (Sorted Sets)</td>
+                <td>Neomezeně / Do smazání</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>3. Ochrana proti útokům</h2>
+    <ul>
+        <li><b>Rate Limiting:</b> Bot i API mají vestavěné omezovače požadavků, aby se zabránilo zneužití a DDoS útokům.</li>
+        <li><b>CORS (Cross-Origin Resource Sharing):</b> Dashboard omezuje požadavky pouze na povolené domény.</li>
+        <li><b>XSS Protection:</b> Všechny uživatelské vstupy v dashboardu jsou escapovány pomocí Jinja2 templatingu.</li>
+    </ul>
+
+    <h2>4. Infrastruktura</h2>
+    <p>Aplikace běží v oddělených Docker kontejnerech. Redis není přístupný z vnější sítě a komunikuje pouze s interními službami bota a dashboardu.</p>
+
+    <h2>5. Modelování hrozeb a Mitigace</h2>
+    <ul>
+        <li><b>SQL Injection:</b> Nulové riziko, protože systém nepoužívá SQL databázi pro uživatelská data (vše je v Redisu přes typové ovladače).</li>
+        <li><b>Token Theft:</b> Session tokeny jsou chráněny příznaky <code>HttpOnly</code> a <code>SameSite=Lax</code>, což znemožňuje jejich krádež běžnými XSS útoky.</li>
+        <li><b>Data Isolation:</b> Data každého serveru (Guildy) jsou v Redisu oddělena prefixy klíčů. API middleware striktně kontroluje, zda má uživatel práva k přístupu k danému prefixu.</li>
+    </ul>
+
+    <h2>6. Šifrování</h2>
+    <p>Veškerá komunikace mezi botem, dashboardem a Discord API probíhá přes <b>TLS 1.3</b>. Citlivá data v <code>.env</code> jsou při běhu v Dockeru uložena v paměti RAM a nejsou zapisována do logů.</p>
+</section>
+{% endblock %}

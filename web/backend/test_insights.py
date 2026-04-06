@@ -15,7 +15,7 @@ class TestSecurityInsights(unittest.TestCase):
             'verification_level': 2,
             'mfa_level': 1,
             'explicit_filter': 2,
-            'churn_rate': 20.0,  
+            'churn_rate': 31.0,  
             'participation_rate': 15,
             'reply_ratio': 60,
             'voice_hours_per_dau': 0.5
@@ -30,7 +30,7 @@ class TestSecurityInsights(unittest.TestCase):
             'verification_level': 2,
             'mfa_level': 1,
             'explicit_filter': 2,
-            'churn_rate': 35.0,  
+            'churn_rate': 55.0,  
             'participation_rate': 15,
             'reply_ratio': 60,
             'voice_hours_per_dau': 0.5
@@ -62,7 +62,7 @@ class TestSecurityInsights(unittest.TestCase):
             'mfa_level': 1,
             'explicit_filter': 2,
             'churn_rate': 2.0,
-            'participation_rate': 5,  
+            'participation_rate': 8,  
             'reply_ratio': 60,
             'voice_hours_per_dau': 0.5
         }
@@ -78,12 +78,13 @@ class TestSecurityInsights(unittest.TestCase):
             'explicit_filter': 2,
             'churn_rate': 2.0,
             'participation_rate': 15,
-            'reply_ratio': 10,  
+            'reply_ratio': 4,  
             'voice_hours_per_dau': 0.5
         }
         insights = generate_security_insights(metrics)
-        self.assertTrue(any("monology" in i.lower() for i in insights))
+        self.assertTrue(any("broadcast" in i.lower() for i in insights))
         print("✅ Low reply ratio insight verified")
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,0 +1,72 @@
+{% extends "docs_base.html" %}
+
+{% block title %}Admin průvodce{% endblock %}
+
+{% block docs_content %}
+<section id="admin-guide">
+    <h1>Administrátorský průvodce (Instance Manager)</h1>
+    <p>Tento průvodce je určen pro ty, kteří spravují samotnou instanci Metricord (backend, databáze, konfigurace).</p>
+
+    <h2>1. Škálování (Scaling Limits)</h2>
+    <p>Výchozí instalace na jednom VPS pohodlně zvládne až 50,000 členů. Pro větší servery (100k+) doporučujeme:</p>
+    <ul>
+        <li><b>Redis Slaves:</b> Rozdělení čtení (Dashboard) a zápisu (Bot) na různé instance Redisu.</li>
+        <li><b>Event Thinning:</b> Snížení frekvence sběru voice sezení z 1 minuty na 5 minut v <code>activity.py</code>.</li>
+    </ul>
+
+    <h2>2. Performance Tuning (Redis)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Parametr</th>
+                <th>Doporučená hodnota</th>
+                <th>Dopad</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>tcp-keepalive</code></td>
+                <td>60</td>
+                <td>Stabilnější bot připojení</td>
+            </tr>
+            <tr>
+                <td><code>maxmemory</code></td>
+                <td>75% system gold</td>
+                <td>Prevence swapování na disk</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>3. Správa vah (XP Tuning)</h2>
+    <p>Pravidla pro výpočet XP můžete měnit v reálném čase bez restartu bota. To se děje přes Redis dashboard nebo přes API endpoint <code>/admin/config/weights</code>.</p>
+    <ul>
+        <li><b>Výchozí stav:</b> 1 char = 1 XP, Reply = 60 XP.</li>
+        <li><b>Doporučení:</b> Pokud máte příliš rychlý nárůst úrovní, zvyšte váhu pro <code>bans</code> nebo zaveďte přísnější timeouty sezení.</li>
+    </ul>
+
+    <h2>2. Údržba Redisu</h2>
+    <p>Redis uchovává historická data v operační paměti. Pro servery s 1M+ zprávami měsíčně doporučujeme:</p>
+    <ul>
+        <li>Nastavit <code>maxmemory-policy</code> na <code>noeviction</code> (aby nedocházelo k mazání historických statistik).</li>
+        <li>Pravidelně provádět <code>BGSAVE</code> pro perzistenci na disk.</li>
+        <li>Sledovat velikost Sorted Setů (ZSET) u klíčů <code>events:*</code>.</li>
+    </ul>
+
+    <h2>3. Správa bot tokenů</h2>
+    <p>Při změně tokenu bota v <code>.env</code> je nutné provést kompletní restart kontejnerů:</p>
+    <pre><code>docker-compose down
+docker-compose up -d</code></pre>
+
+    <h2>4. Logování a Monitoring</h2>
+    <p>Metricord generuje dva hlavní logy:</p>
+    <ul>
+        <li><code>bot.log</code>: Události z Discordu, chyby v příkazech, Redis reconnecty.</li>
+        <li><code>web.log</code>: HTTP požadavky, OAuth sezení, chyby v renderování dashboardu.</li>
+    </ul>
+
+    <div class="info-box" style="background: rgba(245, 158, 11, 0.1); border-left-color: #f59e0b;">
+        <b>Důležité upozornění:</b>
+        Nikdy nesdílejte <code>.env</code> soubor ani <code>SECRET_KEY</code>. Kompromitace těchto klíčů umožňuje komukoliv ovládat váš dashboard a přistupovat k datům všech uživatelů.
+    </div>
+</section>
+{% endblock %}

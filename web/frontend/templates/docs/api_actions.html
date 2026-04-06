@@ -1,0 +1,60 @@
+{% extends "docs_base.html" %}
+
+{% block title %}API Action Triggers{% endblock %}
+
+{% block docs_content %}
+<section id="api-actions">
+    <h1>Advanced API: Action Triggers</h1>
+    <p>Vzdálené ovládání vašeho bota přes REST API. Metricord není jen o datech, je o akci.</p>
+
+    <h2>1. Odesílání zpráv (Webhooks 2.0)</h2>
+    <div class="api-endpoint">
+        <span class="method post">POST</span> <code>/api/v1/guild/{id}/message</code>
+    </div>
+    
+    <h3>Request Body Schema:</h3>
+    <pre><code class="language-json">{
+  "channel_id": "string",
+  "content": "string",
+  "embed": {
+    "title": "string",
+    "description": "string",
+    "color": "integer (hex)",
+    "fields": [
+      { "name": "label", "value": "text", "inline": true }
+    ]
+  }
+}</code></pre>
+
+    <h3>Příklad odpovědi (201 Created):</h3>
+    <pre><code class="language-json">{
+  "status": "success",
+  "message_id": "123456789012345678",
+  "channel_id": "999888777"
+}</code></pre>
+
+    <h2>2. Moderační zásahy přes API</h2>
+    <div class="api-endpoint">
+        <span class="method post">POST</span> <code>/api/v1/guild/{id}/member/{uid}/timeout</code>
+    </div>
+    <p>Parametry: <code>duration</code> (v minutách), <code>reason</code> (nepovinné).</p>
+    <p>Můžete automatizovat tresty na základě externích signálů.</p>
+    <ul>
+        <li><code>POST /api/v1/guild/{id}/member/{uid}/timeout</code>: Uloží uživateli "time-out".</li>
+        <li><code>POST /api/v1/guild/{id}/member/{uid}/kick</code>: Vyhodí uživatele ze serveru.</li>
+    </ul>
+
+    <h2>3. Správa rolí</h2>
+    <p>Synchronizujte role s vaším webem nebo e-shopem.</p>
+    <pre><code>PUT /api/v1/guild/{id}/member/{uid}/roles
+{
+  "add": ["12345"],
+  "remove": ["67890"]
+}</code></pre>
+
+    <div class="warning-box" style="background: rgba(239, 68, 68, 0.1); border-left-color: #ef4444; padding: 15px; border-radius: 8px;">
+        <b>⚠️ Bezpečnostní upozornění:</b>
+        Tyto endpointy vyžadují API klíč s oprávněním <code>WRITE_ACTIONS</code>. Nikdy tyto akce nepovolujte pro veřejné tokeny.
+    </div>
+</section>
+{% endblock %}

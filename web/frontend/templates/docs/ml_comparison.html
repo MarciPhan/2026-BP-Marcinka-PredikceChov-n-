@@ -1,0 +1,48 @@
+{% extends "docs_base.html" %}
+
+{% block title %}ML Comparison{% endblock %}
+
+{% block docs_content %}
+<section id="ml-comparison">
+    <h1>Srovnání ML algoritmů v Metricordu</h1>
+    <p>Proč jsme pro základní predikce vybrali Markovovy řetězce a jaké jsou alternativy pro budoucnost.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Metoda</th>
+                <th>Využití v Metricordu</th>
+                <th>Výhody</th>
+                <th>Nevýhody</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><b>Markovovy řetězce</b></td>
+                <td>Predikce Retence/Churnu</td>
+                <td>Extrémně rychlé, nízká spotřeba RAM, vysoká interpretovatelnost.</td>
+                <td>Nedostatek kontextu pro velmi dlouhé časové řady.</td>
+            </tr>
+            <tr>
+                <td><b>LSTM (RNN)</b></td>
+                <td>Experimentální (Labs)</td>
+                <td>Skvěle zachycuje dlouhodobé závislosti v chování.</td>
+                <td>Náročné na trénink, vyžaduje GPU/vysoký výpočetní výkon.</td>
+            </tr>
+            <tr>
+                <td><b>Kaplan-Meier</b></td>
+                <td>Survival Analysis</td>
+                <td>Standard v medicíně a pojistné matematice pro sledování odchodů.</td>
+                <td>Statický model, nereaguje na okamžité změny aktivity (burst).</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Prognóza: Hybridní modely</h2>
+    <p>V příští verzi Metricordu (Roadmap Q3) plánujeme propojení interpretovatelnosti Markovových řetězců s hloubkou LSTM sítí pro náročné enterprise zákazníky.</p>
+
+    <div class="info-box" style="background: rgba(139, 92, 246, 0.1); border-left-color: #8b5cf6;">
+        <b>Technický verdikt:</b> Pro 95 % Discord serverů jsou Markovovy řetězce ideálním kompromisem mezi přesností a nároky na hosting.
+    </div>
+</section>
+{% endblock %}
