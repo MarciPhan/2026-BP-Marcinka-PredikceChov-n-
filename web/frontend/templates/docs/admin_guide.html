@@ -5,68 +5,231 @@
 {% block docs_content %}
 <section id="admin-guide">
     <h1>Administrátorský průvodce (Instance Manager)</h1>
-    <p>Tento průvodce je určen pro ty, kteří spravují samotnou instanci Metricord (backend, databáze, konfigurace).</p>
+    <p>Průvodce pro správce, kteří provozují vlastní instanci Metricord — konfigurace, škálování,
+        Redis údržba, monitoring a optimalizace výkonu.</p>
 
-    <h2>1. Škálování (Scaling Limits)</h2>
-    <p>Výchozí instalace na jednom VPS pohodlně zvládne až 50,000 členů. Pro větší servery (100k+) doporučujeme:</p>
-    <ul>
-        <li><b>Redis Slaves:</b> Rozdělení čtení (Dashboard) a zápisu (Bot) na různé instance Redisu.</li>
-        <li><b>Event Thinning:</b> Snížení frekvence sběru voice sezení z 1 minuty na 5 minut v <code>activity.py</code>.</li>
-    </ul>
+    <h2>1. Konfigurace prostředí (.env)</h2>
+    <p>Kompletní přehled všech environmentálních proměnných:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Proměnná</th>
+                <th>Povinná</th>
+                <th>Výchozí</th>
+                <th>Popis</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>BOT_TOKEN</code></td>
+                <td>✅</td>
+                <td>—</td>
+                <td>Discord bot token z Developer Portalu.</td>
+            </tr>
+            <tr>
+                <td><code>DISCORD_CLIENT_SECRET</code></td>
+                <td>✅</td>
+                <td>—</td>
+                <td>OAuth2 Client Secret pro dashboard přihlášení.</td>
+            </tr>
+            <tr>
+                <td><code>DASHBOARD_PORT</code></td>
+                <td>—</td>
+                <td><code>8092</code></td>
+                <td>Port pro web dashboard.</td>
+            </tr>
+            <tr>
+                <td><code>DASHBOARD_SECRET_KEY</code></td>
+                <td>✅</td>
+                <td>—</td>
+                <td>Kryptografický klíč pro podpis session cookies. Generujte: <code>python3 -c "import secrets; print(secrets.token_hex(32))"</code></td>
+            </tr>
+            <tr>
+                <td><code>DASHBOARD_ACCESS_TOKEN</code></td>
+                <td>—</td>
+                <td>—</td>
+                <td>Bearer token pro API přístup (volitelný).</td>
+            </tr>
+            <tr>
+                <td><code>REDIS_URL</code></td>
+                <td>—</td>
+                <td><code>redis://localhost:6379/0</code></td>
+                <td>Redis connection string. Podpora hesla: <code>redis://:password@host:6379/0</code></td>
+            </tr>
+            <tr>
+                <td><code>SMTP_PASSWORD</code></td>
+                <td>—</td>
+                <td>—</td>
+                <td>Heslo pro SMTP (e-mailový OTP). Bez nastavení = OTP do konzole.</td>
+            </tr>
+            <tr>
+                <td><code>BOT_LITE_MODE</code></td>
+                <td>—</td>
+                <td><code>0</code></td>
+                <td>Nastavte na <code>1</code> pro sekundární bot instanci (dashboard bot).</td>
+            </tr>
+            <tr>
+                <td><code>DISCORD_REDIRECT_URI</code></td>
+                <td>—</td>
+                <td><code>http://localhost:{PORT}/auth/callback</code></td>
+                <td>OAuth2 redirect URI. Nastavte pro produkci s vlastní doménou.</td>
+            </tr>
+        </tbody>
+    </table>
 
-    <h2>2. Performance Tuning (Redis)</h2>
+    <h2>2. Škálování (Scaling Limits)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Velikost serveru</th>
+                <th>RAM Redis</th>
+                <th>CPU</th>
+                <th>Poznámky</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>&lt; 5,000 členů</td>
+                <td>256 MB</td>
+                <td>1 jádro</td>
+                <td>Výchozí konfigurace bez úprav.</td>
+            </tr>
+            <tr>
+                <td>5k – 50k členů</td>
+                <td>1 GB</td>
+                <td>2 jádra</td>
+                <td>Zvažte zvýšení <code>maxmemory</code> v Redis config.</td>
+            </tr>
+            <tr>
+                <td>50k – 100k+ členů</td>
+                <td>4+ GB</td>
+                <td>4+ jader</td>
+                <td>Redis read replicas, event thinning (voice sezení z 1 min na 5 min).</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>3. Redis Performance Tuning</h2>
     <table>
         <thead>
             <tr>
                 <th>Parametr</th>
                 <th>Doporučená hodnota</th>
-                <th>Dopad</th>
+                <th>Efekt</th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td><code>tcp-keepalive</code></td>
                 <td>60</td>
-                <td>Stabilnější bot připojení</td>
+                <td>Stabilnější bot↔Redis připojení, prevence TCP timeout.</td>
             </tr>
             <tr>
                 <td><code>maxmemory</code></td>
-                <td>75% system gold</td>
-                <td>Prevence swapování na disk</td>
+                <td>75% system RAM</td>
+                <td>Prevence swapování na disk — fatální pro in-memory DB.</td>
+            </tr>
+            <tr>
+                <td><code>maxmemory-policy</code></td>
+                <td><code>noeviction</code></td>
+                <td>Nikdy automaticky nemazat data. Lepší error než ztráta statistik.</td>
+            </tr>
+            <tr>
+                <td><code>save</code></td>
+                <td><code>300 10</code></td>
+                <td>RDB snapshot každých 5 minut pokud bylo 10+ změn.</td>
+            </tr>
+            <tr>
+                <td><code>appendonly</code></td>
+                <td><code>yes</code></td>
+                <td>AOF logging pro maximální bezpečnost dat.</td>
+            </tr>
+        </tbody>
+    </table>
+    <pre><code># Příklad redis.conf optimalizace
+tcp-keepalive 60
+maxmemory 1gb
+maxmemory-policy noeviction
+save 300 10
+appendonly yes
+appendfsync everysec</code></pre>
+
+    <h2>4. Správa vah XP (bez restartu)</h2>
+    <p>XP pravidla lze měnit v reálném čase přes Redis nebo API:</p>
+    <pre><code># Přes redis-cli
+redis-cli HSET config:xp:weights msg_short 1 msg_medium 5 msg_long 15 reply_bonus 10 voice_per_min 5
+
+# Přes API (pokud máte access token)
+curl -X POST http://localhost:8092/admin/config/weights \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"msg_short": 1, "msg_medium": 5, "msg_long": 15}'</code></pre>
+
+    <h2>5. Správa bot tokenů</h2>
+    <p>Při změně tokenu:</p>
+    <pre><code># Lokální
+pkill -f "bot/main.py"
+# Upravte .env
+./start.sh
+
+# Docker
+docker-compose down
+# Upravte .env
+docker-compose up -d</code></pre>
+
+    <div class="info-box" style="background: rgba(245, 158, 11, 0.1); border-left-color: #f59e0b;">
+        <b>⚠️ Bot Lite Mode</b>
+        Docker Compose provozuje dvě bot instance — primární (plný tracking) a dashboard bot (Lite Mode).
+        Lite Mode přeskakuje interaktivní příkazy a slouží pouze pro poskytování guild dat dashboardu.
+        Pokud nepotřebujete dvě instance, zakomentujte službu <code>discord-bot-dashboard</code>.
+    </div>
+
+    <h2>6. Logování a Monitoring</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Log</th>
+                <th>Obsah</th>
+                <th>Kde</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>bot.log</code></td>
+                <td>Discord eventy, chyby příkazů, Redis reconnecty, guild join/leave.</td>
+                <td>Kořen projektu / Docker stdout</td>
+            </tr>
+            <tr>
+                <td><code>web.log</code></td>
+                <td>HTTP requesty, OAuth sezení, API chyby, rendering exceptions.</td>
+                <td>Kořen projektu / Docker stdout</td>
+            </tr>
+            <tr>
+                <td>Discord Console Channel</td>
+                <td>Startup diagnostika, modul loading, sync status.</td>
+                <td>Kanál ID v <code>config/config.py</code></td>
             </tr>
         </tbody>
     </table>
 
-    <h2>3. Správa vah (XP Tuning)</h2>
-    <p>Pravidla pro výpočet XP můžete měnit v reálném čase bez restartu bota. To se děje přes Redis dashboard nebo přes API endpoint <code>/admin/config/weights</code>.</p>
-    <ul>
-        <li><b>Výchozí stav:</b> 1 char = 1 XP, Reply = 60 XP.</li>
-        <li><b>Doporučení:</b> Pokud máte příliš rychlý nárůst úrovní, zvyšte váhu pro <code>bans</code> nebo zaveďte přísnější timeouty sezení.</li>
-    </ul>
+    <h3>Monitorovací příkazy</h3>
+    <pre><code># Redis info
+redis-cli INFO memory | grep used_memory_human
+redis-cli INFO keyspace
+redis-cli DBSIZE
 
-    <h2>2. Údržba Redisu</h2>
-    <p>Redis uchovává historická data v operační paměti. Pro servery s 1M+ zprávami měsíčně doporučujeme:</p>
-    <ul>
-        <li>Nastavit <code>maxmemory-policy</code> na <code>noeviction</code> (aby nedocházelo k mazání historických statistik).</li>
-        <li>Pravidelně provádět <code>BGSAVE</code> pro perzistenci na disk.</li>
-        <li>Sledovat velikost Sorted Setů (ZSET) u klíčů <code>events:*</code>.</li>
-    </ul>
+# Bot heartbeat
+redis-cli GET bot:heartbeat
 
-    <h2>3. Správa bot tokenů</h2>
-    <p>Při změně tokenu bota v <code>.env</code> je nutné provést kompletní restart kontejnerů:</p>
-    <pre><code>docker-compose down
-docker-compose up -d</code></pre>
+# Počet tracked guilds
+redis-cli SCARD bot:guilds
 
-    <h2>4. Logování a Monitoring</h2>
-    <p>Metricord generuje dva hlavní logy:</p>
-    <ul>
-        <li><code>bot.log</code>: Události z Discordu, chyby v příkazech, Redis reconnecty.</li>
-        <li><code>web.log</code>: HTTP požadavky, OAuth sezení, chyby v renderování dashboardu.</li>
-    </ul>
+# Online členové na guild
+redis-cli GET presence:online:&lt;guild_id&gt;</code></pre>
 
-    <div class="info-box" style="background: rgba(245, 158, 11, 0.1); border-left-color: #f59e0b;">
-        <b>Důležité upozornění:</b>
-        Nikdy nesdílejte <code>.env</code> soubor ani <code>SECRET_KEY</code>. Kompromitace těchto klíčů umožňuje komukoliv ovládat váš dashboard a přistupovat k datům všech uživatelů.
+    <div class="info-box" style="background: rgba(239, 68, 68, 0.1); border-left-color: #ef4444;">
+        <b>🔒 Bezpečnostní upozornění</b>
+        Nikdy nesdílejte <code>.env</code> soubor ani <code>SECRET_KEY</code>. Kompromitace těchto klíčů
+        umožňuje komukoliv ovládat váš dashboard a přistupovat k datům všech uživatelů.
     </div>
 </section>
 {% endblock %}

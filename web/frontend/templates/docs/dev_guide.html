@@ -4,33 +4,242 @@
 
 {% block docs_content %}
 <section id="dev-guide">
-    <h1>Developer Guide: Rozšiřování Metricord</h1>
-    <p>Chcete přidat vlastní metriku nebo nový AI model? Tento průvodce vás provede architekturou modulů.</p>
+    <h1>Developer Guide: Vývoj a rozšiřování Metricord</h1>
+    <p>Průvodce pro vývojáře, kteří chtějí nasadit, upravovat nebo rozšiřovat Metricord. Pokrývá lokální
+        vývojové prostředí, strukturu modulů, coding conventions a testování.</p>
 
-    <h2>1. Struktura Analytics Modulu</h2>
-    <p>Všechny výpočty metrik probíhají v <code>bot/commands/activity.py</code> a jsou agregovány v <code>bot/commands/stats_hll.py</code>.</p>
-    
-    <h3>Přidání nové metriky (Kroky):</h3>
+    <h2>1. Lokální vývojové prostředí</h2>
+    <pre><code># Klonování
+git clone https://github.com/MarciPhan/2026-BP-Marcinka-PredikceChov-n-.git
+cd 2026-BP-Marcinka-PredikceChov-n-
+
+# Virtuální prostředí
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Závislosti
+pip install -r requirements.txt
+
+# Konfigurace
+cp .env.example .env
+# Vyplňte alespoň BOT_TOKEN a REDIS_URL
+
+# Redis (musí běžet)
+redis-server --daemonize yes   # nebo: sudo systemctl start redis
+
+# Spuštění bota
+export PYTHONPATH=$PWD
+python3 bot/main.py
+
+# Spuštění dashboardu (v novém terminálu)
+export PYTHONPATH=$PWD
+python3 -m uvicorn web.backend.main:app --host 0.0.0.0 --port 8092 --reload</code></pre>
+
+    <div class="info-box">
+        <b>💡 Uvicorn --reload</b>
+        Flag <code>--reload</code> automaticky restartuje dashboard při změně souborů. Ideální pro vývoj frontend šablon.
+    </div>
+
+    <h2>2. Struktura modulů</h2>
+
+    <h3>Bot Commands (Cogs)</h3>
+    <p>Každý soubor v <code>bot/commands/</code> je discord.py Cog načítaný automaticky při startu:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Modul</th>
+                <th>Velikost</th>
+                <th>Odpovědnost</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>activity.py</code></td>
+                <td>29 KB</td>
+                <td>Hlavní tracking engine — zprávy, voice, XP, leaderboard, backfill, sync_names.</td>
+            </tr>
+            <tr>
+                <td><code>stats_hll.py</code></td>
+                <td>18 KB</td>
+                <td>HyperLogLog statistiky — DAU/MAU, unikátní uživatelé, channel breakdown.</td>
+            </tr>
+            <tr>
+                <td><code>gdpr.py</code></td>
+                <td>15 KB</td>
+                <td>GDPR compliance — export dat, smazání dat, privacy info.</td>
+            </tr>
+            <tr>
+                <td><code>help.py</code></td>
+                <td>9 KB</td>
+                <td>Interaktivní nápověda s embed kartami a ModuleSelect.</td>
+            </tr>
+            <tr>
+                <td><code>health.py</code></td>
+                <td>5 KB</td>
+                <td>Sys diagnostika: Redis ping, verze, info about guilds.</td>
+            </tr>
+            <tr>
+                <td><code>ping.py</code></td>
+                <td>4 KB</td>
+                <td>Latence test (bot ↔ Discord ↔ Redis).</td>
+            </tr>
+            <tr>
+                <td><code>analytics_tracking.py</code></td>
+                <td>3 KB</td>
+                <td>Sledování dashboard eventů (otevření stránek, kliknutí).</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Web Backend</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Soubor</th>
+                <th>Velikost</th>
+                <th>Odpovědnost</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>web/backend/main.py</code></td>
+                <td>121 KB</td>
+                <td>FastAPI aplikace — routing, API endpointy, Jinja2 rendering, OAuth flow.</td>
+            </tr>
+            <tr>
+                <td><code>web/backend/utils.py</code></td>
+                <td>74 KB</td>
+                <td>Analytické výpočty — Engagement Score, predikce, Smart Insights, CSV/JSON export.</td>
+            </tr>
+            <tr>
+                <td><code>web/backend/demo_data.py</code></td>
+                <td>13 KB</td>
+                <td>Generátor realistických demo dat pro ukázkový režim.</td>
+            </tr>
+            <tr>
+                <td><code>web/backend/otp_utils.py</code></td>
+                <td>7 KB</td>
+                <td>OTP generování, SMTP odesílání, rate limiting.</td>
+            </tr>
+            <tr>
+                <td><code>web/backend/hydrate_users.py</code></td>
+                <td>3 KB</td>
+                <td>Obohacení user dat z Discord REST API (avatary, jména).</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Shared modul</h3>
+    <p>Sdílený kód mezi botem a dashboardem:</p>
+    <ul>
+        <li><code>shared/keys.py</code> — Centrální definice Redis klíčů. <b>Všechny klíče na jednom místě.</b></li>
+        <li><code>shared/models.py</code> — Matematické modely (Markov, Kaplan-Meier). Třída <code>CommunityModels</code>.</li>
+        <li><code>shared/redis_client.py</code> — Singleton async Redis klient.</li>
+    </ul>
+
+    <h2>3. Přidání nového příkazu (Cog)</h2>
+    <pre><code class="language-python"># bot/commands/my_command.py
+import discord
+from discord.ext import commands
+from shared.redis_client import get_redis_client
+
+class MyCommand(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @discord.app_commands.command(name="mycommand", description="Popis příkazu")
+    async def my_command(self, interaction: discord.Interaction):
+        r = await get_redis_client()
+        # ... vaše logika ...
+        await r.close()
+        await interaction.response.send_message("Hotovo!", ephemeral=True)
+
+async def setup(bot):
+    await bot.add_cog(MyCommand(bot))</code></pre>
+    <p>Soubor bude automaticky načten při dalším restartu bota (díky auto-discovery v <code>load_commands()</code>).</p>
+
+    <h2>4. Přidání nové metriky do dashboardu</h2>
     <ol>
-        <li>Definujte nový klíč v Redisu (např. <code>stats:custom:{gid}</code>).</li>
-        <li>Implementujte listener v <code>bot/main.py</code> nebo jako nový Cog.</li>
-        <li>Přidejte API endpoint do <code>web/backend/main.py</code> pro zobrazení v dashboardu.</li>
+        <li><b>Definujte Redis klíč</b> v <code>shared/keys.py</code>:
+            <pre><code>def K_CUSTOM(gid: int) -> str:
+    return f"stats:custom:{gid}"</code></pre>
+        </li>
+        <li><b>Zapisujte data</b> v bot commandu nebo listeneru:
+            <pre><code>r = await get_redis_client()
+await r.hincrby(K_CUSTOM(guild.id), "field", 1)</code></pre>
+        </li>
+        <li><b>Přidejte API endpoint</b> v <code>web/backend/main.py</code>:
+            <pre><code>@app.get("/api/guild/{guild_id}/custom")
+async def get_custom(guild_id: int):
+    r = await get_redis_client()
+    data = await r.hgetall(f"stats:custom:{guild_id}")
+    await r.close()
+    return data</code></pre>
+        </li>
+        <li><b>Vytvořte widget</b> v dashboard šabloně pomocí Chart.js.</li>
     </ol>
 
-    <h2>2. Vlastní AI Modely</h2>
-    <p>Predikční engine v <code>web/backend/utils.py</code> je navržen jako modulární. Můžete přidat vlastní funkci <code>predict_X</code>, která bere data z Redisu a vrací pravděpodobnost.</p>
+    <h2>5. Přidání vlastního prediktivního modelu</h2>
+    <p>Predikční engine v <code>web/backend/utils.py</code> je modulární. Přidejte novou async funkci:</p>
+    <pre><code class="language-python"># V utils.py nebo jako nový modul
+async def predict_participation(r, guild_id: int) -> dict:
+    """Predikce účasti na základě historických vzorců."""
+    # Čtení dat z Redisu
+    events = await r.zrangebyscore(
+        f"events:msg:{guild_id}:*", "-inf", "+inf"
+    )
+    # Vaše logika (numpy, sklearn, ...)
+    model_output = {"prediction": 0.85, "confidence": 0.72}
+    return model_output</code></pre>
 
-    <pre><code class="language-python"># Příklad nového prediktoru
-async def predict_participation(r, guild_id):
-    history = await r.zrange(f"events:msg:{guild_id}:*", 0, -1)
-    # Vaše logika (např. pomocí scikit-learn)
-    return 0.95</code></pre>
+    <h2>6. Coding Conventions</h2>
+    <ul>
+        <li><b>Async everywhere:</b> Vždy používejte <code>async/await</code> pro IO operace. Bot zpracovává stovky eventů za sekundu.</li>
+        <li><b>Redis přes shared client:</b> Používejte <code>get_redis_client()</code> z <code>shared/redis_client.py</code>. Nezakládejte vlastní connection pools.</li>
+        <li><b>Klíče přes keys.py:</b> Nikdy nepoužívejte hardcoded Redis klíče. Vždy definujte v <code>shared/keys.py</code>.</li>
+        <li><b>.env pro secrets:</b> Žádné tokeny nebo hesla v kódu. Všechny secrets musí být v <code>.env</code>.</li>
+        <li><b>Ephemeral responses:</b> Pro příkazy s citlivými informacemi používejte <code>ephemeral=True</code>.</li>
+        <li><b>Error handling:</b> V Cog příkazech vždy ošetřete chyby. Uživatel nesmí vidět Python traceback.</li>
+    </ul>
 
-    <h2>3. Frontend komponenty</h2>
-    <p>Dashboard používá <b>Chart.js</b> a <b>Tailwind-like Vanilla CSS</b>. Pokud přidáváte nový graf, stačí vytvořit nový <code>&lt;canvas&gt;</code> a inicializovat jej v <code>dashboard.html</code> pomocí dat z vašeho nového API endpointu.</p>
+    <h2>7. Testování</h2>
+    <p>Testy jsou v kořenovém adresáři projektu:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Test</th>
+                <th>Účel</th>
+                <th>Spuštění</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>test_math_extreme.py</code></td>
+                <td>Stress test matematických modelů (10M events)</td>
+                <td><code>python3 test_math_extreme.py</code></td>
+            </tr>
+            <tr>
+                <td><code>test_advanced_models.py</code></td>
+                <td>Unit testy Markov a Kaplan-Meier</td>
+                <td><code>python3 test_advanced_models.py</code></td>
+            </tr>
+            <tr>
+                <td><code>test_redis_performance.py</code></td>
+                <td>Redis throughput benchmark</td>
+                <td><code>python3 test_redis_performance.py</code></td>
+            </tr>
+            <tr>
+                <td><code>test_insights_extreme.py</code></td>
+                <td>Smart Insights engine stress test</td>
+                <td><code>python3 test_insights_extreme.py</code></td>
+            </tr>
+        </tbody>
+    </table>
 
     <div class="info-box" style="background: rgba(139, 92, 246, 0.1); border-left-color: #8b5cf6;">
-        <b>Důležité:</b> Vždy zachovávejte asynchronní povahu kódu (async/await) kvůli vysoké propustnosti bota.
+        <b>🧪 Spuštění testů vyžaduje běžící Redis</b>
+        Ujistěte se, že Redis je dostupný na <code>localhost:6379</code> předtím, než spustíte testy.
+        Testy zapisují do databáze 0 (výchozí), ale používají prefixované klíče.
     </div>
 </section>
 {% endblock %}

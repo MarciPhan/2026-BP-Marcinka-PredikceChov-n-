@@ -4,116 +4,428 @@
 
 {% block docs_content %}
 <section id="moderators">
-    <h1>Průvodce pro moderátory (Extenzivní edice)</h1>
-    <p>Tato příručka je navržena jako ultimátní zdroj pro tým Metricord moderátorů. Pokrývá vše od základních příkazů až po
-        pokročilou psychologii komunit a interpretaci prediktivních modelů.</p>
+    <h1>Průvodce pro moderátory (Produkční edice)</h1>
+    <p>Kompletní příručka pro moderátorský tým. Pokrývá interpretaci metrik, práci s prediktivními modely,
+        krizové scénáře a provozní postupy pro každodenní správu komunity.</p>
 
     <div class="info-box">
         <b>💡 Filozofie Metricord: Data-Driven Moderace</b>
         V běžných systémech moderátor reaguje pouze na incidenty (reaktivní moderace). Metricord vám umožňuje
-        <b>proaktivní moderaci</b> – identifikaci problémů dříve, než se stanou kritickými.
+        <b>proaktivní moderaci</b> — identifikaci problémů dříve, než se stanou kritickými. Cílem je přejít od
+        „hašení požárů" k systematickému řízení zdraví komunity.
     </div>
 
-    <h2>1. Životní cyklus uživatele a vaše role</h2>
-    <p>Každý uživatel prochází pěti stavy. Vaším úkolem je ovlivňovat pravděpodobnosti přechodů mezi nimi:</p>
+    <h2>1. Životní cyklus uživatele</h2>
+    <p>Každý člen komunity prochází pěti stavy. Metricord sleduje přechody mezi nimi a predikuje budoucí vývoj
+        pomocí Markovových řetězců.</p>
+
+    <div class="mermaid-container">
+        <pre class="mermaid">
+stateDiagram-v2
+    [*] --> New: Připojení na server
+    New --> Active: Zapojení do diskuze
+    New --> Churned: Odchod (špatný onboarding)
+    Active --> Passive: Pokles aktivity
+    Active --> Active: Opakované zapojení
+    Passive --> Active: Reaktivace (event/ping)
+    Passive --> Inactive: 7+ dní ticha
+    Inactive --> Churned: 14+ dní bez aktivity
+    Inactive --> Active: Návrat (vzácné)
+    Churned --> [*]: Definitivní odchod
+        </pre>
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    </script>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Stav</th>
+                <th>Definice</th>
+                <th>Vaše akce jako moderátora</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><b>New</b> (Nový)</td>
+                <td>Prvních 24 hodin od připojení.</td>
+                <td>Přivítejte uživatele. Nasměrujte ho do správných kanálů. Kritická fáze onboardingu.</td>
+            </tr>
+            <tr>
+                <td><b>Active</b> (Aktivní)</td>
+                <td>Pravidelná aktivita (zprávy/voice) v posledních 7 dnech.</td>
+                <td>Udržujte zapojení: odpovídejte na zprávy, tvořte diskuzní témata, organizujte eventy.</td>
+            </tr>
+            <tr>
+                <td><b>Passive</b> (Pasivní)</td>
+                <td>Přítomen na serveru, ale nízká nebo žádná aktivita 3–7 dní.</td>
+                <td>„Lurkers" — potřebují postrčit. Zmiňte je v diskuzi, pozvěte do voice.</td>
+            </tr>
+            <tr>
+                <td><b>Inactive</b> (Neaktivní)</td>
+                <td>Žádná aktivita 7–14 dní.</td>
+                <td>Hazardní zóna. Pokud se nevrátí do 7 dní, pravděpodobně odejdou navždy. Zvažte DM s pozvánkou na event.</td>
+            </tr>
+            <tr>
+                <td><b>Churned</b> (Odešel)</td>
+                <td>Opustil server nebo 14+ dní bez jakékoliv interakce.</td>
+                <td>Analýza příčiny. Data z těchto uživatelů zlepšují přesnost budoucích predikcí.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>2. Metriky dashboardu — referenční příručka</h2>
+
+    <h3>Engagement Score (0–100)</h3>
+    <p>Kompozitní index zdraví serveru. Váhy: <code>25% Moderace + 25% Bezpečnost + 25% Zapojení + 25% Aktivita týmu</code>.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Rozsah</th>
+                <th>Stav</th>
+                <th>Doporučená akce</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><b>0–30</b></td>
+                <td style="color: #ef4444;">🔴 Kritický</td>
+                <td>Server je v „klinické smrti". Iniciujte diskuze, uspořádejte event. Zvažte změnu pravidel.</td>
+            </tr>
+            <tr>
+                <td><b>30–50</b></td>
+                <td style="color: #f59e0b;">🟡 Slabý</td>
+                <td>Komunita stagnuje. Analyzujte Heatmapu — plánujte eventy na hodiny s nejvyšší přirozenou aktivitou.</td>
+            </tr>
+            <tr>
+                <td><b>50–80</b></td>
+                <td style="color: #10b981;">🟢 Zdravý</td>
+                <td>Optimální zóna. Vyvážený poměr aktivity a kvality. Udržujte stávající strategii.</td>
+            </tr>
+            <tr>
+                <td><b>80–100</b></td>
+                <td style="color: #8b5cf6;">⚡ Hyperaktivní</td>
+                <td>Pozor na spam a toxicitu. Vysoký engagement často provází hádky. Posilte moderaci.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Stickiness (Lepivost)</h3>
+    <p>Vzorec: <code>(DAU / MAU) × 100</code>. Kolik procent vašich měsíčních uživatelů se vrací <b>každý den</b>.</p>
     <ul>
-        <li><b>New (Nový):</b> Prvních 24 hodin. Kritická fáze pro onboarding.</li>
-        <li><b>Active (Aktivní):</b> Jádro komunity. Udržujte je zapojené zajímavým obsahem.</li>
-        <li><b>Passive (Pasivní):</b> "Lurkers". Čtou, ale nepíšou. Potřebují "postrčit" k první zprávě.</li>
-        <li><b>Inactive (Neaktivní):</b> Hazardní zóna. Pokud se nevrátí do 7 dnů, pravděpodobně odejdou navždy.</li>
-        <li><b>Churned (Odešel):</b> Uživatel je ztracen. Analýza těchto dat pomáhá zabránit odchodu ostatních.</li>
+        <li><b>&gt; 20%</b> = velmi aktivní komunita (srovnatelná s top Discord servery).</li>
+        <li><b>10–20%</b> = zdravý průměr pro většinu serverů.</li>
+        <li><b>&lt; 5%</b> = „přízrakový server" — hodně registrovaných, málo se vrací.</li>
     </ul>
 
-    <h2>2. Hloubkový rozbor metrik Dashboardu</h2>
+    <h3>Churn Rate (Míra odchodu)</h3>
+    <p>Procentuální podíl uživatelů, kteří opustili server v daném období. Pokud Churn Rate náhle vzroste, zkontrolujte:</p>
+    <ol>
+        <li>Poslední konflikty v chatu (toxicita, drama).</li>
+        <li>Změny v pravidlech nebo struktuře serveru (rušení oblíbených kanálů).</li>
+        <li>Aktivitu vašeho týmu (přílišná přísnost vs. anarchie).</li>
+        <li>Aktivitu konkurenčních serverů (odliv ke konkurenci).</li>
+    </ol>
 
-    <h3>Engagement Score (Vážený index zapojení)</h3>
-    <p>Tento index není jen průměr, ale vážený výpočet <code>(W1*Activity + W2*Security + W3*Team)</code>.</p>
+    <div class="info-box" style="background: rgba(245, 158, 11, 0.1); border-left-color: #f59e0b;">
+        <b>⚠️ Korelace</b>
+        Pokud Stickiness klesá a Churn Rate roste <b>současně</b>, máte strukturální problém — typicky toxické
+        jádro starších členů, které odrazuje nováčky. Dashboard tuto korelaci zvýrazní automaticky.
+    </div>
+
+    <h3>MII (Moderator Intervention Index)</h3>
+    <p>Index úrovně toxicity, vyjádřený jako vážený poměr moderátorských akcí k objemu zpráv.</p>
+    <pre>MII = (Bány × 10 + Timeouty × 3 + Smazané zprávy × 1) / Celkový počet zpráv</pre>
+    <table>
+        <thead>
+            <tr>
+                <th>MII</th>
+                <th>Engagement</th>
+                <th>Interpretace</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Nízký</td>
+                <td>Nízký</td>
+                <td>Komunita je „mrtvá". Málo aktivity, málo problémů.</td>
+            </tr>
+            <tr>
+                <td>Nízký</td>
+                <td>Vysoký</td>
+                <td>✅ Ideální stav. Živá komunita s minimem konfliktů.</td>
+            </tr>
+            <tr>
+                <td>Vysoký</td>
+                <td>Vysoký</td>
+                <td>⚠️ Živá, ale konfliktní. Typické pro herní/politické servery. Posilte pravidla.</td>
+            </tr>
+            <tr>
+                <td>Vysoký</td>
+                <td>Nízký</td>
+                <td>🔴 Toxické prostředí odrazuje nové členy. Zvažte restructuralizaci pravidel.</td>
+            </tr>
+        </tbody>
+    </table>
+    <p>Systém automaticky vypočítává <code>N_mod</code> — ideální počet moderátorů pro aktuální zátěž. Pokud hlásí
+        „Nedostatek moderátorů", hrozí vyhoření týmu nebo nárůst neřešené toxicity.</p>
+
+    <h2>3. Prediktivní modely — praktické využití</h2>
+
+    <h3>🤖 Markovovy řetězce (Retence)</h3>
+    <p>Dashboard zobrazuje predikci stavů uživatelů na příštích 7 dní. Matice přechodu se přepočítává denně.</p>
     <ul>
-        <li><b>Kritická mez (<30):</b> Server je v klinické smrti. Moderátoři by měli iniciovat diskuzi nebo eventy.</li>
-        <li><b>Optimální zóna (65-85):</b> Zdravá komunita s vyváženým poměrem šumu a kvality.</li>
-        <li><b>Hyperaktivní (>90):</b> Pozor na spam a toxicitu. Vysoký engagement často provází hádky.</li>
+        <li><b>Kde najít:</b> Sekce „Predictions" → karta „Markov Forecast".</li>
+        <li><b>Co sledovat:</b> Pokud model očekává odchod &gt; 15% členů do 3 dnů, aktivujte retention event.</li>
+        <li><b>Akce:</b> Targetujte uživatele ve stavu <code>Passive</code> a <code>Inactive</code> — pozvánka na voice, @zmínka v diskuzi, giveaway.</li>
     </ul>
 
-    <h3>Stickiness vs. Churn Rate</h3>
-    <p>Pokud Stickiness klesá a Churn Rate roste současně, máte <b>strukturální problém</b> (např. toxické jádro starších
-        členů, které odrazuje nováčky).</p>
+    <h3>⏳ Kaplan-Meier (Survival analýza)</h3>
+    <p>Zobrazuje „střední délku života" uživatele na serveru jako klesající křivku.</p>
+    <ul>
+        <li><b>Kde najít:</b> Sekce „Predictions" → karta „Survival Curve".</li>
+        <li><b>Co sledovat:</b> Prudký pád po N dnech = problém s onboardingem nebo obsahem v daném období.</li>
+        <li><b>Příklad:</b> Pokud 50% uživatelů odejde po 3 dnech → špatný onboarding. Vylepšete uvítací kanál, přidejte role-select, uvítací DM.</li>
+    </ul>
 
-    <h2>3. Krizové scénáře a jejich řešení</h2>
+    <div class="info-box" style="background: rgba(16, 185, 129, 0.1); border-left-color: #10b981;">
+        <b>💡 Tip pro moderátory</b>
+        Sledujte bod zlomu survival křivky. Pokud je to den 5, zaměřte se na zlepšení uživatelského zážitku
+        v den 4 — speciální obsah, pozvánka do voice, osobní zpráva.
+    </div>
+
+    <h2>4. Krizové scénáře a rozhodovací matice</h2>
+
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 30px 0;">
         <div class="info-box" style="margin: 0; background: rgba(239, 68, 68, 0.1); border-left-color: #ef4444;">
-            <b>🚨 Scénář: "Náhlý úbytek DAU"</b>
-            <b>Příčina:</b> Výpadek obsahu, konkurenční server, nebo interní konflikt.<br>
-            <b>Řešení:</b> Podívejte se na <code>/activity stats</code> nejaktivnějších členů. Pokud přestali psát ti,
-            co dělali 50% aktivity, kontaktujte je soukromě.
+            <b>🚨 Scénář: Náhlý úbytek DAU</b>
+            <b>Symptomy:</b> DAU klesne o 30%+ za 24h. Stickiness prudce klesá.<br>
+            <b>Příčiny:</b> Výpadek obsahu, konkurenční server, interní drama.<br>
+            <b>Řešení:</b>
+            <ol>
+                <li>Zkontrolujte <code>/activity stats</code> top členů — pokud přestali psát „nosiče" 50% aktivity, kontaktujte je DM.</li>
+                <li>Podívejte se do logů na poslední konflikty.</li>
+                <li>Uspořádejte „Community Meeting" nebo AMA.</li>
+            </ol>
         </div>
         <div class="info-box" style="margin: 0; background: rgba(245, 158, 11, 0.1); border-left-color: #f59e0b;">
-            <b>⚠️ Scénář: "Vysoký MII (Toxicitu)"</b>
-            <b>Příčina:</b> Nedostatečná pravidla nebo absence moderátorů ve špičce.<br>
-            <b>Řešení:</b> Zkontrolujte Heatmapu. Pokud špička toxicity sedí na 22:00, posilte noční směnu moderátorů.
+            <b>⚠️ Scénář: Vysoký MII (Toxicita)</b>
+            <b>Symptomy:</b> MII > 0.05, rostoucí počet reportů, nízký engagement nováčků.<br>
+            <b>Příčiny:</b> Nedostatečná pravidla, absence moderátorů ve špičce.<br>
+            <b>Řešení:</b>
+            <ol>
+                <li>Zkontrolujte Heatmapu — pokud špička toxicity je ve 22:00, posilte noční směnu.</li>
+                <li>Aktivujte přísnější AutoMod filtry Discordu.</li>
+                <li>Zvažte slowmode v problémových kanálech.</li>
+            </ol>
+        </div>
+        <div class="info-box" style="margin: 0; background: rgba(139, 92, 246, 0.1); border-left-color: #8b5cf6;">
+            <b>🔮 Scénář: Markov predikuje masový exodus</b>
+            <b>Symptomy:</b> Predikce Churned roste > 20% v horizontu 7 dní.<br>
+            <b>Příčiny:</b> Systémový problém — špatné pravidlo, nudný obsah, toxický jádro.<br>
+            <b>Řešení:</b>
+            <ol>
+                <li>Analyzujte survival křivku — kde přesně lidé „padají"?</li>
+                <li>Spusťte anketu v komunitě — přímá zpětná vazba.</li>
+                <li>Připravte retention event (giveaway, game night).</li>
+            </ol>
+        </div>
+        <div class="info-box" style="margin: 0; background: rgba(59, 130, 246, 0.1); border-left-color: #3b82f6;">
+            <b>🆕 Scénář: Špatný onboarding (vysoký churn nováčků)</b>
+            <b>Symptomy:</b> Survival křivka ukazuje 60%+ odchod do 48h po připojení.<br>
+            <b>Příčiny:</b> Chybí uvítací zpráva, příliš mnoho kanálů, žádné role-select.<br>
+            <b>Řešení:</b>
+            <ol>
+                <li>Vytvořte přehledný welcome kanál s pravidly a navigací.</li>
+                <li>Nastavte role-selector pro přizpůsobení obsahu.</li>
+                <li>Přidejte uvítacího bota / DM pro nováčky.</li>
+            </ol>
         </div>
     </div>
 
-    <h2>4. Kompletní katalog moderátorských příkazů</h2>
-    <p>Metricord zavádí hybridní příkazy (Slash i Prefix <code>*</code>).</p>
+    <h2>5. Kompletní katalog moderátorských příkazů</h2>
 
-    <div style="background: var(--glass); padding: 20px; border-radius: 12px; border: 1px solid var(--glass-border);">
-        <h3>🛡️ Moderátorské (Admin Only)</h3>
-        <ul>
-            <li><code>/activity report</code>: Vygeneruje PDF/Embed s aktivitou týmu. Ukazuje <i>Weighted Moderation
-                    Points</i>.</li>
-            <li><code>/activity sync_names</code>: Opraví nesoulad mezi Discordem a Redis databází.</li>
-            <li><code>/activity backfill [days]</code>: Pozor! Tento příkaz je náročný na CPU. Používejte jen po
-                přidání bota na starší server k načtení historie.</li>
-        </ul>
-
-        <h3>📊 Analytické (Public/Staff)</h3>
-        <ul>
-            <li><code>/activity stats [user]</code>: Neocenitelné při "ban appeal". Uvidíte, zda byl uživatel dříve
-                přínosem.</li>
-            <li><code>/activity leaderboard</code>: Neslouží jen k egu, ale k identifikaci budoucích moderátorů.</li>
-            <li><code>/help [modul]</code>: Rychlý odkaz na konkrétní část této dokumentace.</li>
-        </ul>
+    <div style="background: var(--glass); padding: 24px; border-radius: 12px; border: 1px solid var(--glass-border); margin-bottom: 24px;">
+        <h3 style="margin-top: 0;">🛡️ Administrátorské (vyžadují oprávnění Administrator)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Příkaz</th>
+                    <th>Popis</th>
+                    <th>Poznámky</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>/activity report</code></td>
+                    <td>Generuje přehled aktivity moderátorského týmu (weighted moderation points).</td>
+                    <td>Ukazuje kdo reálně moderuje — zprávy, voice, bany.</td>
+                </tr>
+                <tr>
+                    <td><code>/activity sync_names</code></td>
+                    <td>Vynutí synchronizaci přezdívek a rolí mezi Discordem a Redis databází.</td>
+                    <td>Spusťte po velkých změnách v rolích.</td>
+                </tr>
+                <tr>
+                    <td><code>/activity backfill [days]</code></td>
+                    <td>Načte historii zpráv ze serveru.</td>
+                    <td>⚠️ CPU náročné. Použijte jen po přidání bota na starší server.</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
-    <h2>5. MII: Jak systém počítá toxicitu?</h2>
-    <p>Index MII není binární. Počítá se jako:</p>
-    <pre>MII = (Bány*10 + Timeouty*3 + Smazané zprávy*1) / Celkový počet zpráv</pre>
-    <p>To znamená, že smazání 10 zpráv má stejnou váhu jako jeden Ban. Systém vám v dashboardu doporučí, kolik modů je
-        potřeba pro udržení rozumného MII.</p>
+    <div style="background: var(--glass); padding: 24px; border-radius: 12px; border: 1px solid var(--glass-border); margin-bottom: 24px;">
+        <h3 style="margin-top: 0;">📊 Analytické (dostupné pro Staff i Public)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Příkaz</th>
+                    <th>Popis</th>
+                    <th>Viditelnost</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>/activity stats [user]</code></td>
+                    <td>Detailní rozbor aktivity uživatele — čas v chatu, voice, počet zpráv, rank.</td>
+                    <td>Pokud vynecháte uživatele, zobrazí vaše statistiky. Vidí všichni.</td>
+                </tr>
+                <tr>
+                    <td><code>/activity leaderboard</code></td>
+                    <td>TOP 10 nejaktivnějších členů podle váženého času.</td>
+                    <td>Vidí všichni. Zvažte využití pro identifikaci budoucích moderátorů.</td>
+                </tr>
+                <tr>
+                    <td><code>/help [modul]</code></td>
+                    <td>Interaktivní nápověda k modulům bota.</td>
+                    <td>Jen pro vás (ephemeral).</td>
+                </tr>
+                <tr>
+                    <td><code>/ping</code></td>
+                    <td>Test odezvy bota a připojení k Redisu.</td>
+                    <td>Vidí všichni.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
-    <h2>6. Práce s prediktivními modely</h2>
-    <p>Jako moderátor byste měli sledovat kartu <b>"Predictions"</b>:</p>
+    <div style="background: var(--glass); padding: 24px; border-radius: 12px; border: 1px solid var(--glass-border);">
+        <h3 style="margin-top: 0;">🔒 GDPR příkazy</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Příkaz</th>
+                    <th>Popis</th>
+                    <th>Poznámky</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>/gdpr export</code></td>
+                    <td>Stáhne přehled všech dat, které o uživateli bot eviduje.</td>
+                    <td>Jen pro sebe. Výstup je ephemeral JSON.</td>
+                </tr>
+                <tr>
+                    <td><code>/gdpr delete</code></td>
+                    <td>Smaže všechna data uživatele. Nevratné — přijde o XP i úroveň.</td>
+                    <td>Pokud člen požádá: odkažte ho na tento příkaz.</td>
+                </tr>
+                <tr>
+                    <td><code>/privacy</code></td>
+                    <td>Rychlý přehled zásad ochrany osobních údajů.</td>
+                    <td>Jen pro vás (ephemeral).</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>6. XP systém a gamifikace</h2>
+    <p>Metricord používá <b>Anti-Spam XP systém</b> s následujícími mechanismy:</p>
     <ul>
-        <li><b>Markov Churn Expectancy:</b> Pokud model očekává odchod 15% členů do 3 dnů, je to signál k aktivaci
-            "Retention Eventu" (např. giveaway nebo anketa).</li>
-        <li><b>Survival Curve:</b> Sledujte bod zlomu. Pokud 50% lidí odejde po 5 dnech, zkuste v 4. den poslat hromadnou
-            notifikaci nebo zajímavý obsah.</li>
+        <li><b>Cooldown 60 sekund:</b> Maximálně 1 XP-profitující zpráva za minutu na uživatele.</li>
+        <li><b>Délka zpráv:</b> Krátká (&lt; 15 znaků) = 1 XP, standardní (15–100) = 5 XP, dlouhá (&gt; 100) = 15+ XP (max 50).</li>
+        <li><b>Reply bonus:</b> +10 XP za odpověď na zprávu jiného uživatele.</li>
+        <li><b>Voice:</b> 5 XP / min aktivního mikrofonu (AFK kanál = 0 XP).</li>
+        <li><b>Duplicate check:</b> Opakování stejné zprávy = 0 XP.</li>
+    </ul>
+    <p><b>Leveling křivka:</b> <code>XP(L) = 50 × L² + 200 × L + 100</code>. Progrese je záměrně exponenciální —
+        vyšší úrovně vyžadují výrazně více aktivity, čímž se posiluje prestiž vysokých ranků.</p>
+
+    <h2>7. GDPR a povinnosti moderátorského týmu</h2>
+    <p>Jako moderátoři máte přístup k analytickým datům. Dodržujte tyto zásady:</p>
+    <ul>
+        <li><b>Nikdy neukládáme obsah zpráv.</b> Pouze metadata: počet, délka, timestamp, kanál, autor (ID).</li>
+        <li><b>Nešiřte uživatelská data</b> (historii aktivity, IP adresy) mimo tým.</li>
+        <li><b>Anonymizace po 90 dnech:</b> Systém automaticky anonymizuje starší záznamy.</li>
+        <li><b>Právo na smazání:</b> Pokud uživatel napíše „Smažte moje data", odkažte ho na <code>/gdpr delete</code>.</li>
     </ul>
 
-    <h2>7. GDPR a povinnosti týmu</h2>
-    <p>V systému Metricord jsou data anonymizována po 90 dnech. Jako moderátoři však nesmíte uživatelská data (např.
-        historii aktivity) šířit mimo tým. </p>
     <div class="info-box" style="background: rgba(16, 185, 129, 0.1); border-left-color: #10b981;">
-        <b>Právo na smazání:</b> Pokud uživatel napíše "Smažte moje data", stačí mu říct, ať použije <code>/privacy
-            delete</code>. O zbytek se postará bot automaticky.
+        <b>Právo na smazání</b>
+        Pokud uživatel napíše „Smažte moje data", stačí mu říct, ať použije <code>/gdpr delete</code>.
+        O zbytek se postará bot automaticky. Smazání je nevratné — uživatel přijde o veškeré XP a úroveň.
     </div>
 
-    <h2>8. FAQ pro moderátory</h2>
+    <h2>8. Best Practices pro růst komunity</h2>
+    <ol>
+        <li><b>Plánujte eventy podle Heatmapy:</b> Organizujte akce v hodinách s nejvyšší přirozenou aktivitou (typicky 18:00–22:00 CET).</li>
+        <li><b>Reagujte na predikce:</b> Pokud Markov ukazuje nárůst odchodů do 3 dnů, spusťte „Community Meeting" nebo game night.</li>
+        <li><b>Identifikujte evangelisty:</b> Z leaderboardu vytipujte TOP 10 členů = budoucí moderátoři nebo ambasadoři.</li>
+        <li><b>Kalibrace toxicity:</b> Pokud je MII dlouhodobě vysoký, zvažte úpravu AutoMod pravidel Discordu.</li>
+        <li><b>Sledujte „Dead Hours":</b> Pokud je v Heatmapě viditelný „gap" (např. 4:00–8:00), nastavte slowmode pro noční spam.</li>
+        <li><b>Používejte Survival data pro onboarding:</b> Pokud většina lidí odchází v den 2, vylepšete den 1 — DM, role-select, uvítací quest.</li>
+    </ol>
+
+    <h2>9. FAQ pro moderátory</h2>
     <details style="margin-bottom: 10px; cursor: pointer; background: var(--glass); padding: 10px; border-radius: 8px;">
         <summary style="font-weight: 600;">Proč bot nepočítá zprávy v některých kanálech?</summary>
         <p style="margin-top: 10px;">Bot ignoruje kanály, ke kterým nemá právo <code>View Channel</code> nebo jsou na
             Blacklistu v konfiguraci (např. NSFW sekce nebo Staff kanály).</p>
     </details>
     <details style="margin-bottom: 10px; cursor: pointer; background: var(--glass); padding: 10px; border-radius: 8px;">
-        <summary style="font-weight: 600;">Jak se liší "Voice Time" a "Weighted Time"?</summary>
-        <p style="margin-top: 10px;">Voice Time jsou čisté sekundy. Weighted Time zohledňuje aktivitu. Sedění v AFK
-            kanálu dává 0 bodů do Weighted Time.</p>
+        <summary style="font-weight: 600;">Jak se liší „Voice Time" a „Weighted Time"?</summary>
+        <p style="margin-top: 10px;">Voice Time jsou čisté minuty. Weighted Time zohledňuje aktivitu — sedění v AFK
+            kanálu, mute nebo solo v prázdném kanálu dávají 0 bodů do Weighted Time.</p>
+    </details>
+    <details style="margin-bottom: 10px; cursor: pointer; background: var(--glass); padding: 10px; border-radius: 8px;">
+        <summary style="font-weight: 600;">Může bot odhalit „Alty" (alternativní účty)?</summary>
+        <p style="margin-top: 10px;">V sekci Security dashboardu bot porovnává join-time a vzorce chování. Pokud dva
+            účty píší ve stejné časy a mají podobnou délku zpráv, dostanou varování „Potential Alt".</p>
+    </details>
+    <details style="margin-bottom: 10px; cursor: pointer; background: var(--glass); padding: 10px; border-radius: 8px;">
+        <summary style="font-weight: 600;">Jak často se přepočítávají predikce?</summary>
+        <p style="margin-top: 10px;">Základní metriky (DAU, zprávy, online) se aktualizují v reálném čase (5–10s zpoždění).
+            Markovovy predikce a Survival analýza se přepočítávají jednou za hodinu. Full retraining probíhá
+            každých 24 hodin.</p>
+    </details>
+    <details style="margin-bottom: 10px; cursor: pointer; background: var(--glass); padding: 10px; border-radius: 8px;">
+        <summary style="font-weight: 600;">Vidí uživatelé mé predikce a analytiku?</summary>
+        <p style="margin-top: 10px;">Ne. Predikční rozhraní a pokročilá analytika jsou dostupné pouze uživatelům
+            s oprávněním <code>Manage Server</code> nebo <code>Administrator</code>. Běžní členové vidí pouze
+            své vlastní statistiky přes <code>/activity stats</code>.</p>
     </details>
     <details style="margin-bottom: 30px; cursor: pointer; background: var(--glass); padding: 10px; border-radius: 8px;">
-        <summary style="font-weight: 600;">Může bot odhalit "Alty"?</summary>
-        <p style="margin-top: 10px;">Ano, v sekci Security dashboardu bot porovnává Join-time a vzorce chování. Pokud dva
-            účty píší ve stejné časy a mají podobnou délku zpráv, dostanou varování "Potential Alt".</p>
+        <summary style="font-weight: 600;">Co dělat, když predikce vypadají nepřesně?</summary>
+        <p style="margin-top: 10px;">Přesnost roste s množstvím dat. V prvních 7 dnech jsou predikce orientační.
+            Po 30 dnech sběru dat dosahují spolehlivosti 80%+. Pokud jste spustili backfill, data budou přesnější
+            okamžitě.</p>
     </details>
 
+    <style>
+        .mermaid-container {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 30px 0;
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+        }
+    </style>
 </section>
 {% endblock %}

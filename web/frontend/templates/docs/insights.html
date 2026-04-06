@@ -5,39 +5,117 @@
 {% block docs_content %}
 <section id="insights">
     <h1>Smart Insights Engine</h1>
-    <p>Váš osobní analytik, který nikdy nespí. Insights Engine každou hodinu vyhodnocuje více než 20 různých metrik a
-        hledá anomálie nebo příležitosti ke zlepšení.</p>
+    <p>Váš analytický asistent, který nikdy nespí. Insights Engine vyhodnocuje více než 20 metrik každou
+        hodinu a automaticky detekuje anomálie, trendy a příležitosti pro moderátorský tým.</p>
 
     <h2>Typy detekcí</h2>
 
-    <h3>🚨 Bezpečnostní varování</h3>
+    <h3>🚨 Bezpečnostní varování (Severity: Kritická)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Insight</th>
+                <th>Podmínka</th>
+                <th>Doporučená akce moderátora</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><b>Raid Detection</b></td>
+                <td>Nárůst nových členů &gt; 10 za 5 min + nárůst zpráv &gt; 500%.</td>
+                <td>Aktivujte verification mode, zapněte slowmode, kontaktujte Discord Trust & Safety.</td>
+            </tr>
+            <tr>
+                <td><b>Mass Mention Spam</b></td>
+                <td>Velký počet @everyone / @here zmínek od ne-adminů v krátkém čase.</td>
+                <td>Ban útočníků, zkontrolujte oprávnění rolí, zapněte AutoMod pravidla pro zmínky.</td>
+            </tr>
+            <tr>
+                <td><b>Alt Account Alert</b></td>
+                <td>Dva účty se shodnými vzorci chování (časy, délky zpráv, kanály).</td>
+                <td>Prohlédněte profily v Security dashboardu. Zvažte kick podezřelého účtu.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>📉 Trendy a Retence (Severity: Střední)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Insight</th>
+                <th>Podmínka</th>
+                <th>Doporučená akce</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><b>Dead Server Warning</b></td>
+                <td>DAU pokles &gt; 30% oproti 30dennímu klouzavému průměru.</td>
+                <td>Analyzujte příčinu (konkurence? drama?). Uspořádejte event, oživte diskuze.</td>
+            </tr>
+            <tr>
+                <td><b>Churn Spike</b></td>
+                <td>Náhlý nárůst odchodů ze serveru.</td>
+                <td>Zkontrolujte poslední změny pravidel, kontroverzní diskuze, toxicitu v logách.</td>
+            </tr>
+            <tr>
+                <td><b>Onboarding Failure</b></td>
+                <td>Survival křivka ukazuje &gt; 60% odchod do 48h.</td>
+                <td>Vylepšete welcome kanál, přidejte role-select, nastavte uvítací DM.</td>
+            </tr>
+            <tr>
+                <td><b>Engagement Plateau</b></td>
+                <td>Engagement Score stagnuje 7+ dní na stejné hodnotě.</td>
+                <td>Komunita potřebuje nový impulz — nový kanál, event, nebo formát diskuze.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>🛠️ Management komunity (Severity: Informativní)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Insight</th>
+                <th>Podmínka</th>
+                <th>Doporučená akce</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><b>Moderation Gap</b></td>
+                <td>Vysoká aktivita + nulové moderátorské akce po &gt; 4 hodiny.</td>
+                <td>Zkontrolujte, zda jsou moderátoři online. Zvažte přidání nových členů do týmu.</td>
+            </tr>
+            <tr>
+                <td><b>Voice Overload</b></td>
+                <td>Voice kanály často na 100% kapacity.</td>
+                <td>Vytvořte nové voice roomky. Zvažte dynamické voice kanály.</td>
+            </tr>
+            <tr>
+                <td><b>Understaffed Warning</b></td>
+                <td><code>N_mod</code> doporučuje více moderátorů, než máte.</td>
+                <td>Z leaderboardu identifikujte potenciální nové moderátory a oslovte je.</td>
+            </tr>
+            <tr>
+                <td><b>Peak Time Shift</b></td>
+                <td>Hodina maximální aktivity se posunula o 2+ hodiny oproti průměru.</td>
+                <td>Aktualizujte plán eventů a moderátorské směny podle nové peak time.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Notifikace</h2>
+    <p>Insights se zobrazují na několika místech:</p>
     <ul>
-        <li><b>Raid Detection:</b> Náhlý nárůst počtu nových členů (>10 za 5 min) doprovázený prudkým zvýšením počtu
-            zpráv (>500%). Indikuje probíhající útok.</li>
-        <li><b>Mass Mention Spam:</b> Detekce velkého počtu zmínek (@everyone / @here) v krátkém čase od uživatelů bez
-            admin práv.</li>
+        <li><b>Dashboard:</b> Karta „Smart Insights" na hlavní stránce serveru.</li>
+        <li><b>Discord:</b> Kritické insighty lze posílat do moderátorského kanálu (nastavitelné v konfiguraci).</li>
+        <li><b>Bot Console:</b> Všechny insighty se logují do console kanálu pro audit.</li>
     </ul>
 
-    <h3>📉 Trendy a Retence</h3>
-    <ul>
-        <li><b>Dead Server Warning:</b> Pokud hodnota DAU (Denní aktivní uživatelé) klesne o více než 30% oproti
-            30dennímu klouzavému průměru.</li>
-        <li><b>Churn Spike:</b> Náhlý nárůst počtu odchodů ze serveru. Může indikovat kontroverzní událost nebo toxicitu
-            v komunitě.</li>
-    </ul>
-
-    <h3>🛠️ Management Komunity</h3>
-    <ul>
-        <li><b>Moderation Gap:</b> Detekuje situaci, kdy je aktivita na serveru vysoká (hodně zpráv), ale počet
-            moderátorských akcí (logů) je nulový po delší dobu. Značí, že moderátoři nejsou aktivní.</li>
-        <li><b>Voice Channel Overload:</b> Upozornění, pokud jsou voice kanály často zaplněné na 100% kapacity. Signál
-            pro vytvoření nových místností.</li>
-    </ul>
-
-    <div class="info-box">
-        <b>Notifikace</b>
-        Tyto insighty se zobrazují nejen v dashboardu, ale můžete si nastavit i zasílání upozornění přímo do soukromého
-        kanálu pro moderátory.
+    <div class="info-box" style="background: rgba(139, 92, 246, 0.1); border-left-color: #8b5cf6;">
+        <b>💡 Confidence Score</b>
+        Každý insight má skóre spolehlivosti (0–1.0). Insights s confidence &lt; 0.5 se zobrazují jako
+        „experimentální" a neměly by vést k okamžitým akcím. Čím více dat (7+ dní), tím přesnější insighty.
     </div>
 </section>
 {% endblock %}

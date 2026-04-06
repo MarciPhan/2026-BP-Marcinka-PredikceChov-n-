@@ -4,17 +4,112 @@
 
 {% block docs_content %}
 <section id="data-schema">
-    <h1>Vnitřní datové schéma (Redis Map)</h1>
-    <p>Metricord využívá Redis jako primární databázi pro in-memory analytiku. Zde je kompletní mapa klíčů a datových typů používaných v systému.</p>
+    <h1>Redis Datové schéma (Kompletní referenční mapa)</h1>
+    <p>Metricord využívá Redis jako primární databázi pro in-memory analytiku. Tato stránka dokumentuje
+        všechny klíče definované v <code>shared/keys.py</code> a runtime klíče vytvářené botem.</p>
 
-    <h2>1. Uživatelská data a stavy</h2>
+    <div class="info-box">
+        <b>💡 Konvence pojmenování klíčů</b>
+        Formát: <code>{kategorie}:{subtyp}:{guild_id}:{identifikátor}</code>. Všechny klíče jsou definovány
+        centrálně v <code>shared/keys.py</code>. Nikdy nepoužívejte hardcoded klíče v kódu.
+    </div>
+
+    <h2>1. Analytické eventy (Time-Series)</h2>
+    <p>Data jednotlivých uživatelů jako <b>Sorted Sets</b> (score = UNIX timestamp).</p>
     <table>
         <thead>
             <tr>
                 <th>Klíč (Pattern)</th>
                 <th>Typ</th>
-                <th>Expirace</th>
+                <th>TTL</th>
                 <th>Popis</th>
+                <th>Funkce v keys.py</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>events:msg:{gid}:{uid}</code></td>
+                <td>Sorted Set</td>
+                <td>—</td>
+                <td>Timestampy zpráv uživatele. Member = JSON metadata (délka, kanál, reply).</td>
+                <td><code>K_EVENTS_MSG()</code></td>
+            </tr>
+            <tr>
+                <td><code>events:voice:{gid}:{uid}</code></td>
+                <td>Sorted Set</td>
+                <td>—</td>
+                <td>Voice sezení — start/end časy, kanál, délka trvání.</td>
+                <td><code>K_EVENTS_VOICE()</code></td>
+            </tr>
+            <tr>
+                <td><code>events:action:{gid}:{uid}</code></td>
+                <td>Sorted Set</td>
+                <td>—</td>
+                <td>Moderátorské akce (ban, kick, timeout, delete) s timestampem.</td>
+                <td><code>K_EVENTS_ACTION()</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>2. Agregované statistiky</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Klíč (Pattern)</th>
+                <th>Typ</th>
+                <th>TTL</th>
+                <th>Popis</th>
+                <th>Funkce v keys.py</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>hll:dau:{gid}:{YYYYMMDD}</code></td>
+                <td>HyperLogLog</td>
+                <td>—</td>
+                <td>Unikátní aktivní uživatelé za den. ~12 KB / den / guild. Chyba: 0.81%.</td>
+                <td><code>K_DAU()</code></td>
+            </tr>
+            <tr>
+                <td><code>stats:hourly:{gid}:{YYYYMMDD}</code></td>
+                <td>Hash</td>
+                <td>—</td>
+                <td>Počet zpráv za každou hodinu (field = "0"–"23", value = count).</td>
+                <td><code>K_HOURLY()</code></td>
+            </tr>
+            <tr>
+                <td><code>stats:heatmap:{gid}</code></td>
+                <td>Hash</td>
+                <td>—</td>
+                <td>Aktivita po dnech a hodinách (field = "0:14" = pondělí 14:00).</td>
+                <td><code>K_HEATMAP()</code></td>
+            </tr>
+            <tr>
+                <td><code>stats:msglen:{gid}</code></td>
+                <td>Hash</td>
+                <td>—</td>
+                <td>Distribuce délky zpráv (field = bucket "0-15", "15-100", "100+").</td>
+                <td><code>K_MSGLEN()</code></td>
+            </tr>
+            <tr>
+                <td><code>stats:total_msgs:{gid}</code></td>
+                <td>String</td>
+                <td>—</td>
+                <td>Kumulativní celkový počet zpráv na serveru.</td>
+                <td><code>K_TOTAL_MSGS()</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>3. Uživatelská data</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Klíč (Pattern)</th>
+                <th>Typ</th>
+                <th>TTL</th>
+                <th>Popis</th>
+                <th>Funkce v keys.py</th>
             </tr>
         </thead>
         <tbody>
@@ -22,42 +117,169 @@
                 <td><code>user:info:{uid}</code></td>
                 <td>Hash</td>
                 <td>7 dní</td>
-                <td>Ukládá <code>name</code>, <code>avatar</code> a <code>roles</code> (IDs).</td>
-            </tr>
-            <tr>
-                <td><code>activity:state:{gid}:{uid}:{key}</code></td>
-                <td>String</td>
-                <td>-</td>
-                <td>Dočasné značky pro start/konec sezení (<code>chat_start</code>, <code>voice_start</code>).</td>
+                <td>Cached uživatelské údaje: <code>name</code>, <code>avatar</code>, <code>roles</code>.</td>
+                <td><code>K_USER_INFO()</code></td>
             </tr>
         </tbody>
     </table>
 
-    <h2>2. Analytické eventy (Time-Series)</h2>
-    <p>Pro každou metriku používáme <b>Sorted Sets</b> (ZSET), kde skóre je UNIX timestamp a hodnota je JSON s detaily eventu.</p>
-    <ul>
-        <li><code>events:msg:{gid}:{uid}</code>: Historie zpráv (jen metadata: délka, reply).</li>
-        <li><code>events:voice:{gid}:{uid}</code>: Historie voice sezení (duration, channel).</li>
-        <li><code>events:action:{gid}:{uid}</code>: Moderační akce (type: kick/ban/timeout).</li>
-    </ul>
+    <h2>4. Konfigurace a systémové klíče</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Klíč (Pattern)</th>
+                <th>Typ</th>
+                <th>TTL</th>
+                <th>Popis</th>
+                <th>Funkce v keys.py</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>cfg:logchan:{gid}</code></td>
+                <td>String</td>
+                <td>—</td>
+                <td>ID log kanálu pro daný server.</td>
+                <td><code>K_LOGCHAN()</code></td>
+            </tr>
+            <tr>
+                <td><code>backfill:progress:{gid}</code></td>
+                <td>String</td>
+                <td>—</td>
+                <td>Status průběhu backfillu (procenta, status).</td>
+                <td><code>K_BACKFILL_PROGRESS()</code></td>
+            </tr>
+        </tbody>
+    </table>
 
-    <h2>3. Agregované statistiky (HyperLogLog)</h2>
-    <p>Používáme pro extrémně rychlý výpočet unikátních uživatelů (DAU/WAU/MAU).</p>
-    <ul>
-        <li><code>stats:hll:{gid}:day:{YYYY-MM-DD}</code>: Unikátní uživatelé za den.</li>
-        <li><code>stats:hll:{gid}:week:{YYYY-WW}</code>: Unikátní za týden.</li>
-        <li><code>stats:hll:{gid}:month:{YYYY-MM}</code>: Unikátní za měsíc.</li>
-    </ul>
+    <h2>5. Runtime klíče (bot/main.py)</h2>
+    <p>Tyto klíče nejsou v <code>keys.py</code>, ale zapisuje je bot přímo:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Klíč (Pattern)</th>
+                <th>Typ</th>
+                <th>TTL</th>
+                <th>Popis</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>bot:heartbeat</code></td>
+                <td>String</td>
+                <td>—</td>
+                <td>UNIX timestamp posledního heartbeatu (60s interval). Dashboard ho čte pro UP/DOWN status.</td>
+            </tr>
+            <tr>
+                <td><code>bot:guilds</code></td>
+                <td>Set</td>
+                <td>—</td>
+                <td>ID všech serverů, kde je bot přítomen.</td>
+            </tr>
+            <tr>
+                <td><code>bot:guilds:primary</code></td>
+                <td>Set</td>
+                <td>—</td>
+                <td>Servery primárního bota.</td>
+            </tr>
+            <tr>
+                <td><code>bot:guilds:dashboard</code></td>
+                <td>Set</td>
+                <td>—</td>
+                <td>Servery dashboard bota (Lite Mode).</td>
+            </tr>
+            <tr>
+                <td><code>bot:token</code></td>
+                <td>String</td>
+                <td>—</td>
+                <td>Volitelný token uložený přes dashboard (když .env je prázdný).</td>
+            </tr>
+            <tr>
+                <td><code>presence:online:{gid}</code></td>
+                <td>String</td>
+                <td>60s</td>
+                <td>Aktuálně online členové. Zapisuje <code>member_stats_task</code> každých 10s.</td>
+            </tr>
+            <tr>
+                <td><code>presence:total:{gid}</code></td>
+                <td>String</td>
+                <td>60s</td>
+                <td>Celkový počet členů serveru.</td>
+            </tr>
+            <tr>
+                <td><code>guild:verification_level:{gid}</code></td>
+                <td>String</td>
+                <td>—</td>
+                <td>Úroveň verifikace serveru (pro Security Score).</td>
+            </tr>
+            <tr>
+                <td><code>guild:mfa_level:{gid}</code></td>
+                <td>String</td>
+                <td>—</td>
+                <td>MFA požadavek pro moderátory.</td>
+            </tr>
+            <tr>
+                <td><code>guild:explicit_filter:{gid}</code></td>
+                <td>String</td>
+                <td>—</td>
+                <td>Explicit content filter nastavení.</td>
+            </tr>
+        </tbody>
+    </table>
 
-    <h2>4. Systémová konfigurace</h2>
-    <ul>
-        <li><code>bot:guilds</code>: Set všech ID serverů, kde je bot přítomen.</li>
-        <li><code>config:action_weights</code>: Hash uživatelsky definovaných vah pro XP (<code>bans=300</code>, <code>msg=1</code> atd.).</li>
-    </ul>
+    <h2>6. Discourse klíče</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Klíč (Pattern)</th>
+                <th>Typ</th>
+                <th>Popis</th>
+                <th>Funkce v keys.py</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>discourse:conf:{gid}</code></td>
+                <td>Hash</td>
+                <td>Konfigurace Discourse fóra pro guild.</td>
+                <td><code>K_DISCOURSE_CONF()</code></td>
+            </tr>
+            <tr>
+                <td><code>user:discourse:{uid}</code></td>
+                <td>Set</td>
+                <td>Seznam Discourse guild IDs vlastněných uživatelem.</td>
+                <td><code>K_USER_DISCOURSE()</code></td>
+            </tr>
+            <tr>
+                <td><code>discourse:ids</code></td>
+                <td>Set</td>
+                <td>Všechna registrovaná Discourse guild IDs.</td>
+                <td><code>K_DISCOURSE_IDS()</code></td>
+            </tr>
+        </tbody>
+    </table>
 
-    <div class="info-box" style="background: rgba(139, 92, 246, 0.1); border-left-color: #8b5cf6;">
-        <b>💡 Tip pro vývojáře:</b>
-        Při přímém přístupu k Redisu doporučujeme používat příkaz <code>SCAN</code> místo <code>KEYS</code>, aby nedošlo k blokování databáze při velkém objemu dat.
+    <h2>7. Diagnostické příkazy</h2>
+    <pre><code># Zobrazit všechny klíče pro guild
+redis-cli SCAN 0 MATCH "*:{guild_id}*" COUNT 100
+
+# Počet členů v DAU HLL
+redis-cli PFCOUNT "hll:dau:{guild_id}:{yyyymmdd}"
+
+# Počet zpráv uživatele
+redis-cli ZCARD "events:msg:{guild_id}:{user_id}"
+
+# Paměťová náročnost klíče
+redis-cli MEMORY USAGE "events:msg:{guild_id}:{user_id}"
+
+# Celková velikost databáze
+redis-cli DBSIZE</code></pre>
+
+    <div class="info-box" style="background: rgba(245, 158, 11, 0.1); border-left-color: #f59e0b;">
+        <b>⚠️ Výkon</b>
+        Při přímém přístupu k Redisu doporučujeme <code>SCAN</code> místo <code>KEYS</code>, aby
+        nedošlo k blokování databáze při velkém objemu dat. Příkaz <code>KEYS</code> je O(N) a může
+        na velkých databázích trvat sekundy.
     </div>
 </section>
 {% endblock %}

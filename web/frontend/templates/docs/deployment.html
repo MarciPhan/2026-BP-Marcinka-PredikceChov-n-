@@ -4,65 +4,351 @@
 
 {% block docs_content %}
 <section id="deployment">
-    <h1>Nasazení a údržba</h1>
-    <p>Metricord je kontejnerizovaná aplikace. Doporučený způsob nasazení je pomocí <b>Docker Compose</b>.</p>
+    <h1>Nasazení a údržba (Produkční průvodce)</h1>
+    <p>Kompletní průvodce pro nasazení Metricord do produkce — od lokálního testu po zabezpečený server s SSL a monitoringem.</p>
 
-    <h2>1. Požadavky na systém</h2>
-    <ul>
-        <li><b>OS:</b> Linux (Ubuntu 22.04+ doporučeno).</li>
-        <li><b>CPU:</b> Minimálně 1 jádro (pro malé servery), 4+ jádra (pro velké komunity).</li>
-        <li><b>RAM:</b> 2 GB+ (Redis potřebuje místo pro in-memory data).</li>
-        <li><b>Software:</b> Docker 20.10+ a Docker Compose 2.0+.</li>
-    </ul>
+    <h2>1. Systémové požadavky</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Parametr</th>
+                <th>Minimální</th>
+                <th>Doporučeno (produkce)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><b>OS</b></td>
+                <td>Linux (libovolná distribuce)</td>
+                <td>Ubuntu 22.04 LTS / Fedora 39+</td>
+            </tr>
+            <tr>
+                <td><b>CPU</b></td>
+                <td>1 jádro</td>
+                <td>2+ jádra (pro servery s 10k+ členy)</td>
+            </tr>
+            <tr>
+                <td><b>RAM</b></td>
+                <td>1 GB</td>
+                <td>2+ GB (Redis je in-memory)</td>
+            </tr>
+            <tr>
+                <td><b>Python</b></td>
+                <td>3.9</td>
+                <td>3.11+</td>
+            </tr>
+            <tr>
+                <td><b>Redis / Valkey</b></td>
+                <td>6.0</td>
+                <td>7.0+ (pro ACL podporu)</td>
+            </tr>
+            <tr>
+                <td><b>Docker</b> (volitelné)</td>
+                <td>20.10</td>
+                <td>24.0+ s Compose v2</td>
+            </tr>
+        </tbody>
+    </table>
 
-    <h2>2. Instalace (Krok za krokem)</h2>
+    <h2>2. Příprava prostředí</h2>
+
+    <h3>2.1 Discord Developer Portal</h3>
+    <p>Než začnete s nasazením, potřebujete:</p>
+    <ol>
+        <li>Jděte na <a href="https://discord.com/developers/applications" style="color: var(--primary)">Discord Developer Portal</a>.</li>
+        <li>Vytvořte novou aplikaci → sekce <b>Bot</b> → <b>Reset Token</b> → zkopírujte <code>BOT_TOKEN</code>.</li>
+        <li>Zapněte <b>všechny Privileged Gateway Intents</b>:
+            <ul>
+                <li><code>Presence Intent</code> — sledování online/offline statusu.</li>
+                <li><code>Server Members Intent</code> — přístup k seznamu členů.</li>
+                <li><code>Message Content Intent</code> — analýza zpráv (délka, ne obsah).</li>
+            </ul>
+        </li>
+        <li>V sekci <b>OAuth2</b>:
+            <ul>
+                <li>Přidejte Redirect URI: <code>http://localhost:8092/auth/callback</code> (pro vývoj).</li>
+                <li>Zkopírujte <code>DISCORD_CLIENT_ID</code> a <code>DISCORD_CLIENT_SECRET</code>.</li>
+            </ul>
+        </li>
+        <li>Pozvěte bota na server s oprávněním <code>Administrator</code>.</li>
+    </ol>
+
+    <h3>2.2 Generování secret klíčů</h3>
+    <pre><code># Generování bezpečného secret klíče pro dashboard session
+python3 -c "import secrets; print(secrets.token_hex(32))"
+
+# Generování access tokenu pro API
+python3 -c "import secrets; print(secrets.token_urlsafe(48))"</code></pre>
+
+    <h2>3. Metoda A: Lokální nasazení (start.sh)</h2>
+    <p>Ideální pro vývoj a testování. Spustí všechny služby na jednom stroji.</p>
+
     <div class="step-container">
         <div class="step-number">1</div>
         <div class="step-content">
-            <h3>Klonování repozitáře</h3>
-            <pre>git clone https://github.com/marcipan/metricord.git
-cd metricord</pre>
+            <h3>Klonování a příprava</h3>
+            <pre><code>git clone https://github.com/MarciPhan/2026-BP-Marcinka-PredikceChov-n-.git
+cd 2026-BP-Marcinka-PredikceChov-n-
+cp .env.example .env</code></pre>
         </div>
     </div>
 
     <div class="step-container">
         <div class="step-number">2</div>
         <div class="step-content">
-            <h3>Konfigurace prostředí</h3>
-            <p>Zkopírujte vzorový soubor a vyplňte své údaje.</p>
-            <pre>cp .env.example .env
-nano .env</pre>
-            <p>Nezapomeňte vyplnit <code>BOT_TOKEN</code>, <code>DISCORD_CLIENT_ID</code> a <code>DISCORD_CLIENT_SECRET</code>.</p>
+            <h3>Konfigurace .env</h3>
+            <p>Vyplňte všechny povinné proměnné:</p>
+            <pre><code># Povinné
+BOT_TOKEN=your_discord_bot_token_here
+DISCORD_CLIENT_SECRET=your_oauth2_client_secret
+
+# Dashboard
+DASHBOARD_PORT=8092
+DASHBOARD_SECRET_KEY=&lt;vygenerovaný hex klíč&gt;
+DASHBOARD_ACCESS_TOKEN=&lt;vygenerovaný access token&gt;
+
+# Redis
+REDIS_URL=redis://localhost:6379/0
+
+# SMTP (volitelné — bez něj OTP kódy do konzole)
+SMTP_PASSWORD=your_gmail_app_password</code></pre>
         </div>
     </div>
 
     <div class="step-container">
         <div class="step-number">3</div>
         <div class="step-content">
-            <h3>Spuštění kontejnerů</h3>
-            <pre>docker-compose up -d --build</pre>
-            <p>Tento příkaz spustí Redis, Bot proces a Dashboard. Aplikace bude dostupná na portu <code>8093</code>.</p>
+            <h3>Spuštění</h3>
+            <pre><code>chmod +x start.sh
+./start.sh</code></pre>
+            <p>Skript automaticky:</p>
+            <ul>
+                <li>✅ Vytvoří Python virtuální prostředí (<code>.venv</code>)</li>
+                <li>✅ Nainstaluje závislosti z <code>requirements.txt</code></li>
+                <li>✅ Spustí Redis/Valkey (pokud není aktivní)</li>
+                <li>✅ Ukončí předchozí instance</li>
+                <li>✅ Spustí bot (<code>bot/main.py</code>) a dashboard (<code>uvicorn</code>)</li>
+            </ul>
+            <p>Dashboard bude dostupný na <b>http://localhost:8092</b>.</p>
         </div>
     </div>
 
-    <h2>3. Údržba a debugování</h2>
-    <p>Pro kontrolu stavu systému používejte následující příkazy:</p>
-    <ul>
-        <li><b>Zobrazení logů:</b> <code>docker-compose logs -f</code></li>
-        <li><b>Restart systému:</b> <code>docker-compose restart</code></li>
-        <li><b>Čištění dat:</b> <code>docker exec -it metricord-redis redis-cli FLUSHALL</code> (Varování: Smaže všechna
-            data!).</li>
-    </ul>
+    <h2>4. Metoda B: Docker Compose (doporučeno pro produkci)</h2>
 
-    <h2>4. Zálohování (Redis Persistence)</h2>
-    <p>Metricord využívá Redis <b>RDB</b> snapshots každých 60 sekund a <b>AOF</b> logging pro maximální bezpečnost dat.
-        Zálohy naleznete v adresáři <code>./redis_data/</code>. Doporučujeme tento adresář pravidelně zálohovat mimo server.
-    </p>
+    <div class="step-container">
+        <div class="step-number">1</div>
+        <div class="step-content">
+            <h3>Příprava sítě</h3>
+            <pre><code># Docker síť "botnet" musí existovat
+docker network create botnet 2>/dev/null || true</code></pre>
+        </div>
+    </div>
+
+    <div class="step-container">
+        <div class="step-number">2</div>
+        <div class="step-content">
+            <h3>Konfigurace a spuštění</h3>
+            <pre><code>cp .env.example .env
+nano .env    # vyplňte všechny proměnné
+
+docker-compose up -d --build</code></pre>
+        </div>
+    </div>
+
+    <p><b>Docker Compose spustí 4 služby:</b></p>
+    <table>
+        <thead>
+            <tr>
+                <th>Služba</th>
+                <th>Container</th>
+                <th>Účel</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>redis</code></td>
+                <td>discord-redis</td>
+                <td>In-memory databáze. Persistentní volume <code>redis_data</code>.</td>
+            </tr>
+            <tr>
+                <td><code>discord-bot-primary</code></td>
+                <td>discord-bot-primary</td>
+                <td>Hlavní bot — zpracovává příkazy, trackuje aktivitu.</td>
+            </tr>
+            <tr>
+                <td><code>discord-bot-dashboard</code></td>
+                <td>discord-bot-dashboard</td>
+                <td>Sekundární bot v Lite Mode — poskytuje guild data pro dashboard.</td>
+            </tr>
+            <tr>
+                <td><code>web-dashboard</code></td>
+                <td>web-dashboard</td>
+                <td>FastAPI dashboard na portu <code>${DASHBOARD_PORT}</code>.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>5. Produkční nasazení s Nginx a SSL</h2>
+
+    <h3>5.1 Nginx reverse proxy</h3>
+    <p>Projektu je přiložena šablona v <code>config/nginx-reverse-proxy.conf</code>:</p>
+    <pre><code># /etc/nginx/sites-available/metricord
+server {
+    listen 80;
+    server_name dashboard.example.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:8092;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # WebSocket support
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}</code></pre>
+
+    <h3>5.2 SSL s Let's Encrypt</h3>
+    <pre><code># Instalace certbotu
+sudo apt install certbot python3-certbot-nginx
+
+# Získání certifikátu (automaticky upraví nginx config)
+sudo certbot --nginx -d dashboard.example.com
+
+# Automatická obnova (cron)
+sudo certbot renew --dry-run</code></pre>
 
     <div class="info-box" style="background: rgba(245, 158, 11, 0.1); border-left-color: #f59e0b;">
-        <b>⚠️ Aktualizace</b>
-        Před každou aktualizací (<code>git pull</code>) doporučujeme vytvořit snapshot Redisu pomocí příkazu
-        <code>redis-cli SAVE</code>.
+        <b>⚠️ Důležité</b>
+        Po nastavení SSL změňte Redirect URI v Discord Developer Portalu na <code>https://dashboard.example.com/auth/callback</code>
+        a nastavte proměnnou <code>DISCORD_REDIRECT_URI</code> v <code>.env</code>.
+    </div>
+
+    <h3>5.3 Systemd služby (alternativa k Docker)</h3>
+    <pre><code># /etc/systemd/system/metricord-bot.service
+[Unit]
+Description=Metricord Discord Bot
+After=redis.service
+
+[Service]
+Type=simple
+User=metricord
+WorkingDirectory=/opt/metricord
+Environment=PYTHONPATH=/opt/metricord
+EnvironmentFile=/opt/metricord/.env
+ExecStart=/opt/metricord/.venv/bin/python3 bot/main.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+
+    <pre><code># /etc/systemd/system/metricord-dashboard.service
+[Unit]
+Description=Metricord Dashboard
+After=redis.service
+
+[Service]
+Type=simple
+User=metricord
+WorkingDirectory=/opt/metricord
+Environment=PYTHONPATH=/opt/metricord
+EnvironmentFile=/opt/metricord/.env
+ExecStart=/opt/metricord/.venv/bin/python3 -m uvicorn web.backend.main:app --host 127.0.0.1 --port 8092
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+    <pre><code># Aktivace
+sudo systemctl daemon-reload
+sudo systemctl enable --now metricord-bot metricord-dashboard</code></pre>
+
+    <h2>6. Údržba a monitoring</h2>
+
+    <h3>6.1 Logy</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Soubor</th>
+                <th>Obsah</th>
+                <th>Sledování</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>bot.log</code></td>
+                <td>Discord eventy, chyby příkazů, Redis reconnecty</td>
+                <td><code>tail -f bot.log</code></td>
+            </tr>
+            <tr>
+                <td><code>web.log</code></td>
+                <td>HTTP requesty, OAuth sezení, chyby dashboardu</td>
+                <td><code>tail -f web.log</code></td>
+            </tr>
+        </tbody>
+    </table>
+    <p>Pro Docker: <code>docker-compose logs -f</code></p>
+
+    <h3>6.2 Health check</h3>
+    <p>Bot zapisuje heartbeat do Redisu každých 60 sekund. Dashboard ho zobrazuje jako zelený/červený indikátor.</p>
+    <pre><code># Manuální kontrola heartbeatu
+redis-cli GET bot:heartbeat
+# Výsledek: timestamp posledního heartbeatu (pokud > 120s starý → bot je down)</code></pre>
+
+    <h3>6.3 Záloha Redis dat</h3>
+    <pre><code># Manuální snapshot
+redis-cli BGSAVE
+
+# Kopírování zálohy (lokální Redis)
+cp /var/lib/redis/dump.rdb /backup/metricord-$(date +%Y%m%d).rdb
+
+# Docker volume záloha
+docker cp discord-redis:/data/dump.rdb /backup/metricord-$(date +%Y%m%d).rdb</code></pre>
+
+    <h3>6.4 Aktualizace systému</h3>
+    <pre><code># 1. Záloha dat
+redis-cli BGSAVE
+
+# 2. Pull nové verze
+git pull origin main
+
+# 3A. Lokální restart
+./start.sh
+
+# 3B. Docker restart
+docker-compose up -d --build</code></pre>
+
+    <h2>7. Zastavení systému</h2>
+    <pre><code># Lokální
+pkill -f "bot/main.py"
+pkill -f "uvicorn"
+
+# Docker
+docker-compose down
+
+# Docker (s odstraněním volumes — SMAŽE DATA!)
+docker-compose down -v</code></pre>
+
+    <h2>8. Production Checklist</h2>
+    <div style="background: var(--glass); padding: 24px; border-radius: 12px; border: 1px solid var(--glass-border);">
+        <ul style="list-style: none; padding: 0;">
+            <li>☐ <code>BOT_TOKEN</code> vyplněn a validní</li>
+            <li>☐ <code>DASHBOARD_SECRET_KEY</code> vygenerován (32+ znaků)</li>
+            <li>☐ <code>DISCORD_CLIENT_SECRET</code> vyplněn</li>
+            <li>☐ Privileged Intents zapnuty (Presence, Members, Message Content)</li>
+            <li>☐ OAuth2 Redirect URI odpovídá vaší doméně</li>
+            <li>☐ Redis běží a je persistentní (RDB/AOF)</li>
+            <li>☐ Redis port <b>není</b> vystaven na veřejnou síť</li>
+            <li>☐ Nginx s SSL certifikátem (Let's Encrypt)</li>
+            <li>☐ Firewall povoluje pouze porty 22, 80, 443</li>
+            <li>☐ Záloha Redis dat nastavena (cron)</li>
+            <li>☐ Logy rotovány (logrotate nebo Docker log driver)</li>
+            <li>☐ Bot má na serveru roli s dostatečnými oprávněními</li>
+        </ul>
     </div>
 
     <style>
@@ -72,8 +358,7 @@ nano .env</pre>
             margin-bottom: 32px;
             position: relative;
         }
-
-        .step-container:not(:last-child)::after {
+        .step-container:not(:last-of-type)::after {
             content: '';
             position: absolute;
             left: 20px;
@@ -82,7 +367,6 @@ nano .env</pre>
             width: 2px;
             background: var(--glass-border);
         }
-
         .step-number {
             width: 40px;
             height: 40px;
@@ -95,12 +379,10 @@ nano .env</pre>
             flex-shrink: 0;
             z-index: 1;
         }
-
         .step-content {
             flex: 1;
             padding-top: 4px;
         }
-
         .step-content h3 {
             margin-top: 0;
             color: white;

@@ -4,24 +4,122 @@
 
 {% block docs_content %}
 <section id="scaling-global">
-    <h1>Global Scaling & High Availability</h1>
-    <p>Jak provozovat Metricord pro miliony uživatelů napříč kontinenty.</p>
+    <h1>Global Scaling &amp; High Availability</h1>
+    <p>Průvodce škálováním Metricord pro velké komunity (50k+ členů) a zajištění vysoké dostupnosti
+        pro produkční nasazení.</p>
 
-    <h2>1. Redis Sentinel (HA)</h2>
-    <p>Pro zajištění běhu i při výpadku hlavního databázového uzlu využijte Redis Sentinel. Ten automaticky zvolí nového Mastera, pokud hlavní uzel selže.</p>
-    <pre><code class="language-yaml"># Příklad sentinel.conf
+    <h2>1. Redis Sentinel (High Availability)</h2>
+    <p>Pro zajištění běhu i při výpadku hlavního databázového uzlu využijte Redis Sentinel.
+        Ten automaticky zvolí nového Mastera, pokud hlavní uzel selže.</p>
+    <pre><code class="language-yaml"># sentinel.conf
 sentinel monitor mymaster 127.0.0.1 6379 2
 sentinel down-after-milliseconds mymaster 5000
-sentinel failover-timeout mymaster 60000</code></pre>
+sentinel failover-timeout mymaster 60000
+sentinel parallel-syncs mymaster 1</code></pre>
 
-    <h2>2. Redis Sharding (Cluster)</h2>
-    <p>Pokud se data (events) nevejdou do RAM jednoho serveru, využijte Redis Cluster pro horizontální škálování. Data budou rozdělena do 16,384 slotů napříč uzly.</p>
+    <h3>Topologie</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Node</th>
+                <th>Role</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>redis-master</td>
+                <td>Master (read/write)</td>
+                <td>Bot zapisuje sem</td>
+            </tr>
+            <tr>
+                <td>redis-replica-1</td>
+                <td>Replica (read-only)</td>
+                <td>Dashboard čte odtud (snížení latence)</td>
+            </tr>
+            <tr>
+                <td>redis-replica-2</td>
+                <td>Replica (read-only)</td>
+                <td>Záloha pro případ failoveru</td>
+            </tr>
+            <tr>
+                <td>sentinel-1, 2, 3</td>
+                <td>Monitor</td>
+                <td>Sledují master, automatický failover</td>
+            </tr>
+        </tbody>
+    </table>
 
-    <h2>3. Geo-Distributed Monitoring</h2>
-    <p>Pro servery s globální komunitou doporučujeme nasadit "Edge" boty v různých regionech (US-East, EU-Central, ASIA-South), kteří budou data posílat do centrálního Redis clusteru.</p>
+    <h2>2. Redis Cluster (Sharding)</h2>
+    <p>Pro servery s miliony eventů, kde se data nevejdou do RAM jednoho uzlu:</p>
+    <ul>
+        <li>Data jsou automaticky rozdělena do <b>16,384 hash slotů</b> napříč uzly.</li>
+        <li>Klíče s guild ID jako prefixem zajišťují, že data jednoho serveru jsou na stejném uzlu (hash tagy: <code>{guild_id}</code>).</li>
+        <li>Doporučení: 3+ master nodes, každý s 1 replikou.</li>
+    </ul>
+    <pre><code># Vytvoření clusteru
+redis-cli --cluster create \
+    node1:6379 node2:6379 node3:6379 \
+    node4:6379 node5:6379 node6:6379 \
+    --cluster-replicas 1</code></pre>
+
+    <h2>3. Read/Write Splitting</h2>
+    <p>Pro optimální výkon oddělte zapisující a čtecí klienty:</p>
+    <pre><code># .env pro bot (Write)
+REDIS_URL=redis://redis-master:6379/0
+
+# .env pro dashboard (Read)
+REDIS_URL=redis://redis-replica:6379/0</code></pre>
+    <p>Bot vždy zapisuje do Mastera, Dashboard čte z Repliky → nulový dopad analytiky na výkon bota.</p>
+
+    <h2>4. Event Thinning</h2>
+    <p>Pro servery s extrémně vysokou aktivitou (1M+ zpráv/měsíc) zvažte:</p>
+    <ul>
+        <li><b>Voice sampling:</b> Změna frekvence voice trackingu z 1 minuty na 5 minut v <code>activity.py</code>.</li>
+        <li><b>Message aggregation:</b> Místo zápisu každé zprávy zvlášť, agregovat do 5minutových bucketů.</li>
+        <li><b>TTL na events:</b> Nastavit expiraci starých Sorted Setů (<code>events:*</code>) po 90 dnech.</li>
+    </ul>
+    <pre><code># Příklad TTL na event klíče
+redis-cli EXPIRE "events:msg:guild_id:user_id" 7776000  # 90 dní</code></pre>
+
+    <h2>5. Multi-Node Deployment</h2>
+    <p>Pro globální komunity s členy v různých časových zónách:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Region</th>
+                <th>Komponenty</th>
+                <th>Účel</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>EU-Central</td>
+                <td>Redis Master + Bot Primary + Dashboard</td>
+                <td>Hlavní uzel, všechna data</td>
+            </tr>
+            <tr>
+                <td>US-East</td>
+                <td>Redis Replica + Dashboard Read-Only</td>
+                <td>Nižší latence pro americké moderátory</td>
+            </tr>
+        </tbody>
+    </table>
 
     <div class="info-box" style="background: rgba(59, 130, 246, 0.1); border-left-color: #3b82f6;">
-        <b>Architektonický tip:</b> Pro globální škálování je klíčová latence k Redisu. Vždy se snažte mít bota i Redis v rámci stejného regionu a stejné VPC.
+        <b>Architektonický tip</b>
+        Pro globální škálování je klíčová latence k Redisu. Bot i Redis musí být v rámci stejného regionu
+        a ideálně stejné VPC / privátní sítě. Dashboard repliky mohou být geograficky distribuované.
     </div>
+
+    <h2>6. Monitoring velkých instalací</h2>
+    <pre><code># Sledování Redis metriky v reálném čase
+redis-cli --stat
+
+# Detailní monitoring
+redis-cli INFO all | grep -E "(used_memory_human|connected_clients|instantaneous_ops|keyspace)"
+
+# Sledování pomalých příkazů
+redis-cli SLOWLOG GET 10</code></pre>
 </section>
 {% endblock %}
