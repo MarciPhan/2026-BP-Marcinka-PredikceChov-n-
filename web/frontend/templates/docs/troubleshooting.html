@@ -34,7 +34,7 @@ docker-compose ps</code></pre>
     <h2>1. Problémy s botem</h2>
 
     <div class="trouble-card">
-        <h3>🔴 Bot se nespouští</h3>
+        <h3>Bot se nespouští</h3>
         <table>
             <thead>
                 <tr>
@@ -69,7 +69,7 @@ docker-compose ps</code></pre>
     </div>
 
     <div class="trouble-card">
-        <h3>🟡 Bot nereaguje na příkazy</h3>
+        <h3>Bot nereaguje na příkazy</h3>
         <p><b>Postup diagnostiky:</b></p>
         <ol>
             <li>Zkontrolujte, zda je bot online na serveru (zelená tečka).</li>
@@ -81,7 +81,7 @@ docker-compose ps</code></pre>
     </div>
 
     <div class="trouble-card">
-        <h3>🟡 Statistiky se neaktualizují</h3>
+        <h3>Statistiky se neaktualizují</h3>
         <p><b>Možné příčiny a řešení:</b></p>
         <ul>
             <li><b>Redis odpojení:</b> <code>redis-cli ping</code> → pokud nepingne, restartujte Redis.</li>
@@ -94,7 +94,7 @@ docker-compose ps</code></pre>
     <h2>2. Problémy s dashboardem</h2>
 
     <div class="trouble-card">
-        <h3>⚪ „Unauthorized" nebo „Invalid Redirect URI"</h3>
+        <h3>Problém: „Unauthorized" nebo „Invalid Redirect URI"</h3>
         <table>
             <thead>
                 <tr>
@@ -120,7 +120,7 @@ docker-compose ps</code></pre>
     </div>
 
     <div class="trouble-card">
-        <h3>⚪ Grafy jsou prázdné</h3>
+        <h3>Problém: Grafy jsou prázdné</h3>
         <ul>
             <li>Počkejte alespoň 15–30 minut od přidání bota na server.</li>
             <li>Zkontrolujte, že bot má přístup ke kanálům (<code>View Channel</code> oprávnění).</li>
@@ -130,7 +130,7 @@ docker-compose ps</code></pre>
     </div>
 
     <div class="trouble-card">
-        <h3>⚪ Port konflikty</h3>
+        <h3>Problém: Port konflikty</h3>
         <pre><code># Zjistit, co zabírá port 8092
 lsof -i :8092
 # nebo
@@ -143,7 +143,7 @@ kill -9 $(lsof -t -i :8092)</code></pre>
     <h2>3. Redis problémy</h2>
 
     <div class="trouble-card">
-        <h3>🔴 Redis Out of Memory</h3>
+        <h3>Redis Out of Memory</h3>
         <pre><code># Kontrola paměti
 redis-cli INFO memory
 
@@ -157,7 +157,7 @@ redis-cli MEMORY USAGE "events:msg:&lt;guild_id&gt;:&lt;user_id&gt;"</code></pre
     </div>
 
     <div class="trouble-card">
-        <h3>🟡 Redis Persistence selhává</h3>
+        <h3>Redis Persistence selhává</h3>
         <pre><code># Kontrola posledního uložení
 redis-cli LASTSAVE
 

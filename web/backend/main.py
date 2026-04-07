@@ -93,7 +93,7 @@ from .otp_utils import (
     check_rate_limit, send_otp_email, mask_email
 )
 
-app = FastAPI(title="Metricord")
+app = FastAPI(title="Metricord", docs_url=None, redoc_url=None, openapi_url=None)
 # Vypneme automatickou dokumentaci pro čistotu
 
 
@@ -876,23 +876,19 @@ DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token"
 @app.get("/docs", response_class=HTMLResponse)
 @app.get("/docs/{page_name}", response_class=HTMLResponse)
 async def docs_page(request: Request, page_name: str = "index"):
-    # Zobrazení dokumentace
-    allowed_pages = {
-        "index", "setup", "commands", "security", "analytics", "export",
-        "faq", "support", "ai", "backfill", "roles", "insights",
-        "privacy", "terms", "changelog", "predictions", "quickstart"
-    }
+    # Převod pomlček na podtržítka (URL vs Název souboru)
+    file_name = page_name.replace('-', '_')
     
-    if page_name not in allowed_pages:
-        
+    # Ověření existence šablony
+    template_path = TEMPLATES_DIR / "docs" / f"{file_name}.html"
+    if not template_path.exists():
         return RedirectResponse(url="/docs")
         
-    
     sidebar_ctx = await get_sidebar_context(request)
     
-    context = {"request": request, "page_name": page_name}
+    context = {"request": request, "page_name": page_name, "current_page": page_name}
     context.update(sidebar_ctx)
-    return templates.TemplateResponse(f"docs/{page_name}.html", context)
+    return templates.TemplateResponse(f"docs/{file_name}.html", context)
 
 @app.get("/login")
 async def login_page(request: Request):

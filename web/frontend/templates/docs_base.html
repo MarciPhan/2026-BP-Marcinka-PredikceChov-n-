@@ -21,8 +21,14 @@
             --text-muted: #9ca3af;
             --glass: rgba(255, 255, 255, 0.03);
             --glass-border: rgba(255, 255, 255, 0.08);
-            --sidebar-width: 280px;
+            --sidebar-width: 300px;
         }
+
+        /* --- CSS Reset & Scrollbar --- */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
         * {
             box-sizing: border-box;
@@ -73,43 +79,6 @@
             -webkit-text-fill-color: transparent;
         }
 
-        .nav-link-top {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: 0.2s;
-        }
-
-        .sidebar-search {
-            padding: 0 20px 20px;
-            position: relative;
-        }
-        .sidebar-search input {
-            width: 100%;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--glass-border);
-            padding: 10px 35px 10px 15px;
-            border-radius: 8px;
-            color: white;
-            font-size: 0.9rem;
-        }
-        .search-icon {
-            position: absolute;
-            right: 32px;
-            top: 10px;
-            color: var(--text-muted);
-        }
-
-        .nav-link-top:hover {
-            color: white;
-        }
-
-        .nav-link-top.active {
-            color: white;
-            font-weight: 600;
-        }
-
         header .nav-btn {
             background: var(--glass);
             border: 1px solid var(--glass-border);
@@ -136,26 +105,45 @@
             bottom: 0;
             left: 0;
             overflow-y: auto;
-            padding: 40px 20px;
+            padding: 20px;
             z-index: 900;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Custom Scrollbar */
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
+        .sidebar-search {
+            position: sticky;
+            top: 0;
+            background: var(--bg-secondary);
+            padding: 10px 0 20px;
+            margin-bottom: 10px;
+            z-index: 10;
         }
 
-        .sidebar::-webkit-scrollbar-track {
-            background: transparent;
+        .sidebar-search input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            padding: 12px 40px 12px 15px;
+            border-radius: 10px;
+            color: white;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s;
         }
 
-        .sidebar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
+        .sidebar-search input:focus {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
         }
 
-        .sidebar::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.2);
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 22px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            pointer-events: none;
         }
 
         .sidebar-title {
@@ -190,13 +178,28 @@
             font-weight: 600;
         }
 
+        .sidebar-link.hidden {
+            display: none;
+        }
+
         /* --- Main Content --- */
         main {
             flex: 1;
             margin-left: var(--sidebar-width);
             margin-top: 70px;
             padding: 60px 80px;
-            max-width: 1000px;
+            max-width: 1400px;
+        }
+
+        .content-wrapper {
+            display: flex;
+            gap: 60px;
+            align-items: flex-start;
+        }
+
+        .article-body {
+            flex: 1;
+            min-width: 0;
         }
 
         h1 {
@@ -204,6 +207,10 @@
             font-size: 3rem;
             font-weight: 800;
             margin-bottom: 24px;
+            background: linear-gradient(to right, #fff, #9ca3af);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         h2 {
@@ -213,42 +220,65 @@
             margin: 48px 0 24px;
             padding-bottom: 12px;
             border-bottom: 1px solid var(--glass-border);
+            color: white;
         }
 
         h3 {
             font-size: 1.3rem;
             margin-top: 32px;
             color: var(--primary);
+            font-weight: 600;
         }
 
         p {
             line-height: 1.7;
             color: var(--text-muted);
             font-size: 1.05rem;
+            margin-bottom: 20px;
         }
 
+        ul, ol {
+            margin-bottom: 24px;
+            padding-left: 20px;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        li { margin-bottom: 8px; }
+
         code {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(139, 92, 246, 0.1);
             padding: 2px 6px;
             border-radius: 4px;
             font-family: monospace;
             color: var(--accent);
+            font-size: 0.9em;
         }
 
         pre {
             background: #0d0d12;
-            padding: 20px;
+            padding: 24px;
             border-radius: 12px;
             border: 1px solid var(--glass-border);
             overflow-x: auto;
             margin: 24px 0;
-            color: #ddd;
+            color: #e2e8f0;
+            font-family: monospace;
+            line-height: 1.5;
         }
 
+        pre code {
+            background: transparent;
+            padding: 0;
+            color: inherit;
+            border-radius: 0;
+        }
+
+        /* --- Components --- */
         .info-box {
             background: rgba(139, 92, 246, 0.1);
             border-left: 4px solid var(--primary);
-            padding: 20px;
+            padding: 20px 24px;
             border-radius: 4px 12px 12px 4px;
             margin: 32px 0;
         }
@@ -257,63 +287,253 @@
             color: var(--primary);
             display: block;
             margin-bottom: 8px;
-            font-weight: 600;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
         }
 
-        /* --- Commands Table --- */
+        .mermaid-container {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 30px 0;
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mermaid-container:hover {
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.15);
+        }
+
+        .step-container {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        .step-container:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 50px;
+            bottom: -20px;
+            width: 2px;
+            background: var(--glass-border);
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-g);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            flex-shrink: 0;
+            z-index: 1;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .blueprint { border-left: 2px dashed var(--primary); padding-left: 24px; margin: 32px 0; }
+        .bp-step { margin-bottom: 24px; }
+        .bp-step b { color: var(--primary); display: block; margin-bottom: 8px; font-family: 'Outfit', sans-serif; }
+
+        .doc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin: 40px 0;
+        }
+
+        .doc-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            padding: 32px;
+            border-radius: 20px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .doc-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            color: var(--primary);
+            background: rgba(139, 92, 246, 0.1);
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+
+        .doc-card h3 { margin: 0; color: white; }
+        .doc-card p { margin: 0; font-size: 0.95rem; }
+
+        .math-box {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 24px 0;
+            border: 1px solid var(--glass-border);
+        }
+
+        /* --- Tables --- */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 24px 0;
+            margin: 32px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
         }
 
-        th,
-        td {
+        th, td {
             text-align: left;
-            padding: 16px;
+            padding: 16px 20px;
             border-bottom: 1px solid var(--glass-border);
         }
 
         th {
             color: white;
             font-weight: 600;
-            background: var(--glass);
+            background: rgba(255, 255, 255, 0.05);
+            font-family: 'Outfit', sans-serif;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
         }
 
-        /* Mobile Toggle */
+        td { color: var(--text-muted); font-size: 0.95rem; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+        /* --- Page Metadata (Read Time & Summary) --- */
+        .page-meta {
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .read-time {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        /* --- TOC --- */
+        .toc-sidebar {
+            width: 240px;
+            position: sticky;
+            top: 130px;
+            padding: 0 0 20px 24px;
+            border-left: 1px solid var(--glass-border);
+        }
+
+        .toc-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .toc-link {
+            display: block;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            transition: color 0.2s;
+            line-height: 1.5;
+        }
+
+        .toc-link:hover { color: white; }
+        .toc-link.active { color: var(--primary); font-weight: 600; }
+
+        /* --- Lightbox --- */
+        .lightbox-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 10000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+        }
+        .lightbox-overlay.active { display: flex; }
+        .lightbox-content { 
+            max-width: 95vw; 
+            max-height: 90vh; 
+            overflow: auto; 
+            background: #121216; 
+            padding: 32px; 
+            border-radius: 12px; 
+            border: 1px solid var(--glass-border); 
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .lightbox-content img, .lightbox-content svg { max-width: 100%; max-height: 80vh; border-radius: 4px; }
+        .lightbox-hint { position: fixed; top: 20px; right: 30px; color: #94a3b8; font-size: 0.85rem; z-index: 10001; }
+
+        /* --- Mobile Toggle --- */
         .mobile-toggle {
             display: none;
-            background: none;
-            border: none;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
             color: white;
-            font-size: 1.5rem;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 1.2rem;
             cursor: pointer;
         }
 
-        /* Mobile */
-        @media (max-width: 900px) {
-            .mobile-toggle {
-                display: block;
-            }
+        @media (max-width: 1100px) {
+            .toc-sidebar { display: none; }
+            main { padding: 40px 30px; }
+        }
 
+        @media (max-width: 900px) {
+            .mobile-toggle { display: block; }
             .sidebar {
                 transform: translateX(-100%);
-                transition: transform 0.3s;
                 top: 70px;
+                box-shadow: 20px 0 50px rgba(0,0,0,0.5);
             }
-
-            .sidebar.mobile-open {
-                transform: translateX(0);
-            }
-
-            main {
-                margin-left: 0;
-                padding: 40px 20px;
-            }
-
-            header {
-                padding: 0 20px;
-            }
+            .sidebar.mobile-open { transform: translateX(0); }
+            main { margin-left: 0; padding: 40px 20px; }
+            header { padding: 0 20px; }
+            h1 { font-size: 2.5rem; }
         }
     </style>
 </head>
@@ -335,62 +555,53 @@
     </header>
 
     {% set current_page = page_name|default('index') %}
+    <aside class="sidebar">
+        <div class="sidebar-search">
+            <input type="text" placeholder="Hledat v dokumentaci..." id="docs-search">
+            <i class="search-icon fa-solid fa-magnifying-glass"></i>
+        </div>
+        
+        <nav class="docs-nav">
+            <div class="sidebar-title">Začínáme</div>
+            <a href="/docs" class="sidebar-link {% if current_page == 'index' %}active{% endif %}">Úvod</a>
+            <a href="/docs/math-foundations" class="sidebar-link {% if current_page == 'math-foundations' %}active{% endif %}">Matematické základy (BP)</a>
+            <a href="/docs/quickstart" class="sidebar-link {% if current_page == 'quickstart' %}active{% endif %}">Rychlý start</a>
+            <a href="/docs/user-guide" class="sidebar-link {% if current_page == 'user-guide' %}active{% endif %}">Uživatelská příručka</a>
+            <a href="/docs/setup" class="sidebar-link {% if current_page == 'setup' %}active{% endif %}">Instalace</a>
+            <a href="/docs/architecture" class="sidebar-link {% if current_page == 'architecture' %}active{% endif %}">Architektura</a>
+            <a href="/docs/api" class="sidebar-link {% if current_page == 'api' %}active{% endif %}">API Reference</a>
+            <a href="/docs/deployment" class="sidebar-link {% if current_page == 'deployment' %}active{% endif %}">Nasazení</a>
 
-    <div class="sidebar-search">
-        <input type="text" placeholder="Hledat v dokumentaci..." id="docs-search">
-        <i class="search-icon">🔍</i>
-    </div>
-    
-    <nav class="docs-nav">
-        <div class="sidebar-title">Začínáme</div>
-        <a href="/docs" class="sidebar-link {% if current_page == 'index' %}active{% endif %}">Úvod</a>
-        <a href="/docs/math-foundations" class="sidebar-link {% if current_page == 'math-foundations' %}active{% endif %}">Matematické základy (BP)</a>
-        <a href="/docs/quickstart" class="sidebar-link {% if current_page == 'quickstart' %}active{% endif %}">Rychlý start</a>
-        <a href="/docs/user-guide" class="sidebar-link {% if current_page == 'user-guide' %}active{% endif %}">Uživatelská příručka</a>
-        <a href="/docs/setup" class="sidebar-link {% if current_page == 'setup' %}active{% endif %}">Instalace</a>
-        <a href="/docs/architecture" class="sidebar-link {% if current_page == 'architecture' %}active{% endif %}">Architektura</a>
-        <a href="/docs/api" class="sidebar-link {% if current_page == 'api' %}active{% endif %}">API Reference</a>
-        <a href="/docs/deployment" class="sidebar-link {% if current_page == 'deployment' %}active{% endif %}">Nasazení</a>
+            <div class="sidebar-title">Funkce bota</div>
+            <a href="/docs/commands" class="sidebar-link {% if current_page == 'commands' %}active{% endif %}">Slash příkazy</a>
+            <a href="/docs/security" class="sidebar-link {% if current_page == 'security' %}active{% endif %}">Skóre bezpečnosti</a>
+            <a href="/docs/analytics" class="sidebar-link {% if current_page == 'analytics' %}active{% endif %}">Analytické metriky</a>
+            <a href="/docs/case-studies" class="sidebar-link {% if current_page == 'case-studies' %}active{% endif %}">Případové studie</a>
+            <a href="/docs/export" class="sidebar-link {% if current_page == 'export' %}active{% endif %}">Export dat</a>
 
-        <div class="sidebar-title">Funkce</div>
-        <a href="/docs/commands" class="sidebar-link {% if current_page == 'commands' %}active{% endif %}">Příkazy
-            (Slash Commands)</a>
-        <a href="/docs/security" class="sidebar-link {% if current_page == 'security' %}active{% endif %}">Skóre
-            bezpečnosti</a>
-        <a href="/docs/analytics" class="sidebar-link {% if current_page == 'analytics' %}active{% endif %}">Analytické metriky</a>
-        <a href="/docs/case-studies" class="sidebar-link {% if current_page == 'case-studies' %}active{% endif %}">Případové studie</a>
-        <a href="/docs/export" class="sidebar-link {% if current_page == 'export' %}active{% endif %}">Centrum exportu</a>
+            <div class="sidebar-title">Pokročilé</div>
+            <a href="/docs/ai" class="sidebar-link {% if current_page == 'ai' %}active{% endif %}">Predikce & AI</a>
+            <a href="/docs/integrations" class="sidebar-link {% if current_page == 'integrations' %}active{% endif %}">Integrace & Webhooky</a>
+            <a href="/docs/dev-guide" class="sidebar-link {% if current_page == 'dev-guide' %}active{% endif %}">Developer Guide</a>
+            <a href="/docs/data-science" class="sidebar-link {% if current_page == 'data-science' %}active{% endif %}">Data Science</a>
+            <a href="/docs/data-schema" class="sidebar-link {% if current_page == 'data-schema' %}active{% endif %}">Redis Schéma</a>
+            <a href="/docs/security-technical" class="sidebar-link {% if current_page == 'security-technical' %}active{% endif %}">Zabezpečení (Tech)</a>
+            <a href="/docs/hardening" class="sidebar-link {% if current_page == 'hardening' %}active{% endif %}">OS Hardening</a>
 
-        <div class="sidebar-title">Pokročilé funkce</div>
-        <a href="/docs/ai" class="sidebar-link {% if current_page == 'ai' %}active{% endif %}">Predikce</a>
-        <a href="/docs/integrations" class="sidebar-link {% if current_page == 'integrations' %}active{% endif %}">Integrace a Webhooky</a>
-        <a href="/docs/dev-guide" class="sidebar-link {% if current_page == 'dev-guide' %}active{% endif %}">Developer Guide</a>
-        <a href="/docs/data-science" class="sidebar-link {% if current_page == 'data-science' %}active{% endif %}">Data Science & Jupyter</a>
-        <a href="/docs/branding" class="sidebar-link {% if current_page == 'branding' %}active{% endif %}">Brand & Vizuál</a>
-        <a href="/docs/changelog" class="sidebar-link {% if current_page == 'changelog' %}active{% endif %}">Changelog & Roadmap</a>
-        <a href="/docs/discourse" class="sidebar-link {% if current_page == 'discourse' %}active{% endif %}">Discourse fóra fóra</a>
-        <a href="/docs/api-examples" class="sidebar-link {% if current_page == 'api-examples' %}active{% endif %}">API Reference</a>
-        <a href="/docs/api-actions" class="sidebar-link {% if current_page == 'api-actions' %}active{% endif %}">API Action Triggers</a>
-        <a href="/docs/data-schema" class="sidebar-link {% if current_page == 'data-schema' %}active{% endif %}">Redis Schéma</a>
-        <a href="/docs/security-technical" class="sidebar-link {% if current_page == 'security-technical' %}active{% endif %}">Technické zabezpečení</a>
-        <a href="/docs/hardening" class="sidebar-link {% if current_page == 'hardening' %}active{% endif %}">Hardening (OS level)</a>
+            <div class="sidebar-title">Komunita</div>
+            <a href="/docs/moderators" class="sidebar-link {% if current_page == 'moderators' %}active{% endif %}">Moderátoři</a>
+            <a href="/docs/best-practices" class="sidebar-link {% if current_page == 'best-practices' %}active{% endif %}">Best Practices</a>
+            <a href="/docs/privacy-builder" class="sidebar-link {% if current_page == 'privacy-builder' %}active{% endif %}">Privacy Builder</a>
+            <a href="/docs/branding" class="sidebar-link {% if current_page == 'branding' %}active{% endif %}">Vizuální styl</a>
+            <a href="/docs/comparison" class="sidebar-link {% if current_page == 'comparison' %}active{% endif %}">Konkurence</a>
 
-        <div class="sidebar-title">Komunita a Brand</div>
-        <a href="/docs/moderators" class="sidebar-link {% if current_page == 'moderators' %}active{% endif %}">Moderátorský průvodce</a>
-        <a href="/docs/best-practices" class="sidebar-link {% if current_page == 'best-practices' %}active{% endif %}">Best Practices</a>
-        <a href="/docs/case-studies" class="sidebar-link {% if current_page == 'case-studies' %}active{% endif %}">Případové studie</a>
-        <a href="/docs/privacy-builder" class="sidebar-link {% if current_page == 'privacy-builder' %}active{% endif %}">Privacy Builder</a>
-        <a href="/docs/branding" class="sidebar-link {% if current_page == 'branding' %}active{% endif %}">Vizuální styl</a>
-        <a href="/docs/comparison" class="sidebar-link {% if current_page == 'comparison' %}active{% endif %}">Konkurence</a>
-
-        <div class="sidebar-title">O projektu</div>
-        <a href="/docs/vision" class="sidebar-link {% if current_page == 'vision' %}active{% endif %}">Vize 2030</a>
-        <a href="/docs/changelog" class="sidebar-link {% if current_page == 'changelog' %}active{% endif %}">Changelog & Roadmap</a>
-        <a href="/docs/style-guide" class="sidebar-link {% if current_page == 'style-guide' %}active{% endif %}">Code Style Guide</a>
-        <a href="/docs/faq" class="sidebar-link {% if current_page == 'faq' %}active{% endif %}">Časté dotazy</a>
-        <a href="/docs/troubleshooting" class="sidebar-link {% if current_page == 'troubleshooting' %}active{% endif %}">Troubleshooting</a>
-        <a href="/docs/support" class="sidebar-link {% if current_page == 'support' %}active{% endif %}">Podpora</a>
-    </nav>
+            <div class="sidebar-title">O projektu</div>
+            <a href="/docs/changelog" class="sidebar-link {% if current_page == 'changelog' %}active{% endif %}">Roadmapa</a>
+            <a href="/docs/faq" class="sidebar-link {% if current_page == 'faq' %}active{% endif %}">Časté dotazy</a>
+            <a href="/docs/troubleshooting" class="sidebar-link {% if current_page == 'troubleshooting' %}active{% endif %}">Troubleshooting</a>
+            <a href="/docs/support" class="sidebar-link {% if current_page == 'support' %}active{% endif %}">Podpora</a>
+        </nav>
+    </aside>
 
     <main>
         <div class="content-wrapper">
@@ -398,34 +609,169 @@
                 {% block docs_content %}{% endblock %}
             </div>
             <div class="toc-sidebar">
-                <div class="toc-title">Na této stránce</div>
-                <div id="toc-list">
-                    <!-- Budou doplněny JS skriptem níže -->
+                <div id="toc-container">
+                    <div class="toc-title">Na této stránce</div>
+                    <div id="toc-list"></div>
                 </div>
             </div>
         </div>
     </main>
 
+    <div class="lightbox-overlay" id="lightbox">
+        <span class="lightbox-hint">ESC nebo kliknutím pro zavření</span>
+        <div class="lightbox-content" id="lightbox-content"></div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // 0. Page Metadata (Reading Time)
+            const articleBody = document.querySelector('.article-body');
+            const tocSidebar = document.querySelector('.toc-sidebar');
+            if (articleBody && tocSidebar) {
+                const textContent = articleBody.innerText;
+                const wordCount = textContent.trim().split(/\s+/).length;
+                const readTime = Math.max(1, Math.ceil(wordCount / 200));
+                
+                const metaHtml = `
+                    <div class="page-meta">
+                        <div class="read-time">
+                            <i class="fa-regular fa-clock" style="color: var(--primary);"></i>
+                            Doba čtení: cca ${readTime} min
+                        </div>
+                    </div>
+                `;
+                tocSidebar.insertAdjacentHTML('afterbegin', metaHtml);
+            }
+
+            // 1. TOC Generation
             const tocList = document.getElementById('toc-list');
             const h2s = document.querySelectorAll('main h2');
             
             if (h2s.length === 0) {
-                document.querySelector('.toc-sidebar').style.display = 'none';
-                return;
+                const tocContainer = document.getElementById('toc-container');
+                if (tocContainer) tocContainer.style.display = 'none';
+            } else {
+                h2s.forEach(h2 => {
+                    if (!h2.id) {
+                        h2.id = h2.textContent.trim().toLowerCase()
+                            .replace(/[^\w\s-]/g, '')
+                            .replace(/\s+/g, '-');
+                    }
+                    const link = document.createElement('a');
+                    link.href = `#${h2.id}`;
+                    link.textContent = h2.textContent;
+                    link.className = 'toc-link';
+                    tocList.appendChild(link);
+                });
             }
 
-            h2s.forEach(h2 => {
-                if (!h2.id) {
-                    h2.id = h2.textContent.trim().toLowerCase().replace(/\s+/g, '-');
+            // 2. Search Logic (Sidebar filtering)
+            const searchInput = document.getElementById('docs-search');
+            const sidebarLinks = document.querySelectorAll('.sidebar-link');
+            const sidebarTitles = document.querySelectorAll('.sidebar-title');
+
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase().trim();
+                
+                if (term === '') {
+                    sidebarLinks.forEach(l => l.classList.remove('hidden'));
+                    sidebarTitles.forEach(t => t.style.display = 'block');
+                    return;
                 }
-                const link = document.createElement('a');
-                link.href = `#${h2.id}`;
-                link.textContent = h2.textContent;
-                link.className = 'toc-link';
-                tocList.appendChild(link);
+
+                sidebarLinks.forEach(link => {
+                    const text = link.textContent.toLowerCase();
+                    const href = link.getAttribute('href').toLowerCase();
+                    if (text.includes(term) || href.includes(term)) {
+                        link.classList.remove('hidden');
+                    } else {
+                        link.classList.add('hidden');
+                    }
+                });
+
+                // Hide titles if no visible links in section
+                sidebarTitles.forEach(title => {
+                    let next = title.nextElementSibling;
+                    let hasVisible = false;
+                    while (next && next.classList.contains('sidebar-link')) {
+                        if (!next.classList.contains('hidden')) {
+                            hasVisible = true;
+                            break;
+                        }
+                        next = next.nextElementSibling;
+                    }
+                    title.style.display = hasVisible ? 'block' : 'none';
+                });
             });
+
+            // 3. Simple ScrollSpy for TOC
+            const observerOptions = {
+                rootMargin: '-100px 0px -70%',
+                threshold: 0
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        document.querySelectorAll('.toc-link').forEach(link => {
+                            link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id);
+                        });
+                    }
+                });
+            }, observerOptions);
+
+            h2s.forEach(h2 => observer.observe(h2));
+
+            // 4. Lightbox Logic
+            const lb = document.getElementById('lightbox');
+            const lbc = document.getElementById('lightbox-content');
+            
+            function openLB(h) { 
+                lbc.innerHTML = h; 
+                lb.classList.add('active'); 
+                document.body.style.overflow = 'hidden'; 
+            }
+            
+            function closeLB() { 
+                lb.classList.remove('active'); 
+                document.body.style.overflow = ''; 
+                lbc.innerHTML = ''; 
+            }
+            
+            lb.addEventListener('click', (e) => { 
+                if (e.target === lb || e.target.closest('.lightbox-hint')) closeLB(); 
+            });
+            
+            document.addEventListener('keydown', (e) => { 
+                if (e.key === 'Escape') closeLB(); 
+            });
+            
+            document.addEventListener('click', (e) => {
+                const el = e.target.closest('.mermaid-container, main img');
+                if (!el) return;
+                
+                if (el.classList.contains('mermaid-container')) {
+                    const svg = el.querySelector('svg');
+                    if (svg) {
+                        const clone = svg.cloneNode(true);
+                        clone.style.width = '100%';
+                        clone.style.height = 'auto';
+                        clone.style.maxHeight = '85vh';
+                        openLB(clone.outerHTML);
+                    }
+                } else if (el.tagName === 'IMG') {
+                    openLB(`<img src="${el.src}" alt="${el.alt || ''}">`);
+                }
+            });
+            
+            // 5. Mobile Toggle
+            const toggle = document.querySelector('.mobile-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            if (toggle && sidebar) {
+                toggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('mobile-open');
+                });
+            }
         });
     </script>
 
@@ -477,8 +823,64 @@
                 display: none;
             }
         }
+        .mermaid-container { cursor: pointer; transition: all 0.3s ease; }
+        .mermaid-container:hover { border-color: rgba(139, 92, 246, 0.4); box-shadow: 0 4px 20px rgba(139, 92, 246, 0.15); }
+        main img { cursor: pointer; transition: transform 0.3s ease; }
+        main img:hover { transform: scale(1.02); }
+        .lightbox-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 10000; display: none; justify-content: center; align-items: center; padding: 40px; }
+        .lightbox-overlay.active { display: flex; }
+        .lightbox-content { max-width: 95vw; max-height: 90vh; overflow: auto; }
+        .lightbox-content img, .lightbox-content svg { max-width: 100%; max-height: 85vh; }
+        .lightbox-hint { position: fixed; top: 20px; right: 30px; color: #94a3b8; font-size: 0.85rem; z-index: 10001; }
     </style>
 
+    <div class="lightbox-overlay" id="lightbox">
+        <span class="lightbox-hint">ESC nebo klikn&#283;te pro zav&#345;en&#237;</span>
+        <div class="lightbox-content" id="lightbox-content"></div>
+    </div>
+
+    <script>
+    (function() {
+        var lb = document.getElementById('lightbox');
+        var lbc = document.getElementById('lightbox-content');
+        function openLB(h) { lbc.innerHTML = h; lb.classList.add('active'); document.body.style.overflow = 'hidden'; }
+        function closeLB() { lb.classList.remove('active'); document.body.style.overflow = ''; lbc.innerHTML = ''; }
+        lb.addEventListener('click', function(e) { if (e.target === lb) closeLB(); });
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLB(); });
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.mermaid-container').forEach(function(el) {
+                el.title = 'Klikn\u011bte pro zv\u011bt\u0161en\u00ed';
+                el.addEventListener('click', function() {
+                    var svg = el.querySelector('svg');
+                    if (svg) { var c = svg.cloneNode(true); c.style.width = '100%'; c.style.height = 'auto'; c.style.maxHeight = '85vh'; openLB(c.outerHTML); }
+                    else { openLB(el.innerHTML); }
+                });
+            });
+            document.querySelectorAll('main img').forEach(function(img) {
+                img.title = 'Klikn\u011bte pro zv\u011bt\u0161en\u00ed';
+                img.addEventListener('click', function() { openLB('<img src="' + img.src + '" alt="' + (img.alt||'') + '">'); });
+            });
+        });
+    })();
+    </script>
+
+    <!-- Global Mermaid.js -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: false, 
+            theme: 'dark',
+            securityLevel: 'loose',
+            fontFamily: 'Inter'
+        });
+        document.addEventListener("DOMContentLoaded", async () => {
+            try {
+                await mermaid.run({ querySelector: '.mermaid' });
+            } catch(error) {
+                console.error("Mermaid error:", error);
+            }
+        });
+    </script>
 </body>
 
 </html>

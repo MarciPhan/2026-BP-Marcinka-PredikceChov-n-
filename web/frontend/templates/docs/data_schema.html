@@ -9,7 +9,7 @@
         všechny klíče definované v <code>shared/keys.py</code> a runtime klíče vytvářené botem.</p>
 
     <div class="info-box">
-        <b>💡 Konvence pojmenování klíčů</b>
+        <b>Konvence pojmenování klíčů</b>
         Formát: <code>{kategorie}:{subtyp}:{guild_id}:{identifikátor}</code>. Všechny klíče jsou definovány
         centrálně v <code>shared/keys.py</code>. Nikdy nepoužívejte hardcoded klíče v kódu.
     </div>
@@ -276,7 +276,7 @@ redis-cli MEMORY USAGE "events:msg:{guild_id}:{user_id}"
 redis-cli DBSIZE</code></pre>
 
     <div class="info-box" style="background: rgba(245, 158, 11, 0.1); border-left-color: #f59e0b;">
-        <b>⚠️ Výkon</b>
+        <b>Výkon</b>
         Při přímém přístupu k Redisu doporučujeme <code>SCAN</code> místo <code>KEYS</code>, aby
         nedošlo k blokování databáze při velkém objemu dat. Příkaz <code>KEYS</code> je O(N) a může
         na velkých databázích trvat sekundy.

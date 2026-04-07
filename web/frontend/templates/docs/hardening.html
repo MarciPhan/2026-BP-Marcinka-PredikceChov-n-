@@ -25,7 +25,7 @@ sudo firewall-cmd --permanent --add-service=https
 sudo firewall-cmd --reload</code></pre>
 
     <div class="info-box" style="background: rgba(239, 68, 68, 0.1); border-left-color: #ef4444;">
-        <b>⚠️ Kritické</b>
+        <b>Kritické</b>
         Port <code>6379</code> (Redis) nesmí být přístupný z internetu. Pokud používáte Docker, Redis komunika
         pouze přes interní síť <code>botnet</code>.
     </div>
@@ -125,7 +125,7 @@ bantime = 600</code></pre>
     </div>
 
     <div class="info-box">
-        <b>💡 Audit</b>
+        <b>Audit</b>
         Pravidelně kontrolujte přístupy přes <code>redis-cli ACL LIST</code> a prohlížejte logy
         Fail2Ban: <code>sudo fail2ban-client status sshd</code>.
     </div>

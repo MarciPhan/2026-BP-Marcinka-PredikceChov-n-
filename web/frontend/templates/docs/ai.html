@@ -33,23 +33,7 @@ graph TD
     <h3>Kaplan-Meierův odhad</h3>
     <p>Používáme k výpočtu "Survival rate" komunity. Pomáhá nám zodpovědět otázku: <i>"Pokud uživatel zůstane 30 dní, jaká je pravděpodobnost, že zůstane i příští měsíc?"</i></p>
 
-    <!-- JS pro Mermaid -->
-    <script type="module">
-        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-    </script>
 
-    <style>
-        .mermaid-container {
-            background: rgba(0,0,0,0.3);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 20px;
-            margin: 30px 0;
-            display: flex;
-            justify-content: center;
-        }
-    </style>
 
     <h2>4. Interpretace Confidence Scores</h2>
     <p>Každá predikce v Metricord je doprovázena "Skóre spolehlivosti" (Confidence Score). Toto číslo (0–1.0) udává, jak moc si je model jistý svou předpovědí na základě dostupných dat.</p>
@@ -114,8 +98,7 @@ graph TD
     </table>
     <p>Z tabulky je patrné, že uživatel v "Riziku" má stále 30% šanci se vrátit k plné aktivitě, pokud zasáhne moderátor.</p>
     
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
     
     <div class="info-box" style="background: rgba(139, 92, 246, 0.05); border-left-color: #8b5cf6;">
         <b>Matematický základ:</b>
@@ -163,7 +146,7 @@ graph TD
     </ul>
 
     <div class="info-box">
-        <b>💡 Tip pro analytiky</b>
+        <b>Tip pro analytiky</b>
         V sekci "Raw Metrics" dashboardu si můžete najít <b>Transition Probabilities</b> a zjistit tak, který stav je na
         vašem serveru nejrizikovější pro odchod uživatelů.
     </div>

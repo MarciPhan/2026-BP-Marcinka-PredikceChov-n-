@@ -123,11 +123,11 @@ SMTP_PASSWORD=your_gmail_app_password</code></pre>
 ./start.sh</code></pre>
             <p>Skript automaticky:</p>
             <ul>
-                <li>✅ Vytvoří Python virtuální prostředí (<code>.venv</code>)</li>
-                <li>✅ Nainstaluje závislosti z <code>requirements.txt</code></li>
-                <li>✅ Spustí Redis/Valkey (pokud není aktivní)</li>
-                <li>✅ Ukončí předchozí instance</li>
-                <li>✅ Spustí bot (<code>bot/main.py</code>) a dashboard (<code>uvicorn</code>)</li>
+                <li>Ano Vytvoří Python virtuální prostředí (<code>.venv</code>)</li>
+                <li>Ano Nainstaluje závislosti z <code>requirements.txt</code></li>
+                <li>Ano Spustí Redis/Valkey (pokud není aktivní)</li>
+                <li>Ano Ukončí předchozí instance</li>
+                <li>Ano Spustí bot (<code>bot/main.py</code>) a dashboard (<code>uvicorn</code>)</li>
             </ul>
             <p>Dashboard bude dostupný na <b>http://localhost:8092</b>.</p>
         </div>
@@ -222,7 +222,7 @@ sudo certbot --nginx -d dashboard.example.com
 sudo certbot renew --dry-run</code></pre>
 
     <div class="info-box" style="background: rgba(245, 158, 11, 0.1); border-left-color: #f59e0b;">
-        <b>⚠️ Důležité</b>
+        <b>Důležité</b>
         Po nastavení SSL změňte Redirect URI v Discord Developer Portalu na <code>https://dashboard.example.com/auth/callback</code>
         a nastavte proměnnou <code>DISCORD_REDIRECT_URI</code> v <code>.env</code>.
     </div>

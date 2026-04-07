@@ -22,13 +22,13 @@
         <tbody>
             <tr>
                 <td><code>BOT_TOKEN</code></td>
-                <td>✅</td>
+                <td>Ano</td>
                 <td>—</td>
                 <td>Discord bot token z Developer Portalu.</td>
             </tr>
             <tr>
                 <td><code>DISCORD_CLIENT_SECRET</code></td>
-                <td>✅</td>
+                <td>Ano</td>
                 <td>—</td>
                 <td>OAuth2 Client Secret pro dashboard přihlášení.</td>
             </tr>
@@ -40,7 +40,7 @@
             </tr>
             <tr>
                 <td><code>DASHBOARD_SECRET_KEY</code></td>
-                <td>✅</td>
+                <td>Ano</td>
                 <td>—</td>
                 <td>Kryptografický klíč pro podpis session cookies. Generujte: <code>python3 -c "import secrets; print(secrets.token_hex(32))"</code></td>
             </tr>
@@ -177,7 +177,7 @@ docker-compose down
 docker-compose up -d</code></pre>
 
     <div class="info-box" style="background: rgba(245, 158, 11, 0.1); border-left-color: #f59e0b;">
-        <b>⚠️ Bot Lite Mode</b>
+        <b>Bot Lite Mode</b>
         Docker Compose provozuje dvě bot instance — primární (plný tracking) a dashboard bot (Lite Mode).
         Lite Mode přeskakuje interaktivní příkazy a slouží pouze pro poskytování guild dat dashboardu.
         Pokud nepotřebujete dvě instance, zakomentujte službu <code>discord-bot-dashboard</code>.
@@ -227,7 +227,7 @@ redis-cli SCARD bot:guilds
 redis-cli GET presence:online:&lt;guild_id&gt;</code></pre>
 
     <div class="info-box" style="background: rgba(239, 68, 68, 0.1); border-left-color: #ef4444;">
-        <b>🔒 Bezpečnostní upozornění</b>
+        <b>Bezpečnostní upozornění</b>
         Nikdy nesdílejte <code>.env</code> soubor ani <code>SECRET_KEY</code>. Kompromitace těchto klíčů
         umožňuje komukoliv ovládat váš dashboard a přistupovat k datům všech uživatelů.
     </div>

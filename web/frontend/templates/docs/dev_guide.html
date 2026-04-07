@@ -36,7 +36,7 @@ export PYTHONPATH=$PWD
 python3 -m uvicorn web.backend.main:app --host 0.0.0.0 --port 8092 --reload</code></pre>
 
     <div class="info-box">
-        <b>💡 Uvicorn --reload</b>
+        <b>Uvicorn --reload</b>
         Flag <code>--reload</code> automaticky restartuje dashboard při změně souborů. Ideální pro vývoj frontend šablon.
     </div>
 
@@ -237,7 +237,7 @@ async def predict_participation(r, guild_id: int) -> dict:
     </table>
 
     <div class="info-box" style="background: rgba(139, 92, 246, 0.1); border-left-color: #8b5cf6;">
-        <b>🧪 Spuštění testů vyžaduje běžící Redis</b>
+        <b>Spuštění testů vyžaduje běžící Redis</b>
         Ujistěte se, že Redis je dostupný na <code>localhost:6379</code> předtím, než spustíte testy.
         Testy zapisují do databáze 0 (výchozí), ale používají prefixované klíče.
     </div>
