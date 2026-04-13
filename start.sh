@@ -59,11 +59,17 @@ BOT_PID=$!
 nohup python3 -m uvicorn web.backend.main:app --host 0.0.0.0 --port "$PORT" > "$LOG_WEB" 2>&1 &
 WEB_PID=$!
 
+# 6. Documentation (VitePress)
+echo "Launching Documentation..."
+(cd docs-site && nohup npm run docs:dev > ../docs.log 2>&1 &)
+DOCS_PID=$!
+
 sleep 2
 if ps -p $BOT_PID >/dev/null && ps -p $WEB_PID >/dev/null; then
     echo -e "${G}Metricord is up!${N}"
-    echo "  Dashboard: http://localhost:$PORT"
-    echo "  Logs: tail -f $LOG_BOT $LOG_WEB"
+    echo "  Dashboard:  http://localhost:$PORT"
+    echo "  Docs Site:  http://localhost:5173"
+    echo "  Logs:       tail -f $LOG_BOT $LOG_WEB docs.log"
 else
     echo -e "${R}Startup failed. Check logs.${N}"
     exit 1

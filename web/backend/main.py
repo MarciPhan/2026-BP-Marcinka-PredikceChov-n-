@@ -424,21 +424,21 @@ async def landing_about(request: Request):
     context = {"request": request, "stats": stats}
     return templates.TemplateResponse("landing_about.html", context)
 
-@app.get("/privacy", response_class=HTMLResponse)
-async def legal_privacy(request: Request):
-    return templates.TemplateResponse("docs/privacy.html", {"request": request})
+@app.get("/privacy")
+async def legal_privacy():
+    return RedirectResponse(url="/docs/privacy")
 
-@app.get("/terms", response_class=HTMLResponse)
-async def legal_terms(request: Request):
-    return templates.TemplateResponse("docs/terms.html", {"request": request})
+@app.get("/terms")
+async def legal_terms():
+    return RedirectResponse(url="/docs/terms")
 
-@app.get("/changelog", response_class=HTMLResponse)
-async def docs_changelog(request: Request):
-    return templates.TemplateResponse("docs/changelog.html", {"request": request})
+@app.get("/changelog")
+async def docs_changelog():
+    return RedirectResponse(url="/docs/changelog")
 
-@app.get("/support", response_class=HTMLResponse)
-async def support_page(request: Request):
-    return templates.TemplateResponse("docs/support.html", {"request": request})
+@app.get("/support")
+async def support_page():
+    return RedirectResponse(url="/docs/support")
 
 @app.post("/api/discourse/sync")
 async def api_trigger_sync(request: Request, guild_id: str = Form(...)):
@@ -872,22 +872,16 @@ DISCORD_API_BASE = "https://discord.com/api/v10"
 DISCORD_AUTH_URL = "https://discord.com/api/oauth2/authorize"
 DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token"
 
-@app.get("/docs", response_class=HTMLResponse)
-@app.get("/docs/{page_name}", response_class=HTMLResponse)
-async def docs_page(request: Request, page_name: str = "index"):
-    # Převod pomlček na podtržítka (URL vs Název souboru)
-    file_name = page_name.replace('-', '_')
+@app.get("/docs/{path:path}")
+async def docs_proxy(request: Request, path: str = ""):
+    # V dev režimu přesměrujeme na VitePress dev server (port 5173)
+    # V produkci by zde bylo mountování statických souborů z docs-site/.vitepress/dist
+    VITE_DOCS_URL = os.getenv("VITE_DOCS_URL", "http://localhost:5173")
     
-    # Ověření existence šablony
-    template_path = TEMPLATES_DIR / "docs" / f"{file_name}.html"
-    if not template_path.exists():
-        return RedirectResponse(url="/docs")
-        
-    sidebar_ctx = await get_sidebar_context(request)
-    
-    context = {"request": request, "page_name": page_name, "current_page": page_name}
-    context.update(sidebar_ctx)
-    return templates.TemplateResponse(f"docs/{file_name}.html", context)
+    # Pokud cesta nekončí lomítkem ani nemá příponu, přidáme .html pro Vite kompatibilitu (interně)
+    # Ale VitePress dev server obvykle zvládá čisté URL.
+    target_url = f"{VITE_DOCS_URL}/{path}"
+    return RedirectResponse(url=target_url)
 
 @app.get("/login")
 async def login_page(request: Request):

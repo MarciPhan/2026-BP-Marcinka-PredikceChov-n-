@@ -17,40 +17,60 @@ features:
   - title: Real-time analytika
     details: Sledování aktivity v momentě, kdy se děje. Sub-sekundové zpracování každé zprávy.
     icon: ⚡
+    link: /analytics
   - title: Predikce chování
     details: Markovovy řetězce pro předpověď retence a churn rate na 7 dní dopředu.
     icon: 🧠
+    link: /predictions
   - title: Survival analýza
     details: Kaplan-Meier křivky ukazující střední délku života uživatelů na serveru.
     icon: 📈
+    link: /math-foundations
   - title: Skóre bezpečnosti
     details: Unikátní algoritmus pro hodnocení zabezpečení serveru (MFA, verifikace).
     icon: 🛡️
+    link: /security
   - title: Heatmapa aktivity
     details: Vizualizace aktivity po dnech a hodinách pro identifikaci špičkových časů.
     icon: 🔥
+    link: /analytics#heatmap
   - title: XP & Leveling
     details: Anti-spam XP systém s cooldownem, délkovým bonusem a voice trackingem.
     icon: 🎮
+    link: /commands#xp
 ---
 
-## Kam začít?
+## Kde začít?
 
 ::: info Tip pro nové komunity
 Pro dosažení nejlepších výsledků doporučujeme nechat bota běžet alespoň 7 dní, aby mohl nasbírat dostatek dat pro přesné predikce. Chcete-li data ihned, použijte [Backfill systém](/backfill).
 :::
 
-### 🚀 [Rychlý start](/quickstart)
-Nastavte bota během 5 minut a začněte sbírat data. Krok za krokem.
+<div class="premium-grid">
+  <a href="/quickstart" class="premium-card">
+    <span class="card-icon">🚀</span>
+    <h3>Rychlý start</h3>
+    <p>Nastavte bota během 5 minut a začněte sbírat data. Průvodce krok za krokem pro nové servery.</p>
+  </a>
 
-### 👤 [Uživatelská příručka](/user-guide)
-XP systém, příkazy pro členy, leveling křivka a vše o vašem soukromí.
+  <a href="/user-guide" class="premium-card">
+    <span class="card-icon">👤</span>
+    <h3>Uživatelská příručka</h3>
+    <p>Příkazy pro členy, XP systém, leveling křivka a vše o ochraně vašich dat.</p>
+  </a>
 
-### 🛡️ [Moderátorský průvodce](/moderators)
-Jak interpretovat pokročilé metriky, predikce, krizové stavy a optimalizovat komunitu.
+  <a href="/moderators" class="premium-card">
+    <span class="card-icon">🛡️</span>
+    <h3>Pro moderátory</h3>
+    <p>Jak interpretovat metriky, predikce, krizové stavy a efektivně spravovat komunitu.</p>
+  </a>
 
-### 🧩 [Architektura systému](/architecture)
-Technická dokumentace: Redis schéma, datový tok, Mermaid diagramy.
+  <a href="/architecture" class="premium-card">
+    <span class="card-icon">🧩</span>
+    <h3>Architektura</h3>
+    <p>Technické detaily systému: Redis schéma, datový tok a Mermaid diagramy pro vývojáře.</p>
+  </a>
+</div>
 
 ---
 

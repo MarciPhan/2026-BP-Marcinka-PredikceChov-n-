@@ -1,9 +1,11 @@
 import { defineConfig } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
 
-export default defineConfig({
+export default withMermaid(defineConfig({
   lang: 'cs-CZ',
   title: 'Metricord Docs',
   description: 'Dokumentace pro analytický systém Metricord',
+  appearance: 'dark',
   
   head: [
     ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
@@ -103,7 +105,51 @@ export default defineConfig({
     ],
 
     search: {
-      provider: 'local'
-    }
+      provider: 'local',
+      options: {
+        translations: {
+          button: {
+            buttonText: 'Hledat',
+            buttonAriaLabel: 'Hledat'
+          },
+          modal: {
+            displayDetails: 'Zobrazit podrobnosti',
+            resetButtonTitle: 'Vymazat vyhledávání',
+            backButtonTitle: 'Zavřít vyhledávání',
+            noResultsText: 'Žádné výsledky pro',
+            footer: {
+              selectText: 'vybrat',
+              navigateText: 'navigovat',
+              closeText: 'zavřít'
+            }
+          }
+        }
+      }
+    },
+    
+    docFooter: {
+      prev: 'Předchozí strana',
+      next: 'Další strana'
+    },
+    
+    outline: {
+      label: 'Na této stránce',
+      level: [2, 3]
+    },
+    
+    lastUpdated: {
+      text: 'Naposledy aktualizováno',
+      formatOptions: {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+      }
+    },
+    
+    langMenuLabel: 'Jazyk',
+    returnToTopLabel: 'Zpět nahoru',
+    sidebarMenuLabel: 'Menu',
+    darkModeSwitchLabel: 'Vzhled',
+    lightModeSwitchTitle: 'Přepnout na světlý režim',
+    darkModeSwitchTitle: 'Přepnout na tmavý režim'
   }
-})
+}))
