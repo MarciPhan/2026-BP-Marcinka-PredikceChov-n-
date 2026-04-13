@@ -12,62 +12,77 @@
         <b>Base URL:</b> <code>https://dashboard.metricord.app/api/v1</code>
     </div>
 
-    <h2>1. Autentizace (Auth API)</h2>
-    <p>Slouží pro přihlašování uživatelů bez nutnosti Discord OAuth2 (např. přes firemní e-mail).</p>
+    <h2>1. Autentizace a Bezpečnost</h2>
+    <p>Metricord API podporuje dva způsoby autentizace:</p>
+    <ul>
+        <li><b>Session Cookie:</b> Pro požadavky z prohlížeče (dashboard).</li>
+        <li><b>Bearer Token:</b> Pro externí integrace a boty. Token získáte v nastavení profilu.</li>
+    </ul>
 
     <div class="endpoint-card">
         <div class="method-tag post">POST</div>
         <code>/auth/request-otp</code>
-        <p>Zašle jednorázový kód (OTP) na zadaný e-mail.</p>
+        <p>Zašle 6-místný jednorázový kód na e-mail uživatele.</p>
         <pre>
-Payload: { "email": "user@domain.com" }
-Response: 200 OK { "success": true }
+Body: { "email": "string" }
+Response 200: { "success": true, "wait": 60 }
+Response 429: { "error": "Rate limit exceeded" }
+        </pre>
+    </div>
+
+    <h2>2. Metriky a Statistiky (Metrics API)</h2>
+    <p>Endpointy pro získávání analytických dat o serverech.</p>
+
+    <div class="endpoint-card">
+        <div class="method-tag get">GET</div>
+        <code>/guild/{guild_id}/metrics/summary</code>
+        <p>Vrátí klíčové ukazatele (DAU, MAU, MsgCount) pro daný server.</p>
+        <pre>
+Params: guild_id (Snowflake)
+Response 200: {
+  "active_users": 1540,
+  "engagement_score": 88.5,
+  "trend": "up"
+}
         </pre>
     </div>
 
     <div class="endpoint-card">
-        <div class="method-tag post">POST</div>
-        <code>/auth/verify-otp</code>
-        <p>Ověří kód a vytvoří aktivní sezení.</p>
+        <div class="method-tag get">GET</div>
+        <code>/guild/{guild_id}/metrics/heatmap</code>
+        <p>Vrátí data pro zobrazení hodinové aktivity (heatmapy).</p>
         <pre>
-Payload: { "email": "user@domain.com", "otp": "123456" }
-Response: 303 Redirect -> /select-server
+Response 200: {
+  "data": { "0:14": 450, "1:15": 380, ... },
+  "timezone": "UTC"
+}
         </pre>
     </div>
 
-    <h2>2. Správa Discourse (Discourse API)</h2>
-    <p>Umožňuje propojení s diskuzními fóry typu Discourse.</p>
-
+    <h2>3. Predikce a AI (Predictions API)</h2>
+    
     <div class="endpoint-card">
-        <div class="method-tag post">POST</div>
-        <code>/discourse/add</code>
-        <p>Přidá nové fórum k účtu uživatele.</p>
+        <div class="method-tag get">GET</div>
+        <code>/guild/{guild_id}/predict/churn</code>
+        <p>Vypočítá pravděpodobnost odchodu členů na základě Markovových řetězců.</p>
         <pre>
-Payload: { "url": "https://forum.example.com", "api_key": "...", "api_user": "system" }
-Response: 200 OK { "success": true, "guild_id": "-123456" }
+Response 200: {
+  "churn_probability_7d": 0.12,
+  "at_risk_users": 42,
+  "confidence": 0.94
+}
         </pre>
     </div>
 
-    <div class="endpoint-card">
-        <div class="method-tag post">POST</div>
-        <code>/discourse/sync</code>
-        <p>Vynutí okamžitou synchronizaci dat z fóra do Metricord databáze.</p>
-        <pre>
-Payload: { "guild_id": "-123456" }
-Response: 200 OK { "success": true }
-        </pre>
-    </div>
-
-    <h2>3. Administrace systému (Admin API)</h2>
-    <p>Dostupné pouze pro uživatele s rolí <code>admin</code>.</p>
+    <h2>4. Administrace (Admin API)</h2>
 
     <div class="endpoint-card">
         <div class="method-tag post">POST</div>
-        <code>/admin/config/bot-token</code>
-        <p>Aktualizuje Discord Bot Token bez nutnosti restartu celého serveru.</p>
+        <code>/admin/config/update</code>
+        <p>Hromadná aktualizace konfigurace bota.</p>
         <pre>
-Payload: { "token": "MTI..." }
-Response: 200 OK
+Body: { "xp_per_msg": 15, "voice_multiplier": 1.5 }
+Response 200: { "status": "updated" }
         </pre>
     </div>
 

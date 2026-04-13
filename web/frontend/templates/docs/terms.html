@@ -1,98 +1,15 @@
-{% extends "landing_base.html" %}
-{% set simple_nav = true %}
+{% extends "docs_base.html" %}
 
-{% block title %}Podmínky služby | Metricord{% endblock %}
+{% block title %}Podmínky služby{% endblock %}
 
-{% block extra_css %}
-.legal-wrapper {
-max-width: 900px;
-margin: 0 auto;
-background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
-border: 1px solid var(--glass-border);
-border-radius: 32px;
-padding: 60px 80px;
-box-shadow: 0 0 50px rgba(0,0,0,0.3);
-}
-
-.legal-header {
-text-align: center;
-margin-bottom: 60px;
-border-bottom: 1px solid var(--glass-border);
-padding-bottom: 40px;
-}
-
-.legal-header h1 {
-font-size: 3rem;
-background: var(--primary-g);
--webkit-background-clip: text;
-background-clip: text;
--webkit-text-fill-color: transparent;
-margin-bottom: 16px;
-}
-
-.update-date {
-color: var(--text-muted);
-font-family: monospace;
-background: rgba(255,255,255,0.05);
-padding: 6px 16px;
-border-radius: 50px;
-font-size: 0.9rem;
-}
-
-.legal-content {
-font-size: 1.05rem;
-line-height: 1.8;
-color: var(--text-muted);
-text-align: justify;
-}
-
-.legal-content h2 {
-color: white;
-font-size: 1.5rem;
-margin-top: 50px;
-margin-bottom: 24px;
-display: flex;
-align-items: center;
-gap: 16px;
-border-bottom: 1px solid rgba(255,255,255,0.1);
-padding-bottom: 10px;
-}
-
-.legal-content p {
-margin-bottom: 16px;
-}
-
-.legal-content ul {
-margin-bottom: 24px;
-padding-left: 24px;
-}
-
-.legal-content li {
-margin-bottom: 8px;
-}
-
-.legal-content strong {
-color: white;
-}
-
-@media (max-width: 768px) {
-.legal-wrapper {
-padding: 40px 24px;
-}
-.legal-header h1 {
-font-size: 2.2rem;
-}
-}
-{% endblock %}
-
-{% block content %}
-<div class="legal-wrapper">
-    <div class="legal-header">
+{% block docs_content %}
+<div class="legal-content-unified">
+    <div class="legal-header-unified">
         <h1>Podmínky služby</h1>
-        <span class="update-date">Účinné od: 25. ledna 2026</span>
+        <span class="update-badge">Účinné od: 25. ledna 2026</span>
     </div>
 
-    <div class="legal-content">
+    <div class="article-body">
         <p>Vítejte v Metricord. Prosíme, přečtěte si pečlivě tyto Podmínky služby (dále jen "Podmínky").
             Používáním našeho Discord bota, webového dashboardu nebo souvisejících služeb (společně "Služba")
             vyjadřujete svůj výslovný souhlas s těmito Podmínkami a zavazujete se jimi řídit. Pokud s jakoukoli částí
@@ -152,16 +69,11 @@ font-size: 2.2rem;
             ustanovení. Jakékoli spory vzniklé v souvislosti s těmito Podmínkami budou podléhat výlučné jurisdikci soudů
             v České republice.</p>
 
-        <h2>7. Změny podmínek</h2>
-        <p>Tyto Podmínky můžeme čas od času aktualizovat. O změnách vás budeme informovat (např. v dashboardu, na
-            Discordu). Vaše další používání Služby po provedení těchto změn znamená váš souhlas s revidovanými
-            Podmínkami.</p>
-
-        <h2>8. Kontakt</h2>
-        <div
-            style="background: var(--glass); padding: 32px; border-radius: 16px; text-align: center; margin-top: 60px;">
-            <p style="margin-bottom: 20px;">Máte dotazy k těmto podmínkám? Kontaktujte nás.</p>
-            <a href="mailto:info@email.cz" class="nav-btn">info@email.cz</a>
+        <div class="info-box">
+            <b>Máte dotazy k těmto podmínkám?</b>
+            Jsme tu pro vás. Kontaktujte nás pro uplatnění vašich práv nebo vysvětlení nejasností.
+            <br><br>
+            <a href="mailto:info@email.cz" class="nav-btn" style="display:inline-block">info@email.cz</a>
         </div>
     </div>
 </div>

@@ -24,73 +24,11 @@
             <label>Čas ve voice (minuty):</label>
             <input type="number" id="voice-min" value="0" min="0">
         </div>
-        <div class="result-box">
+        <div class="sim-result">
             <span>Odhadovaný zisk:</span>
             <strong id="xp-result">50 XP</strong>
         </div>
     </div>
-
-    <script>
-        const msgLenInput = document.getElementById('msg-len');
-        const isReplyInput = document.getElementById('is-reply');
-        const voiceMinInput = document.getElementById('voice-min');
-        const xpResult = document.getElementById('xp-result');
-
-        // Defaults from code: 1 XP per char, 60 XP for reply, 1 XP per sec for voice (simplified)
-        function calculate() {
-            const len = parseInt(msgLenInput.value) || 0;
-            const reply = isReplyInput.checked ? 60 : 0;
-            const voice = (parseInt(voiceMinInput.value) || 0) * 60; // 1 XP per second
-
-            const total = len + reply + voice;
-            xpResult.textContent = total.toLocaleString() + ' XP';
-        }
-
-        [msgLenInput, isReplyInput, voiceMinInput].forEach(el => {
-            el.addEventListener('input', calculate);
-        });
-    </script>
-
-    <style>
-        .xp-simulator {
-            background: var(--bg-secondary);
-            border: 1px solid var(--glass-border);
-            padding: 30px;
-            border-radius: 16px;
-            margin: 30px 0;
-            max-width: 500px;
-        }
-        .sim-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .sim-row label {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-        .sim-row input[type="number"] {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--glass-border);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 8px;
-            width: 100px;
-        }
-        .result-box {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid var(--glass-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .result-box strong {
-            font-size: 1.5rem;
-            color: var(--primary);
-        }
-    </style>
 
     <h2>1. Algoritmus výpočtu XP (Zpřísněná pravidla)</h2>
     <p>Každá akce uživatele prochází filtrem kvality předtím, než jsou připsány body.</p>

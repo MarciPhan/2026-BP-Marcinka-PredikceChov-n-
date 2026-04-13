@@ -36,7 +36,8 @@ Doporučené nastavení:
     </pre>
 
     <h2>Vnitřní tok dat (System Internals)</h2>
-    <pre class="mermaid">
+    <div class="mermaid-container">
+        <pre class="mermaid">
     graph TD
         A[Discord API] -->|Events| B(Metricord Bot)
         B -->|Async Write| C{Redis In-Memory}
@@ -45,7 +46,8 @@ Doporučené nastavení:
         F[Web Dashboard] -->|REST API| D
         F -->|OAuth2| G[Discord Auth]
         E -->|Alerts| H[Webhook Service]
-    </pre>
+        </pre>
+    </div>
 
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';

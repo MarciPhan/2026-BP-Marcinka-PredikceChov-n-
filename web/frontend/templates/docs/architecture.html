@@ -135,178 +135,86 @@ graph TB
 ├── config/
 │   ├── config.py            # Statická konfigurace — guild IDs, channel IDs
 │   ├── dashboard_secrets.py # Secrets — OAuth, SMTP, session klíče
-│   └── nginx-reverse-proxy.conf  # Produkční Nginx šablona
-├── docker-compose.yml       # 4 služby: Redis, bot-primary, bot-dashboard, web
-├── Dockerfile               # Python 3.9-slim + závislosti
-├── start.sh                 # All-in-one startup skript pro lokální vývoj
-├── requirements.txt         # Python závislosti
-└── .env.example             # Vzorová konfigurace prostředí</code></pre>
+│   └── nginx-reverse-proxy.conf  # Produkční Nginx šablo    <h2>4. Detailní datový tok (Event-Driven Flow)</h2>
+    <p>Metricord využívá plně asynchronní architekturu postavenou na <code>asyncio</code>. Zde je rozbor cesty události:</p>
+    
+    <div class="step-container">
+        <div class="step-number">A</div>
+        <div class="step-content">
+            <b>Ingesce (Bot Layer):</b>
+            <p>Discord Gateway pošle JSON událost (např. <code>MESSAGE_CREATE</code>). Bot ji dekóduje a okamžitě předává do <code>ActivityTracker</code>. Zde se provádí <i>Deduplikace</i> (zabránění započítání stejné zprávy dvakrát při restartu bota).</p>
+        </div>
+    </div>
 
-    <h2>4. Tok dat (Data Flow)</h2>
-    <p>Co se děje, když uživatel pošle zprávu na Discord serveru:</p>
-    <ol>
-        <li><b>Event Capture:</b> Bot zachytí událost <code>on_message</code> přes Discord Gateway WebSocket.</li>
-        <li><b>Pre-processing:</b> Vypočítá se váha zprávy (délka, reply bonus) a XP. Spam check: cooldown 60s, duplicate detection.</li>
-        <li><b>Redis Push (atomický):</b>
-            <ul>
-                <li><code>PFADD</code> do HyperLogLog pro DAU/MAU tracking.</li>
-                <li><code>ZADD</code> do Sorted Setu pro uživatelské eventy (timestamped).</li>
-                <li><code>HINCRBY</code> pro hodinové a denní počítadla zpráv.</li>
-                <li><code>HINCRBY</code> pro heatmapu (den_v_týdnu × hodina).</li>
-            </ul>
-        </li>
-        <li><b>Dashboard Read:</b> Při návštěvě webu FastAPI přečte agregovaná data z Redisu, aplikuje matematické
-            modely (Markov, Kaplan-Meier) a renderuje Jinja2 šablonu s Chart.js grafy.</li>
-    </ol>
+    <div class="step-container">
+        <div class="step-number">B</div>
+        <div class="step-content">
+            <b>Zpracování & Skórování:</b>
+            <p>Vypočítá se základní XP. Pokud zpráva obsahuje více než 50 znaků, aplikuje se <code>Length-Based Bonus</code>. Pokud uživatel napsal zprávu před méně než 60 sekundami (konfigurovatelné), body se nepřičtou (Cooldown), ale událost se započítá do DAU/MAU statistik.</p>
+        </div>
+    </div>
 
-    <h2>5. Background Tasks</h2>
-    <p>Bot spouští dva periodické úlohy na pozadí:</p>
+    <div class="step-container">
+        <div class="step-number">C</div>
+        <div class="step-content">
+            <b>Persistence (Redis Pipeline):</b>
+            <p>Pro minimalizaci latence bot používá Redis Pipeline. V jednom síťovém round-tripu se provede:</p>
+            <pre><code>PIPELINE:
+  PFADD hll:dau:{gid}:{date} {uid}
+  HINCRBY stats:hourly:{gid}:{date} {hour} 1
+  ZADD events:msg:{gid}:{uid} {now} {now}
+  EXPIRE events:msg:{gid}:{uid} 2592000 (30 dní)</code></pre>
+        </div>
+    </div>
+
+    <h2>5. Redis Schéma — Deep Dive</h2>
+    <p>Metricord využívá pokročilé datové struktury Redis pro maximální efektivitu:</p>
+    
+    <div class="info-box">
+        <b>HyperLogLog (HLL):</b>
+        Umožňuje sledovat unikátní uživatele (DAU/MAU) s fixní paměťovou náročností 12 KB bez ohledu na počet členů (i miliony). Chyba odhadu je pouze 0.81%.
+    </div>
+
     <table>
         <thead>
-            <tr>
-                <th>Úloha</th>
-                <th>Interval</th>
-                <th>Účel</th>
-            </tr>
+            <tr><th>Struktura</th><th>Klíč (Shared Keys)</th><th>Použití</th></tr>
         </thead>
         <tbody>
             <tr>
-                <td><code>member_stats_task</code></td>
-                <td>10 sekund</td>
-                <td>Aktualizuje online/total počet členů v Redisu, guild security metadata
-                    (verification level, MFA, explicit filter).</td>
+                <td><b>Sorted Set (ZSET)</b></td>
+                <td><code>events:msg:{gid}:{uid}</code></td>
+                <td>Score = Timestamp. Umožňuje <code>ZRANGEBYSCORE</code> pro analýzu churnu a retence.</td>
             </tr>
             <tr>
-                <td><code>heartbeat_task</code></td>
-                <td>60 sekund</td>
-                <td>Zapisuje timestamp do <code>bot:heartbeat</code>. Dashboard ho čte pro indikátor
-                    „Bot is UP/DOWN".</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <h2>6. Redis datový model</h2>
-    <p>Kompletní přehled klíčů z <code>shared/keys.py</code>:</p>
-    <table>
-        <thead>
-            <tr>
-                <th>Klíč (pattern)</th>
-                <th>Typ</th>
-                <th>Popis</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><code>hll:dau:{guild}:{YYYYMMDD}</code></td>
-                <td>HyperLogLog</td>
-                <td>Denní unikátní aktivní uživatelé. ~12 KB / den / guild.</td>
+                <td><b>Hash (HASH)</b></td>
+                <td><code>stats:heatmap:{gid}</code></td>
+                <td>Field = <code>day:hour</code>. Ukládá agregovanou aktivitu pro renderování heatmapy v dashboardu.</td>
             </tr>
             <tr>
-                <td><code>stats:hourly:{guild}:{YYYYMMDD}</code></td>
-                <td>Hash</td>
-                <td>Počet zpráv za každou hodinu (field = „0"–„23").</td>
-            </tr>
-            <tr>
-                <td><code>stats:heatmap:{guild}</code></td>
-                <td>Hash</td>
-                <td>Aktivita po dnech a hodinách (field = „0:14" = pondělí 14:00).</td>
-            </tr>
-            <tr>
-                <td><code>stats:msglen:{guild}</code></td>
-                <td>Hash</td>
-                <td>Distribuce délky zpráv (field = bucket, value = count).</td>
-            </tr>
-            <tr>
-                <td><code>stats:total_msgs:{guild}</code></td>
-                <td>String</td>
-                <td>Kumulativní celkový počet zpráv.</td>
-            </tr>
-            <tr>
-                <td><code>events:msg:{guild}:{user}</code></td>
-                <td>Sorted Set</td>
-                <td>Timestampy zpráv uživatele (score = unix timestamp).</td>
-            </tr>
-            <tr>
-                <td><code>events:voice:{guild}:{user}</code></td>
-                <td>Sorted Set</td>
-                <td>Začátky/konce voice sezení uživatele.</td>
-            </tr>
-            <tr>
-                <td><code>events:action:{guild}:{user}</code></td>
-                <td>Sorted Set</td>
-                <td>Moderátorské akce (ban, kick, timeout, delete).</td>
-            </tr>
-            <tr>
-                <td><code>user:info:{user}</code></td>
-                <td>Hash</td>
-                <td>Cache uživatelských údajů (jméno, avatar, role).</td>
-            </tr>
-            <tr>
-                <td><code>presence:online:{guild}</code></td>
-                <td>String (TTL: 60s)</td>
-                <td>Aktuálně online členové. Zapisuje member_stats_task.</td>
-            </tr>
-            <tr>
-                <td><code>bot:heartbeat</code></td>
-                <td>String</td>
-                <td>Unix timestamp posledního heartbeatu bota.</td>
-            </tr>
-            <tr>
+                <td><b>Set (SET)</b></td>
                 <td><code>bot:guilds</code></td>
-                <td>Set</td>
-                <td>Seznam guild IDs, kde je bot přítomen.</td>
+                <td>Globální seznam diskordových serverů, na kterých je bot aktivní.</td>
             </tr>
         </tbody>
     </table>
 
-    <h2>7. Matematické modely</h2>
-    <p>Implementace v <code>shared/models.py</code> (třída <code>CommunityModels</code>):</p>
-
-    <h3>Markovovy řetězce</h3>
+    <h2>6. Background Workers & Microservices</h2>
+    <p>Projekt je rozdělen do několika izolovaných procesů běžících v kontejnerech:</p>
     <ul>
-        <li>5 stavů: <code>New(0)</code>, <code>Active(1)</code>, <code>Passive(2)</code>, <code>Inactive(3)</code>, <code>Churned(4)</code>.</li>
-        <li><code>calculate_markov_matrix()</code> — počítá matici přechodů z pozorovaných dat.</li>
-        <li><code>predict_future_states()</code> — predikce rozložení stavů po N krocích (dot product vektoru se maticí).</li>
+        <li><b>Bot-Primary:</b> Stará se výhradně o sběr událostí z Discord Gateway.</li>
+        <li><b>Bot-Dashboard-Syncer:</b> Synchronizuje role a metadata (názvy serverů, ikony) v intervalu 1 hodina.</li>
+        <li><b>FastAPI Backend:</b> Čte data z Redisu a provádí matematické transformace (Markov, KM) on-the-fly.</li>
     </ul>
 
-    <h3>Kaplan-Meier (Survival Analysis)</h3>
-    <ul>
-        <li><code>calculate_survival_rate()</code> — křivka přežití z dob přežití a cenzorovaných pozorování.</li>
-        <li><code>estimate_life_expectancy()</code> — střední délka přežití (plocha pod survival křivkou).</li>
-    </ul>
-
-    <h2>8. Bezpečnostní model</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Vrstva</th>
-                <th>Mechanismus</th>
-                <th>Detail</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><b>Autentizace</b></td>
-                <td>Discord OAuth2</td>
-                <td>Nikdy nevidíme heslo uživatele. Token flow s PKCE.</td>
-            </tr>
-            <tr>
-                <td><b>Session</b></td>
-                <td>itsdangerous signed cookies</td>
-                <td>Kryptograficky podepsané session tokeny s TTL 24h.</td>
-            </tr>
-            <tr>
-                <td><b>API</b></td>
-                <td>Bearer token + guild permission check</td>
-                <td>Každý request ověřuje guild membership a Manage Server oprávnění.</td>
-            </tr>
-            <tr>
-                <td><b>Redis</b></td>
-                <td>Interní síť (botnet)</td>
-                <td>Redis nikdy nevystavěn na veřejný port. Komunikace jen přes Docker network.</td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="blueprint">
+        <b>Optimalizace výkonu</b>
+        <div class="bp-step">
+            <b>Server-Side Rendering (SSR):</b> Jinja2 generuje HTML přímo na serveru, což zajišťuje bleskové načítání i na pomalých mobilních zařízeních.
+        </div>
+        <div class="bp-step">
+            <b>Math-Offloading:</b> Náročné maticové operace pro Markovovy řetězce jsou prováděny pomocí <code>NumPy</code> v C-extension, což je o 2 řády rychlejší než čistý Python.
+        </div>
+    </div>
 
     <div class="info-box">
         <b>Důležité pro vývojáře</b>

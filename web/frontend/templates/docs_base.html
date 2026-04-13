@@ -105,7 +105,7 @@
             bottom: 0;
             left: 0;
             overflow-y: auto;
-            padding: 20px;
+            padding: 0 20px 20px;
             z-index: 900;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -114,7 +114,7 @@
             position: sticky;
             top: 0;
             background: var(--bg-secondary);
-            padding: 10px 0 20px;
+            padding: 20px 0 10px;
             margin-bottom: 10px;
             z-index: 10;
         }
@@ -140,7 +140,7 @@
         .search-icon {
             position: absolute;
             right: 15px;
-            top: 22px;
+            top: 32px;
             color: var(--text-muted);
             font-size: 0.9rem;
             pointer-events: none;
@@ -474,7 +474,39 @@
         .toc-link:hover { color: white; }
         .toc-link.active { color: var(--primary); font-weight: 600; }
 
-        /* --- Lightbox --- */
+        /* --- Zoom / Lightbox --- */
+        .mermaid-container { position: relative; }
+        .img-zoom-wrapper { position: relative; display: inline-block; max-width: 100%; cursor: pointer; transition: transform 0.3s ease; }
+        .img-zoom-wrapper:hover { transform: scale(1.01); }
+        .img-zoom-wrapper img { display: block; max-width: 100%; }
+
+        .img-zoom-wrapper::after, .mermaid-container::after {
+            content: '\f00e';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            background: rgba(20, 20, 25, 0.8);
+            color: var(--text-muted);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            opacity: 0;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(4px);
+            border: 1px solid var(--glass-border);
+            pointer-events: none;
+        }
+        .img-zoom-wrapper:hover::after, .mermaid-container:hover::after {
+            opacity: 1;
+            color: white;
+            transform: scale(1.1);
+        }
         .lightbox-overlay {
             position: fixed;
             top: 0;
@@ -491,20 +523,36 @@
         }
         .lightbox-overlay.active { display: flex; }
         .lightbox-content { 
-            max-width: 95vw; 
-            max-height: 90vh; 
-            overflow: auto; 
+            width: 90vw; 
+            height: 90vh; 
+            overflow: hidden; 
             background: #121216; 
-            padding: 32px; 
             border-radius: 12px; 
             border: 1px solid var(--glass-border); 
             box-shadow: 0 10px 50px rgba(0, 0, 0, 0.8);
             display: flex;
             justify-content: center;
             align-items: center;
+            position: relative;
         }
-        .lightbox-content img, .lightbox-content svg { max-width: 100%; max-height: 80vh; border-radius: 4px; }
-        .lightbox-hint { position: fixed; top: 20px; right: 30px; color: #94a3b8; font-size: 0.85rem; z-index: 10001; }
+        .lightbox-content img, .lightbox-content svg { 
+            display: block;
+            margin: 0;
+            max-width: 95%; 
+            max-height: 95%; 
+            border-radius: 4px; 
+            transform-origin: center;
+            pointer-events: none; /* Prevent image drag logic browser conflict */
+            transition: transform 0.05s ease-out;
+            will-change: transform;
+        }
+        .lightbox-close { 
+            position: fixed; top: 20px; right: 30px; z-index: 10001;
+            background: rgba(255, 255, 255, 0.1); border: 1px solid var(--glass-border); color: white;
+            width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 1.2rem; transition: all 0.2s;
+        }
+        .lightbox-close:hover { background: rgba(239, 68, 68, 0.8); transform: scale(1.1); border-color: rgba(239, 68, 68, 1); }
 
         /* --- Mobile Toggle --- */
         .mobile-toggle {
@@ -518,9 +566,119 @@
             cursor: pointer;
         }
 
-        @media (max-width: 1100px) {
-            .toc-sidebar { display: none; }
-            main { padding: 40px 30px; }
+        .navbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 40px; position: fixed; width: 100%; top: 0; left: 0; z-index: 2000;
+            box-sizing: border-box; background: rgba(9, 9, 11, 0.85);
+            backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border);
+        }
+        .logo { font-size: 1.4rem; font-weight: 800; display: flex; align-items: center; gap: 12px; text-decoration: none; color: white; letter-spacing: -0.5px; }
+        .nav-links { display: flex; gap: 32px; align-items: center; }
+        .nav-item { color: var(--text-muted); text-decoration: none; font-weight: 500; transition: 0.2s; font-size: 0.95rem; }
+        .nav-item:hover { color: white; }
+        .nav-btn { background: var(--primary-g); color: white; padding: 8px 24px; border-radius: 50px; text-decoration: none; font-weight: 600; transition: all 0.3s; border: 1px solid rgba(255, 255, 255, 0.1); }
+
+        /* --- Tech Grid --- */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 32px 0;
+        }
+        .tech-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            padding: 24px;
+            border-radius: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .tech-card:hover {
+            border-color: var(--primary);
+            background: rgba(139, 92, 246, 0.05);
+            transform: translateY(-2px);
+        }
+        .tech-card i {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            color: var(--primary);
+            display: block;
+        }
+        .tech-card b {
+            display: block;
+            margin-bottom: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+        }
+        .tech-card p {
+            font-size: 0.85rem;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        /* --- Simulators --- */
+        .xp-simulator {
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            padding: 32px;
+            border-radius: 20px;
+            margin: 32px 0;
+            max-width: 550px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .sim-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .sim-row label {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        .sim-row input[type="number"], .sim-row input[type="text"] {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 10px 14px;
+            border-radius: 10px;
+            width: 120px;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .sim-row input:focus { border-color: var(--primary); background: rgba(255,255,255,0.08); }
+        .sim-result {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sim-result span { color: var(--text-muted); font-weight: 500; }
+        .sim-result strong { font-size: 1.6rem; color: var(--primary); font-family: 'Outfit', sans-serif; }
+
+        /* --- Legal Content Utility --- */
+        .legal-content-unified {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .legal-header-unified {
+            text-align: center;
+            margin-bottom: 48px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .update-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.05);
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-family: monospace;
+            margin-top: 12px;
         }
 
         @media (max-width: 900px) {
@@ -531,15 +689,16 @@
                 box-shadow: 20px 0 50px rgba(0,0,0,0.5);
             }
             .sidebar.mobile-open { transform: translateX(0); }
-            main { margin-left: 0; padding: 40px 20px; }
-            header { padding: 0 20px; }
+            main { margin-left: 0; padding: 100px 20px 40px; }
+            .navbar { padding: 15px 20px; }
+            .nav-links { display: none; }
             h1 { font-size: 2.5rem; }
         }
     </style>
 </head>
 
 <body>
-    <header>
+    <nav class="navbar">
         <div style="display: flex; align-items: center; gap: 16px;">
             <button class="mobile-toggle" onclick="document.querySelector('.sidebar').classList.toggle('mobile-open')">
                 <i class="fa-solid fa-bars"></i>
@@ -549,10 +708,16 @@
                 Metricord
             </a>
         </div>
-        <div style="display: flex; align-items: center; gap: 24px;">
-            <a href="/" class="nav-btn"><i class="fa-solid fa-arrow-left"></i> Zpět na web</a>
+        <div class="nav-links">
+            <a href="/about" class="nav-item">O nás</a>
+            <a href="/support#faq" class="nav-item">FAQ</a>
+            <a href="/features" class="nav-item">Funkce</a>
+            <a href="/docs" class="nav-item">Dokumentace</a>
+            <a href="/login" class="nav-btn">
+                <i class="fa-brands fa-discord" style="margin-right:8px;"></i> Přihlásit se
+            </a>
         </div>
-    </header>
+    </nav>
 
     {% set current_page = page_name|default('index') %}
     <aside class="sidebar">
@@ -564,6 +729,8 @@
         <nav class="docs-nav">
             <div class="sidebar-title">Začínáme</div>
             <a href="/docs" class="sidebar-link {% if current_page == 'index' %}active{% endif %}">Úvod</a>
+            <a href="/docs/vision" class="sidebar-link {% if current_page == 'vision' %}active{% endif %}">Vize & Cíle</a>
+            <a href="/docs/whitepaper" class="sidebar-link {% if current_page == 'whitepaper' %}active{% endif %}">Whitepaper</a>
             <a href="/docs/math-foundations" class="sidebar-link {% if current_page == 'math-foundations' %}active{% endif %}">Matematické základy (BP)</a>
             <a href="/docs/quickstart" class="sidebar-link {% if current_page == 'quickstart' %}active{% endif %}">Rychlý start</a>
             <a href="/docs/user-guide" class="sidebar-link {% if current_page == 'user-guide' %}active{% endif %}">Uživatelská příručka</a>
@@ -578,28 +745,40 @@
             <a href="/docs/analytics" class="sidebar-link {% if current_page == 'analytics' %}active{% endif %}">Analytické metriky</a>
             <a href="/docs/case-studies" class="sidebar-link {% if current_page == 'case-studies' %}active{% endif %}">Případové studie</a>
             <a href="/docs/export" class="sidebar-link {% if current_page == 'export' %}active{% endif %}">Export dat</a>
+            <a href="/docs/health-dashboard" class="sidebar-link {% if current_page == 'health-dashboard' %}active{% endif %}">Health Dashboard</a>
 
             <div class="sidebar-title">Pokročilé</div>
             <a href="/docs/ai" class="sidebar-link {% if current_page == 'ai' %}active{% endif %}">Predikce & AI</a>
+            <a href="/docs/predictions" class="sidebar-link {% if current_page == 'predictions' %}active{% endif %}">ML Modely</a>
+            <a href="/docs/insights" class="sidebar-link {% if current_page == 'insights' %}active{% endif %}">Smart Insights</a>
             <a href="/docs/integrations" class="sidebar-link {% if current_page == 'integrations' %}active{% endif %}">Integrace & Webhooky</a>
             <a href="/docs/dev-guide" class="sidebar-link {% if current_page == 'dev-guide' %}active{% endif %}">Developer Guide</a>
             <a href="/docs/data-science" class="sidebar-link {% if current_page == 'data-science' %}active{% endif %}">Data Science</a>
             <a href="/docs/data-schema" class="sidebar-link {% if current_page == 'data-schema' %}active{% endif %}">Redis Schéma</a>
+            <a href="/docs/scaling-global" class="sidebar-link {% if current_page == 'scaling-global' %}active{% endif %}">Škálování</a>
             <a href="/docs/security-technical" class="sidebar-link {% if current_page == 'security-technical' %}active{% endif %}">Zabezpečení (Tech)</a>
             <a href="/docs/hardening" class="sidebar-link {% if current_page == 'hardening' %}active{% endif %}">OS Hardening</a>
+            <a href="/docs/labs" class="sidebar-link {% if current_page == 'labs' %}active{% endif %}">Labs (Experimenty)</a>
 
             <div class="sidebar-title">Komunita</div>
             <a href="/docs/moderators" class="sidebar-link {% if current_page == 'moderators' %}active{% endif %}">Moderátoři</a>
             <a href="/docs/best-practices" class="sidebar-link {% if current_page == 'best-practices' %}active{% endif %}">Best Practices</a>
+            <a href="/docs/roles" class="sidebar-link {% if current_page == 'roles' %}active{% endif %}">Role a XP</a>
             <a href="/docs/privacy-builder" class="sidebar-link {% if current_page == 'privacy-builder' %}active{% endif %}">Privacy Builder</a>
             <a href="/docs/branding" class="sidebar-link {% if current_page == 'branding' %}active{% endif %}">Vizuální styl</a>
+            <a href="/docs/style-guide" class="sidebar-link {% if current_page == 'style-guide' %}active{% endif %}">Style Guide</a>
             <a href="/docs/comparison" class="sidebar-link {% if current_page == 'comparison' %}active{% endif %}">Konkurence</a>
 
             <div class="sidebar-title">O projektu</div>
             <a href="/docs/changelog" class="sidebar-link {% if current_page == 'changelog' %}active{% endif %}">Roadmapa</a>
+            <a href="/docs/glossary" class="sidebar-link {% if current_page == 'glossary' %}active{% endif %}">Slovník pojmů</a>
             <a href="/docs/faq" class="sidebar-link {% if current_page == 'faq' %}active{% endif %}">Časté dotazy</a>
             <a href="/docs/troubleshooting" class="sidebar-link {% if current_page == 'troubleshooting' %}active{% endif %}">Troubleshooting</a>
             <a href="/docs/support" class="sidebar-link {% if current_page == 'support' %}active{% endif %}">Podpora</a>
+
+            <div class="sidebar-title">Právní informace</div>
+            <a href="/docs/privacy" class="sidebar-link {% if current_page == 'privacy' %}active{% endif %}">Ochrana dat</a>
+            <a href="/docs/terms" class="sidebar-link {% if current_page == 'terms' %}active{% endif %}">Podmínky služby</a>
         </nav>
     </aside>
 
@@ -617,10 +796,7 @@
         </div>
     </main>
 
-    <div class="lightbox-overlay" id="lightbox">
-        <span class="lightbox-hint">ESC nebo kliknutím pro zavření</span>
-        <div class="lightbox-content" id="lightbox-content"></div>
-    </div>
+
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -722,48 +898,7 @@
 
             h2s.forEach(h2 => observer.observe(h2));
 
-            // 4. Lightbox Logic
-            const lb = document.getElementById('lightbox');
-            const lbc = document.getElementById('lightbox-content');
-            
-            function openLB(h) { 
-                lbc.innerHTML = h; 
-                lb.classList.add('active'); 
-                document.body.style.overflow = 'hidden'; 
-            }
-            
-            function closeLB() { 
-                lb.classList.remove('active'); 
-                document.body.style.overflow = ''; 
-                lbc.innerHTML = ''; 
-            }
-            
-            lb.addEventListener('click', (e) => { 
-                if (e.target === lb || e.target.closest('.lightbox-hint')) closeLB(); 
-            });
-            
-            document.addEventListener('keydown', (e) => { 
-                if (e.key === 'Escape') closeLB(); 
-            });
-            
-            document.addEventListener('click', (e) => {
-                const el = e.target.closest('.mermaid-container, main img');
-                if (!el) return;
-                
-                if (el.classList.contains('mermaid-container')) {
-                    const svg = el.querySelector('svg');
-                    if (svg) {
-                        const clone = svg.cloneNode(true);
-                        clone.style.width = '100%';
-                        clone.style.height = 'auto';
-                        clone.style.maxHeight = '85vh';
-                        openLB(clone.outerHTML);
-                    }
-                } else if (el.tagName === 'IMG') {
-                    openLB(`<img src="${el.src}" alt="${el.alt || ''}">`);
-                }
-            });
-            
+
             // 5. Mobile Toggle
             const toggle = document.querySelector('.mobile-toggle');
             const sidebar = document.querySelector('.sidebar');
@@ -772,93 +907,140 @@
                     sidebar.classList.toggle('mobile-open');
                 });
             }
+
+            // 6. Global XP Simulator Logic
+            const simulators = document.querySelectorAll('.xp-simulator');
+            simulators.forEach(sim => {
+                const msgLen = sim.querySelector('#msg-len');
+                const isReply = sim.querySelector('#is-reply');
+                const voiceMin = sim.querySelector('#voice-min');
+                const result = sim.querySelector('#xp-result');
+
+                if (msgLen && result) {
+                    const calc = () => {
+                        const len = parseInt(msgLen.value) || 0;
+                        const reply = (isReply && isReply.checked) ? 60 : 0;
+                        const voice = (voiceMin ? parseInt(voiceMin.value) || 0 : 0) * 60;
+                        const total = len + reply + voice;
+                        result.textContent = total.toLocaleString() + ' XP';
+                    };
+                    [msgLen, isReply, voiceMin].forEach(el => {
+                        if (el) el.addEventListener('input', calc);
+                    });
+                    calc(); // Initial call
+                }
+            });
         });
     </script>
 
-    <style>
-        .content-wrapper {
-            display: flex;
-            gap: 60px;
-            align-items: flex-start;
-        }
 
-        .article-body {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .toc-sidebar {
-            width: 220px;
-            position: sticky;
-            top: 130px;
-            padding-left: 20px;
-            border-left: 1px solid var(--glass-border);
-        }
-
-        .toc-title {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-muted);
-            margin-bottom: 16px;
-            font-weight: 700;
-        }
-
-        .toc-link {
-            display: block;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.9rem;
-            margin-bottom: 12px;
-            transition: color 0.2s;
-            line-height: 1.4;
-        }
-
-        .toc-link:hover {
-            color: white;
-        }
-
-        @media (max-width: 1200px) {
-            .toc-sidebar {
-                display: none;
-            }
-        }
-        .mermaid-container { cursor: pointer; transition: all 0.3s ease; }
-        .mermaid-container:hover { border-color: rgba(139, 92, 246, 0.4); box-shadow: 0 4px 20px rgba(139, 92, 246, 0.15); }
-        main img { cursor: pointer; transition: transform 0.3s ease; }
-        main img:hover { transform: scale(1.02); }
-        .lightbox-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 10000; display: none; justify-content: center; align-items: center; padding: 40px; }
-        .lightbox-overlay.active { display: flex; }
-        .lightbox-content { max-width: 95vw; max-height: 90vh; overflow: auto; }
-        .lightbox-content img, .lightbox-content svg { max-width: 100%; max-height: 85vh; }
-        .lightbox-hint { position: fixed; top: 20px; right: 30px; color: #94a3b8; font-size: 0.85rem; z-index: 10001; }
-    </style>
 
     <div class="lightbox-overlay" id="lightbox">
-        <span class="lightbox-hint">ESC nebo klikn&#283;te pro zav&#345;en&#237;</span>
-        <div class="lightbox-content" id="lightbox-content"></div>
+        <button class="lightbox-close" id="lightbox-close" title="Zavřít (ESC)"><i class="fa-solid fa-xmark"></i></button>
+        <div class="lightbox-content" id="lightbox-content" style="cursor: grab;"></div>
     </div>
 
     <script>
     (function() {
         var lb = document.getElementById('lightbox');
         var lbc = document.getElementById('lightbox-content');
-        function openLB(h) { lbc.innerHTML = h; lb.classList.add('active'); document.body.style.overflow = 'hidden'; }
-        function closeLB() { lb.classList.remove('active'); document.body.style.overflow = ''; lbc.innerHTML = ''; }
+        var currentZoom = 1;
+        var translateX = 0, translateY = 0;
+
+        function updateTransform() {
+            var el = lbc.firstElementChild;
+            if (el) {
+                el.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + currentZoom + ')';
+            }
+        }
+
+        function openLB(h) { 
+            lbc.innerHTML = h; 
+            lb.classList.add('active'); 
+            document.body.style.overflow = 'hidden'; 
+            currentZoom = 1; 
+            translateX = 0; 
+            translateY = 0;
+            var el = lbc.firstElementChild;
+            if (el) {
+                el.style.width = 'auto';
+                el.style.height = 'auto'; 
+                el.style.maxWidth = '90%';
+                el.style.maxHeight = '90vh';
+            }
+            updateTransform(); 
+        }
+
+        function closeLB() { 
+            lb.classList.remove('active'); 
+            document.body.style.overflow = ''; 
+            lbc.innerHTML = ''; 
+        }
+
         lb.addEventListener('click', function(e) { if (e.target === lb) closeLB(); });
+        document.getElementById('lightbox-close').addEventListener('click', closeLB);
         document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLB(); });
+        
+        // Transform panning logic (Free movement everywhere)
+        var isDown = false;
+        var startX, startY;
+        var prevX = 0, prevY = 0;
+
+        lbc.addEventListener('mousedown', function(e) {
+            isDown = true;
+            lbc.style.cursor = 'grabbing';
+            startX = e.clientX;
+            startY = e.clientY;
+            prevX = translateX;
+            prevY = translateY;
+            
+            var el = lbc.firstElementChild;
+            if(el) el.style.transition = 'none'; // disable transition during drag for 0 latency
+        });
+
+        window.addEventListener('mouseup', function() {
+            isDown = false;
+            lbc.style.cursor = 'grab';
+            var el = lbc.firstElementChild;
+            if(el) el.style.transition = 'transform 0.05s ease-out';
+        });
+
+        window.addEventListener('mousemove', function(e) {
+            if (!isDown) return;
+            e.preventDefault();
+            translateX = prevX + (e.clientX - startX);
+            translateY = prevY + (e.clientY - startY);
+            updateTransform();
+        });
+
+        // Zoomování přímo modifikací scale matice
+        lbc.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            currentZoom += (e.deltaY * -0.002);
+            currentZoom = Math.min(Math.max(0.1, currentZoom), 15); // 10% až 1500% zoom limit
+            updateTransform();
+        }, { passive: false });
+
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.mermaid-container').forEach(function(el) {
-                el.title = 'Klikn\u011bte pro zv\u011bt\u0161en\u00ed';
+                el.title = 'Klikněte pro zvětšení (zapnuto zoomování kolečkem)';
                 el.addEventListener('click', function() {
                     var svg = el.querySelector('svg');
-                    if (svg) { var c = svg.cloneNode(true); c.style.width = '100%'; c.style.height = 'auto'; c.style.maxHeight = '85vh'; openLB(c.outerHTML); }
+                    if (svg) { 
+                        var c = svg.cloneNode(true); 
+                        openLB(c.outerHTML); 
+                    }
                     else { openLB(el.innerHTML); }
                 });
             });
             document.querySelectorAll('main img').forEach(function(img) {
-                img.title = 'Klikn\u011bte pro zv\u011bt\u0161en\u00ed';
-                img.addEventListener('click', function() { openLB('<img src="' + img.src + '" alt="' + (img.alt||'') + '">'); });
+                // Preskočíme obrázky, které už wrapper mají nebo jsou součástí nějakého specifického gridu (např logo nahoře v headeru je v <header>, takže main img je fajn).
+                img.title = 'Klikněte pro zvětšení (zapnuto zoomování kolečkem)';
+                var wrapper = document.createElement('div');
+                wrapper.className = 'img-zoom-wrapper';
+                img.parentNode.insertBefore(wrapper, img);
+                wrapper.appendChild(img);
+                wrapper.addEventListener('click', function() { openLB('<img src="' + img.src + '" alt="' + (img.alt||'') + '">'); });
             });
         });
     })();

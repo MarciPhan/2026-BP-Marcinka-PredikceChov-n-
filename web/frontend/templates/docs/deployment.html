@@ -333,7 +333,42 @@ docker-compose down
 # Docker (s odstraněním volumes — SMAŽE DATA!)
 docker-compose down -v</code></pre>
 
-    <h2>8. Production Checklist</h2>
+    <h2>8. Hardening & Security (Zabezpečení)</h2>
+    <p>Pro produkční prostředí je kritické minimalizovat útočnou plochu. Metricord splňuje standardy SOC2 (internal policy):</p>
+    <ul>
+        <li><b>Isolace:</b> Aplikace běží pod neprivilegovaným uživatelem (<code>UID 1000</code>).</li>
+        <li><b>Redis ACL:</b> V produkci doporučujeme vypnout <code>FLUSHALL</code> a <code>CONFIG</code> příkazy pro bot uživatele.</li>
+        <li><b>Rate Limiting:</b> Nginx konfigurace obsahuje <code>limit_req</code> pro prevenci útoků na API.</li>
+    </ul>
+
+    <div class="blueprint">
+        <b>Pokročilý Hardening (sysctl.conf)</b>
+        <pre><code># Ochrana proti SYN flood
+net.ipv4.tcp_syncookies = 1
+# Ignorování ICMP broadcastů
+net.ipv4.icmp_echo_ignore_broadcasts = 1</code></pre>
+    </div>
+
+    <h2>9. Škálování pro velké servery (100k+ členů)</h2>
+    <p>Díky bezstavové (stateless) architektuře dashboardu můžete systém škálovat horizontálně:</p>
+    
+    <div class="step-container">
+        <div class="step-number">↑</div>
+        <div class="step-content">
+            <h3>Horizontální škálování Dashboardu</h3>
+            <p>Můžete spustit více instancí <code>web-dashboard</code> za Load Balancerem (Nginx/HAProxy). Protože session jsou uloženy v Redisu nebo podepsány v cookie, uživatel zůstane přihlášen bez ohledu na to, která instance požadavek vyřídí.</p>
+        </div>
+    </div>
+
+    <div class="step-container">
+        <div class="step-number">⚡</div>
+        <div class="step-content">
+            <h3>Redis Sharding</h3>
+            <p>Pokud <code>events:msg</code> přesáhne RAM limit, lze využít Redis Cluster. Klíče jsou navrženy tak, aby <code>{gid}</code> byl hash tagem, což zajišťuje, že všechna data jednoho serveru jsou na stejném shardu.</p>
+        </div>
+    </div>
+
+    <h2>10. Production Checklist</h2>
     <div style="background: var(--glass); padding: 24px; border-radius: 12px; border: 1px solid var(--glass-border);">
         <ul style="list-style: none; padding: 0;">
             <li>☐ <code>BOT_TOKEN</code> vyplněn a validní</li>
@@ -348,6 +383,7 @@ docker-compose down -v</code></pre>
             <li>☐ Záloha Redis dat nastavena (cron)</li>
             <li>☐ Logy rotovány (logrotate nebo Docker log driver)</li>
             <li>☐ Bot má na serveru roli s dostatečnými oprávněními</li>
+            <li>☐ Nastaven monitoring (UptimeRobot / Prometheus)</li>
         </ul>
     </div>
 

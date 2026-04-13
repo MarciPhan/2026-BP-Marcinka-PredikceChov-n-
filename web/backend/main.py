@@ -574,12 +574,11 @@ async def _dashboard_logic(request: Request, start_date: str = None, end_date: s
                  uid = str(uid_str)
                  xp = int(float(xp_score))
                  
-                 
                  u_info = await r.hgetall(f"user:info:{uid}") or {}
-                 username = u_info.get("name") or u_info.get("username") or f"User {uid}"
+                 username = u_info.get("username") or u_info.get("name") or f"Uživatel {uid[:5]}..."
                  avatar = u_info.get("avatar")
                  
-                 
+                 # Výpočet levelu na základě XP
                  
                  xp_conf = await r.hgetall("config:xp_formula")
                  a = int(xp_conf.get("a", 50))
