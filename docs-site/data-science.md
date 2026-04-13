@@ -1,0 +1,58 @@
+# Data Science Integrace (Jupyter & Pandas)
+
+Metricord data jsou rájem pro datové analytiky. Zde je návod, jak je analyzovat v Jupyter Notebooku.
+
+## 1. Export dat pro Pandas
+
+Získejte data z Redisu přímo do Python DataFrame:
+
+```python
+import pandas as pd
+import redis
+import json
+
+r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+keys = r.keys("events:msg:123456789:*")
+
+all_events = []
+for k in keys:
+    evts = r.zrange(k, 0, -1, withscores=True)
+    for val, ts in evts:
+        d = json.loads(val)
+        d['timestamp'] = ts
+        all_events.append(d)
+
+df = pd.DataFrame(all_events)
+df['datetime'] = pd.to_datetime(df['timestamp'], unit='s')
+```
+
+## 2. Churn Prediction Workflow (Scikit-Learn)
+
+Následující kód ukazuje, jak natrénovat jednoduchý model pro předpověď odchodu uživatelů.
+
+```python
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report
+
+# Příprava featur z DataFrame (df)
+# X = [dny_aktivity, pocet_zprav, voice_sekundy, dqs_score]
+X = df[['days_active', 'msg_count', 'voice_sec', 'dqs']]
+y = df['has_left']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+model = RandomForestClassifier(n_estimators=100)
+model.fit(X_train, y_train)
+
+preds = model.predict(X_test)
+print(classification_report(y_test, preds))
+```
+
+## 3. Export do Grafany / InfluxDB
+
+Pokud potřebujete dlouhodobé uchování metrik mimo Redis, doporučujeme použít Telegraf plugin, který data z Redisu přeposílá do InfluxDB pro vizualizaci v Grafaně.
+
+::: tip Výkon při analýze
+Pokud provádíte těžké analýzy, doporučujeme použít **Redis Snapshot** (soubor `.rdb`), abyste nezatěžovali produkční paměť Redisu náročnými dotazy.
+:::

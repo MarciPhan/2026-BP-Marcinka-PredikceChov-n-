@@ -1,0 +1,120 @@
+:root {
+  --vp-c-brand-1: #8b5cf6;
+  --vp-c-brand-2: #7c3aed;
+  --vp-c-brand-3: #6d28d9;
+  --vp-c-brand-soft: rgba(139, 92, 246, 0.14);
+
+  --bg-dark: #09090b;
+  --bg-secondary: #14141a;
+  --primary: #8b5cf6;
+  --primary-g: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+  --accent: #d946ef;
+  --text-main: #ffffff;
+  --text-muted: #9ca3af;
+  --glass: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+/* Base Overrides */
+html.dark {
+  --vp-c-bg: var(--bg-dark);
+  --vp-c-bg-soft: var(--bg-secondary);
+  --vp-c-bg-mute: var(--bg-secondary);
+  --vp-c-text-1: var(--text-main);
+  --vp-c-text-2: var(--text-muted);
+  --vp-c-border: var(--glass-border);
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+h1, h2, h3, h4, .vp-doc h1, .vp-doc h2 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+}
+
+/* Glassmorphism effects */
+.VPNavBar {
+  background-color: rgba(9, 9, 11, 0.8) !important;
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.VPSidebar {
+  background-color: var(--bg-secondary) !important;
+  border-right: 1px solid var(--glass-border) !important;
+}
+
+.VPDoc {
+  padding-top: 40px;
+}
+
+/* Custom components inspired by the original design */
+.info-box {
+  background: rgba(139, 92, 246, 0.1);
+  border-left: 4px solid var(--primary);
+  padding: 20px 24px;
+  border-radius: 4px 12px 12px 4px;
+  margin: 32px 0;
+}
+
+.info-box b {
+  color: var(--primary);
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+
+/* Mermaid containers */
+.mermaid-container {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 30px 0;
+}
+
+/* Step containers */
+.step-container {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 32px;
+  position: relative;
+}
+
+.step-number {
+  width: 40px;
+  height: 40px;
+  background: var(--primary-g);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  flex-shrink: 0;
+  z-index: 1;
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+/* Table styling */
+.vp-doc table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 32px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+}
+
+.vp-doc th {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.vp-doc td, .vp-doc th {
+  border: 1px solid var(--glass-border);
+}
