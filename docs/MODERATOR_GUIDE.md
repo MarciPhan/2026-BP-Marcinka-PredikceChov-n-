@@ -1,10 +1,10 @@
-# 📊 Metricord: Komplexní příručka pro moderátory
+#  Metricord: Komplexní příručka pro moderátory
 
 Vítejte u podrobné dokumentace systému **Metricord**. Tento dokument slouží jako hlavní zdroj informací pro moderátory a správce komunit, kteří chtějí naplno využít potenciál analytických a prediktivních nástrojů pro rozvoj svého serveru.
 
 ---
 
-## 📑 Obsah
+##  Obsah
 1. [Úvod a filozofie systému](#1-úvod-a-filozofie-systému)
 2. [Interpretace metrik v dashboardu](#2-interpretace-metrik-v-dashboardu)
 3. [Prediktivní modely a včasné varování](#3-prediktivní-modely-a-včasné-varování)
@@ -26,16 +26,16 @@ Metricord není jen "další bot na statistiky". Je to analytický ekosystém po
 
 ## 2. Interpretace metrik v dashboardu
 
-### 📈 Engagement Score (0–100)
+###  Engagement Score (0–100)
 Kompozitní index zdraví serveru. Pokud klesne pod **40**, komunita stagnuje. Pokud je nad **80**, server organicky roste.
 - **Složení:** 25% Moderace, 25% Bezpečnost, 25% Zapojení (Engagement), 25% Aktivita týmu.
 
-### 🔗 Stickiness (Lepivost)
+###  Stickiness (Lepivost)
 Vzorec: `(DAU / MAU) * 100`. 
 - **Interpretace:** Kolik % vašich měsíčních uživatelů se vrací každý den. 
 - **Cíl:** Nad 20% pro velmi aktivní komunity.
 
-### 📉 Churn Rate (Míra odchodu)
+###  Churn Rate (Míra odchodu)
 Klíčový indikátor problému. Pokud Churn Rate náhle vzroste, zkontrolujte:
 1. Poslední konflikty v chatu.
 2. Změny v pravidlech nebo struktuře serveru.
@@ -45,12 +45,12 @@ Klíčový indikátor problému. Pokud Churn Rate náhle vzroste, zkontrolujte:
 
 ## 3. Prediktivní modely a včasné varování
 
-### 🤖 Markovovy řetězce (Retence)
+###  Markovovy řetězce (Retence)
 Systém rozděluje uživatele do stavů: `New`, `Active`, `Passive`, `Inactive`, `Churned`.
 - **Predikce:** Dashboard vám ukáže, kolik uživatelů pravděpodobně přejde do stavu `Churned` v příštích 7 dnech.
 - **Akce:** Targetujte uživatele ve stavu `Passive` nebo `Inactive` speciálními eventy, abyste je "reaktivovali".
 
-### ⏳ Kaplan-Meier (Survival analýza)
+###  Kaplan-Meier (Survival analýza)
 Ukazuje "střední délku života" uživatele na vašem serveru.
 - **Příklad:** Pokud graf ukazuje prudký pád po 3 dnech, máte špatný **onboarding**. Uživatelé přijdou, ale nenajdou důvod zůstat déle než 72 hodin.
 

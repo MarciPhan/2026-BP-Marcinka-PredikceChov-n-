@@ -64,25 +64,25 @@ graph TB
 
 ```text
 metricord/
-├── bot/
-│   ├── main.py              # Entry point, event loop, background tasks
-│   └── commands/
-│       ├── activity.py      # Hlavní tracking modul - XP, voice, zprávy
-│       ├── stats_hll.py     # HyperLogLog statistiky - DAU/MAU
-│       ├── gdpr.py          # GDPR příkazy - export, smazání dat
-│       ├── health.py        # Zdravotní check - Redis ping, bot status
-│       └── analytics_tracking.py  # Event tracking pro dashboard
-├── web/
-│   ├── backend/
-│   │   ├── main.py          # FastAPI routes - Dashboard API
-│   │   ├── utils.py         # Analytické výpočty - Engagement, predikce
-│   │   └── hydrate_users.py # Synchronizace uživatelských dat
-│   └── docs-site/           # Tato dokumentace (VitePress)
-├── shared/
-│   ├── keys.py              # Redis klíčová schéma
-│   ├── models.py            # Matematické modely - Markov, Kaplan-Meier
-│   └── redis_client.py      # Singleton Redis klient
-└── config/                  # Konfigurace a tajemství
+ bot/
+    main.py              # Entry point, event loop, background tasks
+    commands/
+        activity.py      # Hlavní tracking modul - XP, voice, zprávy
+        stats_hll.py     # HyperLogLog statistiky - DAU/MAU
+        gdpr.py          # GDPR příkazy - export, smazání dat
+        health.py        # Zdravotní check - Redis ping, bot status
+        analytics_tracking.py  # Event tracking pro dashboard
+ web/
+    backend/
+       main.py          # FastAPI routes - Dashboard API
+       utils.py         # Analytické výpočty - Engagement, predikce
+       hydrate_users.py # Synchronizace uživatelských dat
+    docs-site/           # Tato dokumentace (VitePress)
+ shared/
+    keys.py              # Redis klíčová schéma
+    models.py            # Matematické modely - Markov, Kaplan-Meier
+    redis_client.py      # Singleton Redis klient
+ config/                  # Konfigurace a tajemství
 ```
 
 ## 4. Detailní datový tok (Event-Driven Flow)

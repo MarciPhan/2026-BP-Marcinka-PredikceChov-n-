@@ -98,32 +98,32 @@ cd docs-site && npm run docs:dev
 
 ```text
 metricord/
-├── bot/
-│   ├── main.py              # Entry point, event loop, background tasks
-│   └── commands/
-│       ├── activity.py      # Hlavní tracking modul — XP, voice, zprávy
-│       ├── stats_hll.py     # HyperLogLog statistiky — DAU/MAU
-│       ├── gdpr.py          # GDPR příkazy — export, smazání dat
-│       ├── health.py        # Zdravotní check — Redis ping, bot status
-│       ├── help.py          # Interaktivní nápověda
-│       └── analytics_tracking.py  # Event tracking pro dashboard
-├── web/
-│   └── backend/
-│       ├── main.py          # FastAPI routes — Dashboard API
-│       ├── utils.py         # Analytické výpočty — Engagement, predikce
-│       └── hydrate_users.py # Synchronizace uživatelských dat
-├── shared/
-│   ├── keys.py              # Redis klíčová schéma (centrální definice)
-│   ├── models.py            # Matematické modely — Markov, Kaplan-Meier
-│   └── redis_client.py      # Singleton Redis klient
-├── docs-site/               # Tato dokumentace (VitePress)
-├── config/                  # Konfigurace a tajemství
-├── scripts/                 # Pomocné skripty
-├── docker-compose.yml       # Produkční nasazení
-├── Dockerfile               # Container image
-├── start.sh                 # Lokální spouštěč
-├── requirements.txt         # Python závislosti
-└── .env.example             # Šablona konfigurace
+ bot/
+    main.py              # Entry point, event loop, background tasks
+    commands/
+        activity.py      # Hlavní tracking modul — XP, voice, zprávy
+        stats_hll.py     # HyperLogLog statistiky — DAU/MAU
+        gdpr.py          # GDPR příkazy — export, smazání dat
+        health.py        # Zdravotní check — Redis ping, bot status
+        help.py          # Interaktivní nápověda
+        analytics_tracking.py  # Event tracking pro dashboard
+ web/
+    backend/
+        main.py          # FastAPI routes — Dashboard API
+        utils.py         # Analytické výpočty — Engagement, predikce
+        hydrate_users.py # Synchronizace uživatelských dat
+ shared/
+    keys.py              # Redis klíčová schéma (centrální definice)
+    models.py            # Matematické modely — Markov, Kaplan-Meier
+    redis_client.py      # Singleton Redis klient
+ docs-site/               # Tato dokumentace (VitePress)
+ config/                  # Konfigurace a tajemství
+ scripts/                 # Pomocné skripty
+ docker-compose.yml       # Produkční nasazení
+ Dockerfile               # Container image
+ start.sh                 # Lokální spouštěč
+ requirements.txt         # Python závislosti
+ .env.example             # Šablona konfigurace
 ```
 
 ## Vývoj dokumentace

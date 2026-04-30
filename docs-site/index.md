@@ -45,32 +45,32 @@ Pro přesné predikce doporučujeme nechat bota sbírat data alespoň 7 dní. Pr
 
 <div class="premium-grid">
   <a href="/quickstart" class="premium-card">
-    <h3>🚀 Rychlý start</h3>
+    <h3> Rychlý start</h3>
     <p>Nastavení bota během 5 minut. Průvodce krok za krokem od instalace po první predikce.</p>
   </a>
 
   <a href="/user-guide" class="premium-card">
-    <h3>📖 Uživatelská příručka</h3>
+    <h3> Uživatelská příručka</h3>
     <p>Příkazy, XP systém, leveling a ochrana osobních údajů.</p>
   </a>
 
   <a href="/moderators" class="premium-card">
-    <h3>🛡️ Příručka pro moderátory</h3>
+    <h3> Příručka pro moderátory</h3>
     <p>Interpretace metrik, predikce, krizové stavy a správa komunity.</p>
   </a>
 
   <a href="/architecture" class="premium-card">
-    <h3>⚙️ Architektura</h3>
+    <h3> Architektura</h3>
     <p>Redis schéma, datový tok, Mermaid diagramy a technické detaily.</p>
   </a>
 
   <a href="/dev-guide" class="premium-card">
-    <h3>💻 Vývojářský průvodce</h3>
+    <h3> Vývojářský průvodce</h3>
     <p>Lokální vývoj, přidávání příkazů, API a Redis best practices.</p>
   </a>
 
   <a href="/faq" class="premium-card">
-    <h3>❓ FAQ & Troubleshooting</h3>
+    <h3> FAQ & Troubleshooting</h3>
     <p>Odpovědi na časté dotazy a řešení běžných problémů.</p>
   </a>
 </div>

@@ -32,10 +32,10 @@ nano .env          # vyplň BOT_TOKEN
 ```
 
 Skript automaticky:
-- ✓ Vytvoří virtuální prostředí (`.venv`)
-- ✓ Nainstaluje závislosti
-- ✓ Zkontroluje konfiguraci
-- ✓ Spustí Redis, Discord bota i Dashboard
+-  Vytvoří virtuální prostředí (`.venv`)
+-  Nainstaluje závislosti
+-  Zkontroluje konfiguraci
+-  Spustí Redis, Discord bota i Dashboard
 
 Dashboard je po spuštění dostupný na **http://localhost:8092**
 
