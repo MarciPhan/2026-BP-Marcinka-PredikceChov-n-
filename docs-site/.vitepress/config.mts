@@ -5,18 +5,27 @@ export default withMermaid(defineConfig({
   lang: 'cs-CZ',
   title: 'Metricord Docs',
   description: 'Dokumentace pro analytický systém Metricord',
-  appearance: 'dark',
+  base: '/2026-BP-Marcinka-PredikceChov-n-/',
+  appearance: 'force-dark',
+  ignoreDeadLinks: [
+    /^http:\/\/localhost/
+  ],
   
   head: [
     ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
-    ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap' }]
+    ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap' }],
+    ['link', { rel: 'stylesheet', href: 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css' }]
   ],
+
+  markdown: {
+    math: true
+  },
 
   themeConfig: {
     nav: [
       { text: 'Domů', link: '/' },
-      { text: 'Dokumentace', link: '/introduction' },
+      { text: 'Vývoj', link: '/dev-guide' },
       { text: 'Rychlý start', link: '/quickstart' },
       { text: 'GitHub', link: 'https://github.com/MarciPhan/2026-BP-Marcuska-PredikceChov-n-' }
     ],
@@ -24,77 +33,77 @@ export default withMermaid(defineConfig({
     sidebar: [
       {
         text: 'Začínáme',
+        collapsed: false,
         items: [
           { text: 'Úvod', link: '/introduction' },
-          { text: 'Vize & Cíle', link: '/vision' },
-          { text: 'Whitepaper', link: '/whitepaper' },
-          { text: 'Matematické základy', link: '/math-foundations' },
           { text: 'Rychlý start', link: '/quickstart' },
-          { text: 'Uživatelská příručka', link: '/user-guide' },
-          { text: 'Instalace', link: '/setup' },
-          { text: 'Architektura', link: '/architecture' },
-          { text: 'API Reference', link: '/api' },
-          { text: 'Nasazení', link: '/deployment' },
+          { text: 'Instalace a konfigurace', link: '/setup' },
+          { text: 'Architektura systému', link: '/architecture' }
+        ]
+      },
+      {
+        text: 'Uživatelská příručka',
+        collapsed: false,
+        items: [
+          { text: 'Základní použití', link: '/user-guide' },
+          { text: 'Příkazy bota', link: '/commands' },
+          { text: 'XP systém a role', link: '/roles' },
+          { text: 'Analytické metriky', link: '/analytics' },
+          { text: 'Export dat', link: '/export' },
+          { text: 'Backfill historických dat', link: '/backfill' },
+          { text: 'Ochrana osobních údajů', link: '/privacy' }
+        ]
+      },
+      {
+        text: 'Příručka pro moderátory',
+        collapsed: false,
+        items: [
+          { text: 'Průvodce pro moderátory', link: '/moderators' },
+          { text: 'Osvědčené postupy', link: '/best-practices' },
+          { text: 'Případové studie', link: '/case-studies' },
+          { text: 'Smart Insights', link: '/insights' },
+          { text: 'Skóre bezpečnosti', link: '/security' }
+        ]
+      },
+      {
+        text: 'Administrátorská příručka',
+        collapsed: false,
+        items: [
+          { text: 'Nasazení do produkce', link: '/deployment' },
+          { text: 'Správa instance', link: '/admin-guide' },
+          { text: 'Monitoring systému', link: '/health-dashboard' },
+          { text: 'Škálování a HA', link: '/scaling-global' },
+          { text: 'Zabezpečení infrastruktury', link: '/hardening' },
+          { text: 'Technické zabezpečení', link: '/security-technical' },
+          { text: 'Privacy Builder', link: '/privacy-builder' },
           { text: 'Cloud Deployment', link: '/cloud-deployment' }
         ]
       },
       {
-        text: 'Funkce bota',
+        text: 'Vývojářská příručka',
+        collapsed: false,
         items: [
-          { text: 'Slash příkazy', link: '/commands' },
-          { text: 'Skóre bezpečnosti', link: '/security' },
-          { text: 'Analytické metriky', link: '/analytics' },
-          { text: 'Případové studie', link: '/case-studies' },
-          { text: 'Export dat', link: '/export' },
-          { text: 'Health Dashboard', link: '/health-dashboard' },
-          { text: 'API Akce', link: '/api-actions' },
-          { text: 'API Příklady', link: '/api-examples' }
-        ]
-      },
-      {
-        text: 'Pokročilé',
-        items: [
-          { text: 'Predikce & AI', link: '/ai' },
-          { text: 'ML Modely', link: '/predictions' },
-          { text: 'Smart Insights', link: '/insights' },
-          { text: 'Integrace & Webhooky', link: '/integrations' },
-          { text: 'Developer Guide', link: '/dev-guide' },
+          { text: 'Lokální vývoj', link: '/dev-guide' },
+          { text: 'API Reference', link: '/api' },
+          { text: 'API akce', link: '/api-actions' },
+          { text: 'API příklady', link: '/api-examples' },
+          { text: 'Redis datové schéma', link: '/data-schema' },
+          { text: 'Integrace a Webhooky', link: '/integrations' },
           { text: 'Data Science', link: '/data-science' },
-          { text: 'Redis Schéma', link: '/data-schema' },
-          { text: 'Škálování', link: '/scaling-global' },
-          { text: 'Zabezpečení (Tech)', link: '/security-technical' },
-          { text: 'OS Hardening', link: '/hardening' },
-          { text: 'Labs (Experimenty)', link: '/labs' },
-          { text: 'Admin Guide', link: '/admin-guide' },
-          { text: 'ML Srovnání', link: '/ml-comparison' }
+          { text: 'Experimentální funkce', link: '/labs' },
+          { text: 'Přehled predikce', link: '/ai' },
+          { text: 'ML pipeline', link: '/predictions' },
+          { text: 'Matematické základy', link: '/math-foundations' },
+          { text: 'Srovnání ML algoritmů', link: '/ml-comparison' }
         ]
       },
       {
-        text: 'Komunita',
+        text: 'Reference',
+        collapsed: false,
         items: [
-          { text: 'Moderátoři', link: '/moderators' },
-          { text: 'Best Practices', link: '/best-practices' },
-          { text: 'Role a XP', link: '/roles' },
-          { text: 'Privacy Builder', link: '/privacy-builder' },
-          { text: 'Vizuální styl', link: '/branding' },
-          { text: 'Style Guide', link: '/style-guide' },
-          { text: 'Konkurence', link: '/comparison' }
-        ]
-      },
-      {
-        text: 'O projektu',
-        items: [
-          { text: 'Roadmapa', link: '/changelog' },
           { text: 'Slovník pojmů', link: '/glossary' },
           { text: 'Časté dotazy', link: '/faq' },
-          { text: 'Troubleshooting', link: '/troubleshooting' },
-          { text: 'Podpora', link: '/support' }
-        ]
-      },
-      {
-        text: 'Právní informace',
-        items: [
-          { text: 'Ochrana dat', link: '/privacy' },
+          { text: 'Řešení potíží', link: '/troubleshooting' },
           { text: 'Podmínky služby', link: '/terms' }
         ]
       }
@@ -147,9 +156,6 @@ export default withMermaid(defineConfig({
     
     langMenuLabel: 'Jazyk',
     returnToTopLabel: 'Zpět nahoru',
-    sidebarMenuLabel: 'Menu',
-    darkModeSwitchLabel: 'Vzhled',
-    lightModeSwitchTitle: 'Přepnout na světlý režim',
-    darkModeSwitchTitle: 'Přepnout na tmavý režim'
+    sidebarMenuLabel: 'Menu'
   }
 }))

@@ -1,57 +1,143 @@
-# Rychlý start s Metricord
+# Průvodce rychlým startem
 
-Tento průvodce vás provede prvním nastavením během 5 minut. Od nuly k prvním predikcím.
+S Metricordem získáte první analytické přehledy během 5 minut. Tento průvodce vás provede nezbytnými kroky od autorizace až po první predikce.
 
-::: info Krok 1: Pozvání bota a konfigurace Intents
-Prvním krokem je přidání bota na váš server. Metricord vyžaduje specifická **Privileged Intents** pro správnou funkci analytiky. Bez nich nebude bot schopen sledovat zprávy ani voice aktivitu.
-
-- **Message Content Intent:** Nutné pro analýzu délky zpráv a aktivity v kanálech.
-- **Guild Members Intent:** Nutné pro sledování příchodů, odchodů a synchronizaci profilů.
-- **Server Members Intent:** Nutné pro real-time statistiky online uživatelů.
-
-[Pozvat bota na server →](/login?invite=true)
+::: tip Předpoklady
+- Discord účet s oprávněním **Manage Server** na cílovém serveru.
+- Bot vytvořený v [Discord Developer Portalu](https://discord.com/developers/applications) s vygenerovaným tokenem.
 :::
 
-::: tip Krok 2: Autorizace dashboardu
-Přihlaste se pomocí svého Discord účtu. Tím získáte přístup ke všem serverům, kde máte práva **Manage Server** nebo **Administrator**.
+## 1. Vytvoření bota v Discord Portalu
 
-Po prvním přihlášení Metricord automaticky zinventarizuje všechny role na serveru, což umožní pozdější filtrování statistik podle hodností.
+Pokud ještě nemáte bota, vytvořte si jej:
 
-**Bezpečnost:** Používáme OAuth2 s PKCE. Vaše heslo nikdy nevidíme, dostáváme pouze dočasný přístupový token.
+1.  Přejděte na [Discord Developer Portal](https://discord.com/developers/applications).
+2.  Klikněte na **New Application** a pojmenujte ji (např. „Metricord").
+3.  V sekci **Bot** klikněte na **Add Bot** a zkopírujte si `BOT_TOKEN`.
+4.  V sekci **OAuth2 → URL Generator** zaškrtněte scope `bot` a `applications.commands`.
+
+> [!IMPORTANT]
+> V sekci **Bot → Privileged Gateway Intents** musíte zapnout:
+> - **Presence Intent:** Pro sledování online stavu členů.
+> - **Server Members Intent:** Pro sledování příchodů, odchodů a synchronizaci profilů.
+> - **Message Content Intent:** Pro výpočet délky zpráv a aktivity.
+
+## 2. Pozvání bota na server
+
+Pomocí vygenerované OAuth2 URL pozvěte bota na váš Discord server. Doporučená oprávnění:
+
+| Oprávnění | Důvod |
+| :--- | :--- |
+| **View Channels & Read Messages** | Analýza textové aktivity. |
+| **Read Message History** | Nutné pro zpětný import dat (Backfill). |
+| **Connect** | Sledování účasti v hlasových kanálech. |
+| **Use Application Commands** | Registrace slash příkazů. |
+| **Manage Roles** *(volitelné)* | Automatické přidělování rolí za aktivitu. |
+
+## 3. Instalace a spuštění
+
+Metricord můžete spustit lokálně nebo přes Docker. Vyberte si cestu, která vám vyhovuje:
+
+::: code-group
+
+```bash [Lokální spuštění (doporučeno pro vývoj)]
+# 1. Klonování
+git clone https://github.com/MarciPhan/2026-BP-Marcinka-PredikceChov-n-
+cd 2026-BP-Marcinka-PredikceChov-n-
+
+# 2. Konfigurace
+cp .env.example .env
+# Otevřete .env a vyplňte BOT_TOKEN a další proměnné
+
+# 3. Spuštění (bot + dashboard + docs jedním příkazem)
+chmod +x start.sh
+./start.sh
+```
+
+```bash [Docker Compose (doporučeno pro produkci)]
+# 1. Klonování
+git clone https://github.com/MarciPhan/2026-BP-Marcinka-PredikceChov-n-
+cd 2026-BP-Marcinka-PredikceChov-n-
+
+# 2. Konfigurace
+cp .env.example .env
+# Otevřete .env a vyplňte BOT_TOKEN a další proměnné
+
+# 3. Vytvoření Docker sítě (pouze poprvé)
+docker network create botnet
+
+# 4. Spuštění celého stacku
+docker-compose up -d --build
+```
+
 :::
 
-::: info Krok 3: První synchronizace (Backfill)
-Ve výchozím stavu bot sleduje aktivitu od momentu pozvání. Chcete-li vidět historické trendy ihned, použijte modul **Backfill**.
+### Ověření úspěšného spuštění
 
-```bash
+Po spuštění by měly běžet tři služby:
+
+| Služba | URL / Kontrola | Co dělá |
+| :--- | :--- | :--- |
+| **Bot** | `redis-cli GET bot:heartbeat` | Sběr událostí z Discordu |
+| **Dashboard** | `http://localhost:8092` | Webové rozhraní s grafy |
+| **Dokumentace** | `http://localhost:5173` | Tato dokumentace (VitePress) |
+
+> [!TIP]
+> Pokud bot neodpovídá na příkazy, spusťte v Discord chatu `*sync` pro registraci slash příkazů.
+
+## 4. Přihlášení k dashboardu
+
+1.  Přejděte na `http://localhost:8092` (nebo vaši produkční doménu).
+2.  Klikněte na **Login** a autorizujte se přes Discord OAuth2.
+3.  Metricord automaticky zobrazí servery, kde máte právo **Manage Server**.
+4.  Vyberte cílový server z postranního panelu.
+
+## 5. První synchronizace dat (Backfill)
+
+Bot standardně sbírá data od momentu svého připojení. Pokud chcete vidět historické trendy okamžitě, proveďte zpětný import:
+
+```
 /activity backfill days:30
 ```
 
-*Tento příkaz projde historii zpráv ve všech kanálech a zpětně dopočítá XP a statistiky.*
-:::
+Bot začne indexovat historii zpráv a audit log. Proces probíhá asynchronně na pozadí a nezpomaluje ostatní funkce bota.
 
-::: tip Krok 4: Kalibrace XP algoritmů
-Každá komunita má jinou dynamiku. V sekci **Nastavení XP** můžete definovat:
+> [!WARNING]
+> Backfill je náročný na Discord API. U velkých serverů (10 000+ zpráv) může trvat i desítky minut. Podrobnosti viz [Backfill historických dat](/backfill).
 
-- **Base XP:** Kolik bodů získá uživatel za jednu zprávu.
-- **Voice Multiplier:** Koeficient pro minutu strávenou ve voice kanálu.
-- **Length Bonus:** Dodatečné body za dlouhé zprávy.
-- **Cooldown:** Minimální rozestup mezi zprávami pro zisk XP.
-:::
+## 6. Kalibrace XP systému
 
-## Důležité milníky po instalaci
+Přizpůsobte metriky dynamice své komunity v dashboardu (sekce **Settings**) nebo přímo přes Redis:
 
-Analytika Metricord pracuje v několika časových horizontech:
-
-| Čas | Dostupná data | Účel |
+| Parametr | Výchozí | Popis |
 | :--- | :--- | :--- |
-| **1 hodina** | Real-time Heatmapa | Okamžitý přehled o aktuální špičce. |
-| **24 hodin** | Denní trendy (DAU) | Porovnání dnešní aktivity s včerejškem. |
-| **7 dní** | Prediktivní modely | První odhady retence členů a Engagement Score. |
-| **30 dní** | Survival analýza | Kompletní Kaplan-Meier křivky přežití komunity. |
+| **Base XP** | 5 | Počet bodů za jednu standardní zprávu. |
+| **Voice Multiplier** | 5/min | XP za minutu strávenou ve voice kanálu. |
+| **Length Bonus** | 15–50 | XP navýšení za dlouhé a komplexní zprávy. |
+| **Cooldown** | 60 s | Časové okno pro anti-spam ochranu. |
 
----
+```bash
+# Příklad úpravy vah přes redis-cli
+redis-cli HSET config:xp:weights msg_short 1 msg_medium 5 msg_long 15
+redis-cli INCR config:weights_version
+```
 
-::: info Další krok
-Přečtěte si [Best Practices](/best-practices), jak tato data využít pro růst serveru.
+## Časový plán sběru dat
+
+Analytika Metricord pracuje v několika cyklech. Očekávejte tyto milníky:
+
+| Časový horizont | Co uvidíte | Účel |
+| :--- | :--- | :--- |
+| **Ihned** | Real-time Heatmapa | Okamžitý přehled o špičce aktivity. |
+| **24 hodin** | DAU (Denní aktivita) | Porovnání dnešní aktivity s předchozím dnem. |
+| **7 dní** | Churn Predictions | První odhady pravděpodobnosti odchodu členů. |
+| **30 dní** | Kaplan-Meier | Kompletní křivky přežití a dlouhodobá retence. |
+
+## Co dál?
+
+::: info Doporučený postup po instalaci
+1. **[Uživatelská příručka](/user-guide)** — Naučte se základní příkazy a XP systém.
+2. **[Průvodce pro moderátory](/moderators)** — Interpretujte metriky a pracujte s predikcemi.
+3. **[Osvědčené postupy](/best-practices)** — 30denní plán pro maximální využití analytiky.
+4. **[Architektura systému](/architecture)** — Pochopte, jak Metricord funguje pod kapotou.
 :::

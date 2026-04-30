@@ -34,3 +34,44 @@ Konkrétní scénáře, jak využít data z Metricord k řešení reálných pro
 
 **Výsledek:** Účast na eventu vzrostla o 150 %.
 :::
+
+::: warning Scénář D: Obnova po výpadku Redis (Disaster Recovery)
+**Problém:** Server se restartoval po hardwarovém výpadku. Redis ztratil data z posledních 4 hodin, protože běžel pouze s RDB snapshotami v 15minutových intervalech.
+
+**Řešení s Metricord:**
+1. **Diagnostika:** Příkaz `redis-cli DBSIZE` ukázal nižší počet klíčů, než odpovídá normálu. `bot:heartbeat` chybí.
+2. **Obnovení:** Načtení posledního zálohy `dump.rdb` z adresáře `/backup/`:
+   ```bash
+   sudo systemctl stop redis
+   cp /backup/metricord-20260413.rdb /var/lib/redis/dump.rdb
+   sudo systemctl start redis
+   ```
+3. **Doplnění:** Spuštění `/activity backfill days:1` pro dopočítání chybějících 4 hodin z Discord API.
+4. **Prevence:** Přechod z čistého RDB na kombinaci **RDB + AOF** dle [doporučení v deployment](/deployment#_10-strategie-disaster-recovery).
+
+**Výsledek:** Ztráta dat omezena na max. 15 minut (poslední RDB snapshot). Po backfillu kompletní data.
+:::
+
+## 4. Metodika aplikované analytiky
+
+Při řešení scénářů postupujte podle cyklu **Metricord Analytics Loop**:
+
+1. **Monitor (Sledování):** Kontrola základních Dashboard metrik (DAU, Heatmapy).
+2. **Predict (Předpověď):** Identifikace anomálií a rizik (Churn Risk, Stability Score).
+3. **Analyze (Analýza):** Hloubkový pohled na data konkrétních uživatelů nebo kanálů.
+4. **Intervene (Zásah):** Implementace změn na serveru (nové role, eventy, úpravy pravidel).
+5. **Evaluate (Vyhodnocení):** Zpětné ověření po 14 dnech, zda měřená metrika vykázala zlepšení.
+
+```mermaid
+graph LR
+    M[Monitor] --> P[Predict]
+    P --> A[Analyze]
+    A --> I[Intervene]
+    I --> E[Evaluate]
+    E --> M
+```
+
+::: tip Doporučení pro BP
+V rámci bakalářské práce doporučujeme dokumentovat alespoň jeden celý tento cyklus na reálném serveru jako důkaz funkčnosti prediktivních modelů.
+:::
+

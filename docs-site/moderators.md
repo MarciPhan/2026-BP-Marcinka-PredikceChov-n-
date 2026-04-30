@@ -1,14 +1,10 @@
-# Průvodce pro moderátory (Produkční edice)
+# Průvodce pro moderátory
 
-Kompletní příručka pro moderátorský tým. Pokrývá interpretaci metrik, práci s prediktivními modely, krizové scénáře a provozní postupy pro každodenní správu komunity.
+Tato příručka vám pomůže interpretovat nasbíraná data, pracovat s predikcemi a efektivně řešit krizové stavy na serveru.
 
-::: info Filozofie Metricord: Data-Driven Moderace
-Metricord vám umožňuje **proaktivní moderaci** — identifikaci problémů dříve, než se stanou kritickými. Cílem je přejít od „hašení požárů" k systematickému řízení zdraví komunity.
-:::
+## Sledování životního cyklu uživatele
 
-## 1. Životní cyklus uživatele
-
-Každý člen komunity prochází pěti stavy. Metricord sleduje přechody mezi nimi a predikuje budoucí vývoj pomocí Markovových řetězců.
+Každý člen komunity se nachází v jednom z pěti stavů. Metricord tyto stavy monitoruje a pomocí Markovových řetězců předpovídá, zda uživatel na serveru zůstane, nebo odejde.
 
 ```mermaid
 stateDiagram-v2
@@ -24,86 +20,48 @@ stateDiagram-v2
     Churned --> [*]: Definitivní odchod
 ```
 
-| Stav | Definice | Vaše akce jako moderátora |
-| :--- | :--- | :--- |
-| **New** | Prvních 24 hodin od připojení. | Přivítejte uživatele. Kritická fáze onboardingu. |
-| **Active** | Pravidelná aktivita v posledních 7 dnech. | Udržujte zapojení: odpovídejte na zprávy, tvořte témata. |
-| **Passive** | Nízká aktivita v posledních 3–7 dnech. | „Lurkers" — potřebují postrčit. Zmiňte je v diskuzi. |
-| **Inactive** | Žádná aktivita 7–14 dní. | Hazardní zóna. Zvažte osobní zprávu s pozvánkou. |
-| **Churned** | Opustil server nebo inaktivní > 14 dní. | Analýza příčiny pro budoucí zlepšení. |
+### Interpretujte stavy uživatelů
 
-## 2. Metriky dashboardu
+| Stav | Co znamená | Vaše doporučená akce |
+| :--- | :--- | :--- |
+| **New** | Uživatel se připojil před méně než 24 hodinami. | Přivítejte nováčka. Tato fáze rozhoduje o jeho setrvání. |
+| **Active** | Pravidelně přispívá v posledních 7 dnech. | Udržujte zapojení: odpovídejte na dotazy a tvořte nová témata. |
+| **Passive** | Aktivita v posledních 3–7 dnech výrazně klesla. | „Lurkers" - zkuste je označit v relevantní diskuzi. |
+| **Inactive** | Žádná aktivita za posledních 7–14 dní. | Kritická zóna. Zvažte osobní pozvánku na blížící se event. |
+| **Churned** | Uživatel odešel nebo je inaktivní déle než 14 dní. | Analyzujte příčinu odchodu pro budoucí zlepšení. |
+
+## Práce s metrikami dashboardu
 
 ### Engagement Score (0–100)
-Kompozitní index zdraví serveru. Váhy: 25% Moderace + 25% Bezpečnost + 25% Zapojení + 25% Aktivita týmu.
+Tato hodnota vám říká, jak „zdravý" je váš server jako celek.
 
-| Rozsah | Stav | Doporučená akce |
+| Skóre | Význam | Co byste měli udělat? |
 | :--- | :--- | :--- |
-| **0–30** | 🔴 Kritický | Server je v „klinické smrti". Iniciujte eventy. |
-| **30–50** | 🟡 Slabý | Komunita stagnuje. Plánujte akce na silné hodiny. |
-| **50–80** | 🟢 Zdravý | Optimální zóna. Udržujte stávající strategii. |
-| **80–100** | 🟣 Hyperaktivní | Pozor na spam a toxicitu. Posilte moderaci. |
+| **0–30** | Kritický stav | Uspořádejte okamžitý event nebo AMA pro oživení diskuze. |
+| **30–50** | Slabá aktivita | Komunita stagnuje. Plánujte akce na časy nejvyšší špičky. |
+| **50–80** | Optimální stav | Zdravá komunita. Pokračujte v nastavené strategii. |
+| **80–100** | Hyperaktivita | Sledujte kvalitu diskuze a posilte dozor proti spamu. |
 
-### Stickiness (Lepivost)
-Vzorec: `(DAU / MAU) × 100`. Kolik procent měsíčních uživatelů se vrací **každý den**.
-- **> 20%** = velmi aktivní komunita.
-- **< 5%** = „přízrakový server".
+### Stickiness a MII index
+- **Stickiness (`DAU / MAU`):** Cílem je hodnota nad 20 %. Pokud klesne pod 5 %, uživatelé se na server nevracejí.
+- **MII (Moderator Intervention Index):** Sleduje úroveň toxicity. Pokud MII roste při stabilní aktivitě, musíte zpřísnit pravidla nebo filtr slov.
 
-### MII (Moderator Intervention Index)
-Index úrovně toxicity. Vážený poměr moderátorských akcí k objemu zpráv.
+## Řešení krizových scénářů
 
-| MII | Engagement | Interpretace |
-| :--- | :--- | :--- |
-| Nízký | Nízký | Komunita je „mrtvá". |
-| Nízký | Vysoký | **Ideální stav.** Živá komunita bez konfliktů. |
-| Vysoký | Vysoký | Živá, ale konfliktní. Posilte pravidla. |
-| Vysoký | Nízký | Toxické prostředí odrazuje nové členy. |
+> [!IMPORTANT]
+> Prediktivní modely (Markov, Kaplan-Meier) slouží k včasnému varování. Nečekejte, až uživatelé odejdou - jednejte ve chvíli, kdy data ukazují riziko.
 
-## 3. Prediktivní modely v praxi
+### Scénář: Náhlý propad denní aktivity (DAU)
+Pokud zaznamenáte pokles o více než 30 % za 24 hodin, prověřte `activity stats` nejaktivnějších členů. Možná došlo ke konfliktu, který vyústil v jejich odchod do soukromých zpráv nebo na jiný server.
 
-### Markovovy řetězce (Retence)
-- **Co sledovat:** Pokud model očekává odchod > 15% členů do 3 dnů.
-- **Akce:** Targetujte uživatele v `Passive` a `Inactive` stavu.
+### Scénář: Vysoká toxicita (Rostoucí MII)
+Pokud MII překročí hodnotu 0,05, zkontrolujte Heatmapu aktivity. Zjistěte, ve které hodiny k incidentům dochází, a v tyto časy posilte moderátorské směny.
 
-### Kaplan-Meier (Survival analýza)
-- **Co sledovat:** Prudký pád křivky po N dnech.
-- **Příklad:** Pád po 3 dnech = špatný onboarding. Vylepšete uvítací proces.
+### Scénář: Selhání onboardingu nových členů
+Pokud Kaplan-Meierova křivka přežití ukazuje strmý pád (více než 60 % odchodů) během prvních 48 hodin, upravte uvítací kanál nebo zjednodušte proces výběru rolí.
 
-## 4. Krizové scénáře
+## Praktické tipy pro moderaci
 
-::: info Scénář: Náhlý úbytek DAU
-- **Symptomy:** DAU klesne o 30%+ za 24h.
-- **Řešení:** Zkontrolujte `activity stats` top členů. Uspořádejte AMA.
-:::
-
-::: danger Scénář: Vysoký MII (Toxicita)
-- **Symptomy:** MII > 0.05, rostoucí počet reportů.
-- **Řešení:** Zkontrolujte Heatmapu aktivity. Posilte směnu v krizový čas.
-:::
-
-::: warning Scénář: Špatný onboarding
-- **Symptomy:** Survival křivka ukazuje 60%+ odchod do 48h.
-- **Řešení:** Vytvořte přehledný welcome kanál, nastavte role-selector.
-:::
-
-## 5. XP systém a gamifikace
-
-- **Cooldown:** 60 sekund mezi XP zprávami.
-- **Délka:** Krátká (1 XP), Standardní (5 XP), Dlouhá (15+ XP).
-- **Reply bonus:** +10 XP za odpověď na zprávu jiného uživatele.
-- **Voice:** 5 XP / min aktivního mikrofonu (AFK = 0 XP).
-- **Leveling křivka:** `XP(L) = 50 × L² + 200 × L + 100`.
-
-## 6. FAQ pro moderátory
-
-::: details Proč bot nepočítá zprávy v některých kanálech?
-Bot ignoruje kanály bez práva `View Channel` nebo ty na Blacklistu (např. Staff sekce).
-:::
-
-::: details Může bot odhalit alternativní účty (Alty)?
-Ano, v sekci Security porovnává join-time a vzorce chování. Při shodě hlásí „Potential Alt".
-:::
-
-::: details Vidí uživatelé mé predikce?
-Ne. Rozhraní je dostupné pouze pro role s `Manage Server` nebo `Administrator`.
-:::
+- **Využívejte Heatmapu:** Plánujte důležitá oznámení na časy, kdy je na serveru statisticky nejvíce lidí.
+- **Sledujte Reply Ratio:** Pokud je nízké, komunita spolu nemluví. Iniciujte dialog pokládáním otevřených otázek.
+- **Zkontrolujte `sync_names`:** Pokud vidíte v dashboardu neaktuální přezdívky, proveďte synchronizaci příkazem `/activity sync_names`.

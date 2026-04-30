@@ -1,69 +1,102 @@
-# Security Hardening (Zabezpečení infrastruktury)
+# Zabezpečení infrastruktury (Hardening)
 
-Metricord je bezpečný na aplikační úrovni, ale produkční server vyžaduje dodatečné zabezpečení na úrovni OS, sítě a kontejnerů.
+Aplikace Metricord je bezpečná již na úrovni kódu, ale pro provoz v produkci musíte zajistit ochranu na úrovni operačního systému, sítě a kontejnerů. Tento průvodce vás provede kroky pro minimalizaci útočné plochy vašeho serveru.
 
-## 1. Firewall (UFW / firewalld)
+## Konfigurace síťového firewallu (UFW)
 
-Povolte pouze nezbytné porty. **Redis nesmí být nikdy přístupný zvenčí.**
+Povolte pouze porty nezbytné pro provoz. Veškerou ostatní komunikaci zablokujte.
+
+> [!CAUTION]
+> **Port 6379 (Redis) nesmí být nikdy přístupný z internetu.** V rámci Dockeru komunikuje Redis pouze přes interní virtuální síť.
+
+Pro nastavení firewallu na systémech Ubuntu/Debian použijte nástroj UFW:
 
 ```bash
-# Ubuntu / Debian (UFW)
+# Nastavení výchozích pravidel
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
-sudo ufw allow 22/tcp    # SSH
-sudo ufw allow 80/tcp    # HTTP
-sudo ufw allow 443/tcp   # HTTPS
+
+# Povolení služeb
+sudo ufw allow 22/tcp    # SSH přístup
+sudo ufw allow 80/tcp    # HTTP pro Certbot
+sudo ufw allow 443/tcp   # HTTPS pro dashboard
+
+# Aktivace firewallu
 sudo ufw enable
 ```
 
-::: danger Kritické
-Port `6379` (Redis) nesmí být přístupný z internetu. V Dockeru komunikuje Redis pouze přes interní síť.
-:::
+## Zabezpečení databáze Redis
 
-## 2. Redis zabezpečení
+### Nastavení silného hesla
+V souboru `redis.conf` aktivujte parametrem `requirepass` silné heslo. Stejné heslo pak zadejte do proměnné `REDIS_URL` v souboru `.env`:
 
-### 2.1 Heslo (requirepass)
-V `redis.conf` nastavte `requirepass` a stejné heslo v `.env`:
-`REDIS_URL=redis://:heslo@localhost:6379/0`
-
-### 2.2 ACL (Redis 6.0+)
-Vytvořte oddělené účty s minimálními oprávněními:
 ```text
+REDIS_URL=redis://:vase_silne_heslo@localhost:6379/0
+```
+
+### Řízení přístupu pomocí ACL (Redis 6.0+)
+Místo jednoho generálního hesla vytvořte oddělené uživatelské účty s minimálními oprávněními (Principle of Least Privilege):
+
+```text
+# Účet pro bota (zápis eventů a čtení statistik)
 user bot on >heslo ~events:* ~stats:* ~hll:* +@all -@admin
+
+# Účet pro dashboard (pouze čtení statistik)
 user dashboard on >heslo ~stats:* ~hll:* +get +hget +zrange +pfcount
 ```
 
-## 3. Docker zabezpečení
+## Zabezpečení SSH přístupu
 
-- **Non-root user:** Spouštějte kontejnery pod neprivilegovaným uživatelem.
-- **Read-only filesystem:** Nastavte `read_only: true` v docker-compose.
-- **Resource limits:** Omezte paměť a CPU pro každý kontejner (např. `memory: 512M`).
+Upravte konfigurační soubor `/etc/ssh/sshd_config` pro zamezení útokům hrubou silou:
 
-## 4. SSH zabezpečení
+1.  Zakažte přihlášení uživatele root: `PermitRootLogin no`.
+2.  Zakažte přihlášení heslem a vyžadujte SSH klíče: `PasswordAuthentication no`.
+3.  Omezte přihlášení pouze na konkrétního uživatele: `AllowUsers metricord`.
+4.  Restartujte službu: `sudo systemctl restart ssh`.
 
-V `/etc/ssh/sshd_config` nastavte:
-- `PermitRootLogin no`
-- `PasswordAuthentication no` (používejte klíče)
-- `AllowUsers metricord`
+## Zabezpečení kontejnerů (Docker Hardening)
 
-## 5. Fail2Ban
+Pro maximální izolaci aplikací v produkci využijte tyto pokročilé techniky:
 
-Ochrana proti bruteforce útokům:
-```bash
-sudo apt install fail2ban
+-   **Neprivilegovaný uživatel:** V Dockerfile definujte `USER 1000`. Aplikace nesmí běžet pod rootem uvnitř kontejneru.
+-   **Souborový systém pouze pro čtení:** V `docker-compose.yml` nastavte `read_only: true`. Pro dočasné soubory využijte `tmpfs`.
+-   **Omezení systémových volání (Seccomp):** Vytvořte Seccomp profil pro omezení povolených syscallů (např. `read`, `write`, `socket`).
+
+### Ukázka konfigurace v `docker-compose.yml`:
+
+```yaml
+services:
+  discord-bot-primary:
+    security_opt:
+      - seccomp:seccomp-profile.json
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
 ```
-Aktivujte maily pro `sshd` a `nginx-http-auth`.
 
-## 6. Bezpečnostní checklist
+> [!WARNING]
+> Před nasazením Seccomp profilu v ostrém provozu důkladně otestujte stabilitu bota. Příliš restriktivní profil může způsobit pád aplikace při legitimním systémovém volání.
 
-- [ ] Redis port 6379 není přístupný z internetu
-- [ ] Redis má nastaveno silné heslo
-- [ ] `.env` má oprávnění `600`
-- [ ] SSH nepovoluje root login ani heslo
-- [ ] Firewall povoluje pouze 22, 80, 443
-- [ ] Fail2Ban aktivní
-- [ ] SSL certifikát aktivní (Certbot)
+## Soulad s předpisy a ochrana soukromí
 
-::: info Audit
-Pravidelně kontrolujte přístupy přes `redis-cli ACL LIST` a logy Fail2Ban přes `sudo fail2ban-client status sshd`.
-:::
+Metricord implementuje principy **Privacy by Design** pro soulad s nařízením GDPR:
+
+1.  **Minimalizace dat:** Neukládáme obsah zpráv, pouze metadata potřebná pro analytiku (čas, délka, metadata autora).
+2.  **Právo na zapomnění:** Příkaz `/gdpr delete` okamžitě a nevratně odstraní všechny záznamy o uživateli ze všech Redis struktur (`Sorted Sets`, `Hashes`).
+3.  **Šifrování komunikace:** Veškerý provoz mezi prohlížečem a dashboardem musí být šifrován pomocí TLS/SSL (HTTPS).
+
+## Kontrolní seznam (Production Readiness)
+
+| Oblast | Doporučení | Stav |
+| :--- | :--- | :--- |
+| **Síť** | Firewall (UFW) blokuje vše kromě 22, 80, 443. | - |
+| **Databáze** | Redis vyžaduje silné heslo a používá ACL profily. | - |
+| **Server** | SSH hesla jsou vypnutá, používají se pouze klíče. | - |
+| **Docker** | Kontejnery běží bez root oprávnění s limity RAM. | - |
+| **SSL** | Dashboard používá platný certifikát Let's Encrypt. | - |
+

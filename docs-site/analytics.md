@@ -1,72 +1,68 @@
-# Analytické metriky a Grafy
+# Technické metriky a KPI
 
-Data jsou srdcem Metricord. V této sekci naleznete technické detaily o tom, jak počítáme klíčové ukazatele výkonu (KPI) pro vaši komunitu.
+Metricord vypočítává širokou škálu ukazatelů výkonnosti (KPI). Tento dokument podrobně vysvětluje jejich matematický základ, způsob uložení v databázi a správnou interpretaci.
 
-## 1. Základní terminologie (KPIs)
+## Měření unikátní aktivity (DAU a MAU)
 
-::: info Všechny časy jsou v UTC
-Dashboard zobrazuje data v koordinovaném světovém čase (UTC). Pokud odesíláte zprávu ve 20:00 SEČ, bot ji zapíše jako 19:00 UTC.
-:::
+Pro efektivní počítání unikátních uživatelů v reálném čase využíváme pravděpodobnostní algoritmus **HyperLogLog (HLL)**.
 
-### DAU (Daily Active Users)
-Počet unikátních uživatelů, kteří provedli "aktivní akci" v průběhu 24 hodin.
-- **Aktivní akce:** Odeslání zprávy, připojení do voice kanálu, přidání reakce.
-- **Výpočet přes HyperLogLog:** Pro efektivitu používáme algoritmus HLL se standardní chybou **0.81%**. To umožňuje sledovat miliony uživatelů při konstantní spotřebě paměti 12 KiB.
+-   **DAU (Daily Active Users):** Počet unikátních členů, kteří provedli aktivní úkon (zpráva, voice, reakce) během posledních 24 hodin.
+-   **MAU (Monthly Active Users):** Počet unikátních aktivních členů za posledních 30 dní.
 
-## 2. Engagement Metriky
+### Technická implementace
+Využíváme Redis datovou strukturu HLL, která umožňuje odhadnout kardinalitu množiny s miliony prvků se standardní chybou pouze **0,81 %**, přičemž spotřebuje fixních **12 KB** paměti na jeden den. Pro výpočet MAU používáme příkaz `PFMERGE`, který sloučí 30 denních struktur do jedné.
 
-### Participation Rate (PR)
-**Vzorec:** $$(DAU / Total Members) * 100$$
+## Analýza zapojení (Stickiness)
 
-Tato metrika měří, jaké procento vaší komunity je skutečně aktivní každý den. PR je "metrikou pravdy".
-- **< 5%:** Kriticky nízké. Server je pravděpodobně "hřbitov".
-- **5 - 15%:** Průměr pro velké veřejné servery.
-- **15 - 30%:** Velmi zdravá komunita.
-- **> 30%:** Výjimečná úroveň zapojení.
+Tato metrika určuje loajalitu vaší komunity. Vyjadřuje, kolik procent měsíčních uživatelů se vrací na server každý den.
 
-### Reply Ratio (RR)
-**Vzorec:** $$(Počet odpovědí / Celkový počet zpráv)$$
+$$ \text{Stickiness} = \frac{\text{DAU}}{\text{MAU}} \times 100 $$
 
-Vysoké RR naznačuje, že lidé spolu skutečně mluví (vedou vlákna). Ideální RR se pohybuje mezi **0.2 a 0.4**.
+| Rozsah | Interpretace |
+| :--- | :--- |
+| **< 5 %** | Uživatelé se nevracejí. Nízká loajalita. |
+| **10–15 %** | Standardní úroveň pro hobby a zájmové servery. |
+| **> 25 %** | Extrémně silné a věrné jádro komunity. |
 
-## 3. Stickiness (Návykovost)
+## Index intenzity moderace (MII)
 
-Stickiness vyjadřuje schopnost serveru udržet uživatele v čase.
+MII (Moderator Intervention Index) měří úroveň toxicity a potřebu moderátorských zásahů vzhledem k objemu diskuze.
 
-::: tip Stickiness Index
-**Vzorec:** $$(DAU / MAU) * 100$$
-Pokud je Stickiness 50 %, znamená to, že průměrný uživatel se na server vrací 15 dní v měsíci.
-:::
+$$ MII = \sum_{i \in \text{Akce}} \frac{\text{Váha}(i)}{\text{Celkový počet zpráv}} $$
 
-**Benchmarky a interpretace:**
-- **< 5% (Kritické):** Uživatelé přijdou jednou a už se nevrátí.
-- **10-15% (Standard):** Běžná úroveň pro hobby servery.
-- **> 25% (Elitní):** Komunita je velmi semknutá, uživatelé se vrací téměř denně.
+Váhy jednotlivých akcí:
+-   **Ban:** 50 bodů
+-   **Kick:** 30 bodů
+-   **Timeout:** 10 bodů
+-   **Smazaná zpráva:** 1 bod
 
-## 4. Vysvětlení grafů
+## Metrika zdraví serveru (Engagement Score)
 
-### Activity Heatmap (Tepelná mapa)
-Mřížka 7x24 polí, která ukazuje intenzitu zpráv pro každou hodinu v týdnu.
-- Identifikujte časové zóny vašich uživatelů.
-- Najděte "hluchá místa" bez moderátorů.
-- Optimalizujte časy pro oznámení novinek.
+Engagement Score (ES) je kompozitní index (0–100), který shrnuje celkový stav serveru na základě čtyř klíčových oblastí:
 
-### Message Length Distribution
-Rozděluje zprávy do tří kategorií:
-- **Krátké (<15 znaků):** Emojis, jednoslovné odpovědi. Často tvoří 40-50% šumu.
-- **Střední (15-60 znaků):** Jádro konverzace.
-- **Dlouhé (>60 znaků):** Argumenty, popisy. Tato kategorie dává nejvíce XP bodů.
+$$ ES = 0,25 \cdot M + 0,25 \cdot S + 0,25 \cdot E + 0,25 \cdot T $$
 
-### Community Growth
-Kombinovaný graf ukazující celkový počet členů (čára) a denní změny (sloupce).
+| Složka | Význam |
+| :--- | :--- |
+| **$M$ (Moderace)** | Hodnota odvozená od MII a rychlosti reakce týmu. |
+| **$S$ (Bezpečnost)** | Skóre zabezpečení (MFA, verifikace, filtry). |
+| **$E$ (Zapojení)** | Participation Rate a Reply Ratio. |
+| **$T$ (Tým)** | Intenzita aktivity moderátorského týmu. |
 
-::: danger Pozor na "Velrybí hřbety"
-Pokud vidíte velké sloupce Joins a hned po nich Leaves, pravděpodobně proběhl nájezd botů nebo neúspěšná promo akce.
-:::
+## Vizualizace aktivity (Heatmapa)
 
-## 5. Datová kvalita (DQS)
+Analytický engine generuje matici 7 × 24 (den v týdnu × hodina), která vizualizuje hustotu zpráv.
 
-Metricord hodnotí i sám sebe pomocí **Data Quality Score**:
-- **DQS 1.0 (Dokonalé):** Server má historii > 30 dní.
-- **DQS < 0.5 (Varování):** Predikce mohou být nepřesné.
-- **DQS < 0.2 (Sbíráme):** Prediktivní modely jsou dočasně vypnuty.
+-   **Uložení:** Redis Hash s klíčem `stats:heatmap:{guild_id}`.
+-   **Formát pole:** `den:hodina` (např. `1:14` pro pondělí 14:00 UTC).
+-   **Využití:** Plánujte své klíčové aktivity na časy s nejvyšší hustotou v heatmapě.
+
+## Kvalita dat pro predikce (DQS)
+
+DQS (Data Quality Score) určuje spolehlivost prediktivních modelů. Pokud je historie dat příliš krátká, systém predikce automaticky deaktivuje.
+
+| Hodnota DQS | Stav modelů | Poznámka |
+| :--- | :--- | :--- |
+| **1,0** | Aktivní (Plná důvěra) | Historie dat > 30 dní. |
+| **0,5–0,9** | Aktivní (Omezená důvěra) | Historie 7–30 dní. Možné odchylky. |
+| **< 0,5** | Deaktivováno | Nedostatek dat pro validní výpočet. |

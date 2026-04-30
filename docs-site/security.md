@@ -1,34 +1,45 @@
-# Skóre bezpečnosti (Security Score)
+# Skóre bezpečnosti serveru
 
-Metricord není jen o analytice aktivity, ale také o zabezpečení vaší komunity. Skóre bezpečnosti ($S$) je unikátní metrika, která vyjadřuje odolnost vašeho serveru proti útokům a spamu.
+Skóre bezpečnosti ($S$) vyjadřuje odolnost Discord serveru proti spamu a útokům. Metrika se vypočítává z nastavení serveru a aktivity moderátorského týmu.
 
 ## Výpočet skóre
 
-Skóre bezpečnosti je vypočítáno na základě několika kritických faktorů:
+Skóre je vážený průměr 4 faktorů v rozsahu 0–100:
 
-| Faktor | Váha | Popis |
+$$S = 0{,}3 \cdot F_{\text{MFA}} + 0{,}2 \cdot F_{\text{verif}} + 0{,}2 \cdot F_{\text{filter}} + 0{,}3 \cdot F_{\text{mod}}$$
+
+| Faktor | Váha | Zdroj dat | Výpočet |
+| :--- | :--- | :--- | :--- |
+| $F_{\text{MFA}}$ (MFA Requirement) | 30 % | `guild.mfa_level` | 100 pokud vyžaduje MFA, jinak 0 |
+| $F_{\text{verif}}$ (Verification Level) | 20 % | `guild.verification_level` | 0 / 25 / 50 / 75 / 100 podle úrovně |
+| $F_{\text{filter}}$ (Content Filter) | 20 % | `guild.explicit_content_filter` | 0 / 50 / 100 podle nastavení |
+| $F_{\text{mod}}$ (Moderator Activity) | 30 % | Audit log + přítomnost online | Průměrná reakční doba moderátorů |
+
+## Klasifikace
+
+| Rozsah | Kategorie | Popis |
 | :--- | :--- | :--- |
-| **MFA Requirement** | 30% | Vyžaduje server od moderátorů dvoufázové ověření? |
-| **Verification Level** | 20% | Nastavení úrovně ověření nového člena (E-mail, telefon). |
-| **Explicit Content Filter** | 20% | Automatické skenování a mazání nevhodných médií. |
-| **Moderator Activity** | 30% | Reakční doba moderátorů na incidenty a jejich přítomnost. |
+| 90–100 | Fortress | Všechny filtry aktivní, aktivní moderace. |
+| 60–89 | Stable | Základní ochrana, doporučeno zapnout MFA. |
+| 30–59 | Exposed | Chybí filtry obsahu nebo nízká verifikace. |
+| 0–29 | Vulnerable | Server je náchylný k raidům a spamu. |
 
-## Úrovně zabezpečení
+## Zlepšení skóre
 
-Na základě skóre (0-100) je serveru přiřazena jedna z kategorií:
+Doporučení pro zvýšení skóre na úroveň Fortress:
 
-- **🟢 90-100 (Fortress):** Maximální zabezpečení. Všechny filtry zapnuty, aktivní moderace.
-- **🟡 60-89 (Stable):** Dobré zabezpečení, doporučujeme zapnout MFA pro moderátory.
-- **🟠 30-59 (Exposed):** Rizikový stav. Chybí filtry obsahu nebo je ověření příliš nízké.
-- **🔴 0-29 (Vulnerable):** Kritický stav. Server je náchylný k raidům a spamu.
+1. V nastavení Discord serveru nastavte **Verification Level** na „Medium" nebo „High".
+2. Aktivujte **Explicit Content Filter** pro všechny členy.
+3. Zapněte **2FA Requirement** pro moderátory (Server Settings → Safety Setup).
+4. Zajistěte přítomnost moderátorů v časech špičky (dle Heatmapy aktivity).
 
-## Doporučení pro zlepšení
+## Dashboard
 
-V dashboardu najdete sekci **Security Insights**, která vám v reálném čase navrhuje kroky ke zvýšení skóre:
-1. Zapněte "Medium" nebo "High" verifikaci v nastavení Discordu.
-2. Aktivujte filtr explicitního obsahu pro všechny členy.
-3. Nastavte pravidlo pro automatické vyhazování účtů mladších než 24 hodin (Bot Protection).
+Skóre se zobrazuje na hlavní stránce dashboardu v karté **Security Score**. Karta obsahuje:
+- Aktuální skóre a kategorii.
+- Rozpad na jednotlivé faktory s doporučeními.
+- Historický vývoj skóre za posledních 30 dní.
 
-::: info Soukromí
-Metricord skenuje pouze metadata nastavení serveru. Žádné soukromé zprávy uživatelů nejsou pro potřeby skóre bezpečnosti analyzovány.
+::: info Ochrana soukromí
+Výpočet skóre využívá pouze metadata nastavení serveru a audit log. Obsah zpráv uživatelů se neanalyzuje.
 :::

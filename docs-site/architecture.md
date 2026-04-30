@@ -67,20 +67,20 @@ metricord/
 ├── bot/
 │   ├── main.py              # Entry point, event loop, background tasks
 │   └── commands/
-│       ├── activity.py      # Hlavní tracking modul — XP, voice, zprávy
-│       ├── stats_hll.py     # HyperLogLog statistiky — DAU/MAU
-│       ├── gdpr.py          # GDPR příkazy — export, smazání dat
-│       ├── health.py        # Zdravotní check — Redis ping, bot status
+│       ├── activity.py      # Hlavní tracking modul - XP, voice, zprávy
+│       ├── stats_hll.py     # HyperLogLog statistiky - DAU/MAU
+│       ├── gdpr.py          # GDPR příkazy - export, smazání dat
+│       ├── health.py        # Zdravotní check - Redis ping, bot status
 │       └── analytics_tracking.py  # Event tracking pro dashboard
 ├── web/
 │   ├── backend/
-│   │   ├── main.py          # FastAPI routes — Dashboard API
-│   │   ├── utils.py         # Analytické výpočty — Engagement, predikce
+│   │   ├── main.py          # FastAPI routes - Dashboard API
+│   │   ├── utils.py         # Analytické výpočty - Engagement, predikce
 │   │   └── hydrate_users.py # Synchronizace uživatelských dat
 │   └── docs-site/           # Tato dokumentace (VitePress)
 ├── shared/
 │   ├── keys.py              # Redis klíčová schéma
-│   ├── models.py            # Matematické modely — Markov, Kaplan-Meier
+│   ├── models.py            # Matematické modely - Markov, Kaplan-Meier
 │   └── redis_client.py      # Singleton Redis klient
 └── config/                  # Konfigurace a tajemství
 ```
@@ -108,7 +108,7 @@ PIPELINE:
 ```
 :::
 
-## 5. Redis Schéma — Deep Dive
+## 5. Redis Schéma - Deep Dive
 
 Metricord využívá pokročilé datové struktury Redis pro maximální efektivitu.
 
@@ -131,3 +131,33 @@ Projekt je rozdělen do několika izolovaných procesů:
 ::: tip Optimalizace výkonu
 Náročné maticové operace pro Markovovy řetězce jsou prováděny pomocí `NumPy` v C-extension, což je o 2 řády rychlejší než čistý Python.
 :::
+
+## 6. Životní cyklus události (Pipeline Step-by-Step)
+
+Každá zpráva na Discordu projde následujícím řetězcem zpracování:
+
+1.  **Ingesce:** Gateway WebSocket bota přijme událost `GUILD_CREATE_MESSAGE`.
+2.  **Validace:** Bot ověří, zda zpráva nepochází od jiného bota a zda má Metricord přístup k obsahu zprávy (Message Intent).
+3.  **Extrakce metadat:** Získá se `user_id`, `guild_id`, timestamp a délka zprávy.
+4.  **Asynchronní zápis:** Bot odešle data do Redis pipeline. Akce nezamyká hlavní vlákno bota, což zajišťuje plynulý chod.
+5.  **HyperLogLog Sync:** ID uživatele se započítá do denní HLL struktury pro sledování DAU.
+6.  **Výpočet XP:** Bot vypočítá XP na základě délky zprávy a cooldownu. Pokud je vše v pořádku, inkrementuje XP v Redis Hashi daného uživatele.
+7.  **Zobrazení:** Dashboard při dalším načtení vytáhne čerstvá data z Redisu, provede transformaci pomocí NumPy a vykreslí aktualizované grafy.
+
+## 7. Škálovatelnost a Vysoká dostupnost (HA)
+
+Metricord je navržen tak, aby dokázal obsloužit desetitisíce Discord serverů současně.
+
+### A. Horizontální škálování botů (Sharding)
+Discord API omezuje jeden WebSocket na cca 2500 serverů. Metricord implementuje **Discord Sharding**, kde lze spustit více instancí bota, přičemž každá instance zpracovává pouze svou část (shard) celkového provozu. Díky Redisu jako centrálnímu úložišti sdílejí všechny shardy stejná data.
+
+### B. Redis Cluster & Sentinel
+Pro kritické nasazení podporuje Metricord:
+- **Redis Sentinel:** Zajišťuje automatický failover. Pokud hlavní Redis selže, Sentinel automaticky povýší repliku na mastera a bot se k němu během několika sekund připojí.
+- **Redis Cluster:** Umožňuje horizontální dělení dat (Sharding) napříč více servery, což eliminuje omezení paměti RAM na jediném stroji a zvyšuje výkon zápisu.
+
+### C. Nginx jako Load Balancer
+V produkčním prostředí běží FastAPI backend za proxy serverem Nginx. Nginx zajišťuje:
+- **SSL Termination:** Šifrování HTTPS komunikace směrem k uživateli.
+- **VitePress Caching:** Rychlé servírování statické dokumentace bez zatěžování backendu.
+- **Load Balancing:** Rozdělování požadavků mezi více instancí FastAPI běžících v Docker kontejnerech.

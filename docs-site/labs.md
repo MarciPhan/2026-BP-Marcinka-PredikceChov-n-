@@ -1,22 +1,44 @@
-# Metricord "Labs": Experimentální funkce
+# Experimentální funkce (Labs)
 
-Nahlédněte pod pokličku vývoje. Tyto funkce jsou v beta režimu a vyžadují aktivaci v `config.py`.
+Funkce v rané fázi vývoje. Aktivace vyžaduje nastavení proměnných prostředí. Experimentální funkce nejsou garantovány pro produkční provoz.
 
-::: info 1. Voice Sentiment Detection (VoiceAI)
-Analýza tónu hlasu (nikoliv obsahu) pro detekci agrese nebo radosti ve voice kanálech.
-**Status:** In Alpha
+## Voice Sentiment Detection
+
+Analýza tónu hlasu (ne obsahu řeči) pro detekci emočních stavů ve voice kanálech.
+
+**Princip:** Systém extrahuje akustické příznaky (hlasitost, tempo řeči, frekvence pauz). Klasifikátor rozlišuje 3 stavy: Neutrální, Vzrušený, Tichý. Obsah řeči se neukládá ani netranskribuje.
+
+**Aktivace:**
+```bash
+LABS_VOICE_SENTIMENT=1
+```
+
+**Status:** Alpha
+
+::: warning Výkon
+VoiceAI zvyšuje CPU zátěž o 15–20 %. Doporučeno pro dedikované instance.
 :::
 
-::: tip 2. Image Pattern Recognition
-Detekce vizuálního spamu (stejné memy, QR kódy) pomocí lehkých neuronových sítí přímo u bota.
-**Status:** R&D Stage
-:::
+## Anomaly Detection (Z-Score)
 
-::: warning 3. Multi-platform Sync (Matrix/Telegram)
-Propojení statistik z Discordu se statistikami z Telegramu pro "Omni-community" přehled.
-**Status:** Planning
-:::
+Automatická detekce statistických anomálií v hodinových metrikách.
 
----
+**Princip:** Pro každou hodinovou metriku systém vypočítá Z-skóre:
 
-*Chcete se zapojit do testování? Kontaktujte nás na našem [Discordu](https://discord.gg/metricord) v kanálu #labs.*
+$$Z = \frac{x - \mu}{\sigma}$$
+
+Pokud $|Z| > 3$, systém vyhodnotí anomálii a vygeneruje Smart Insight.
+
+**Příklad:** Průměrný počet zpráv v 15:00 je 120 ($\mu = 120$, $\sigma = 25$). Pokud přijde 250 zpráv:
+
+$$Z = \frac{250 - 120}{25} = 5{,}2 \quad \rightarrow \quad \text{anomálie}$$
+
+**Status:** Beta
+
+## Image Pattern Recognition
+
+Detekce vizuálního spamu pomocí perceptuálního hashování (pHash).
+
+**Princip:** Každý obrázek se převede na 64bitový hash. Systém porovná hash s databází známých vzorů. Při Hammingově vzdálenosti < 6 (shoda > 90 %) generuje alert.
+
+**Status:** Výzkum

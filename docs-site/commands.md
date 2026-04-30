@@ -1,42 +1,76 @@
-# Příkazy (Slash Commands)
+# Přehled příkazů
 
-Kompletní referenční příručka všech příkazů Metricord bota. Bot používá moderní lomítkové příkazy integrované přímo do Discord chatu.
+Zde najdete seznam všech dostupných příkazů Metricord. Všechny funkce vyvoláte pomocí lomítkových příkazů (Slash Commands).
 
-## Analytické příkazy
+## Metriky a statistiky (`/activity`)
 
-| Příkaz | Popis | Parametry | Viditelnost |
+Tyto příkazy slouží k prohlížení nasbíraných dat a generování reportů.
+
+### Zobrazení statistik uživatele (`/activity stats`)
+Zobrazí detailní statistiku aktivity konkrétního uživatele.
+
+| Parametr | Povinný | Formát | Co ovlivňuje |
 | :--- | :--- | :--- | :--- |
-| `/activity stats` | Zobrazí detailní kartu uživatele — aktivita v chatu, voice čas, rank a úroveň. | `user`, `after`, `before` | Vidí všichni |
-| `/activity leaderboard` | Žebříček TOP 10 nejaktivnějších členů podle váženého času. | — | Vidí všichni |
-| `/ping` | Test odezvy bota a latence k Redis databázi. | — | Vidí všichni |
-| `/help` | Interaktivní nápověda se selektem modulů. | `modul` | Ephemeral |
+| `user` | Ne | @zmínka | Vybere uživatele (výchozí: vy). |
+| `after` | Ne | `DD-MM-YYYY` | Začátek časového filtru. |
+| `before` | Ne | `DD-MM-YYYY` | Konec časového filtru. |
 
-## Administrátorské příkazy
+V přehledu uvidíte:
+- **Chat Time:** Čas strávený aktivním psaním.
+- **Voice Time:** Čas strávený v hlasových kanálech.
+- **Moderation:** Počet a typ provedených moderátorských zásahů.
+- **Total Time:** Celkový vážený čas aktivity.
 
-Vyžadují oprávnění `Administrator` nebo `Manage Server`.
+### `/activity leaderboard`
+Ukáže žebříček 10 nejaktivnějších členů celého serveru.
 
-| Příkaz | Popis | Poznámky |
-| :--- | :--- | :--- |
-| `/activity report` | Generuje report aktivity moderátorského týmu. | Využívá *Weighted Moderation Points*. |
-| `/activity sync_names` | Vynutí aktualizaci přezdívek a rolí v Redis databázi. | Spusťte po velkých změnách v rolích. |
-| `/activity backfill` | Načte historii zpráv ze serveru do Redisu. | CPU náročné. Výchozí: 30 dní. |
-| `*sync` | Synchronizuje slash příkazy s Discord API (prefix). | Použijte po aktualizaci bota. |
+| Parametr | Povinný | Formát | Co ovlivňuje |
+| :--- | :--- | :--- | :--- |
+| `after` | Ne | `DD-MM-YYYY` | Začátek období. |
+| `before` | Ne | `DD-MM-YYYY` | Konec období. |
 
-## GDPR a soukromí
+### `/activity report`
+Vytvoří souhrnný report aktivity moderátorského týmu. Tento příkaz vyžaduje oprávnění **Administrator**.
 
-| Příkaz | Popis | Poznámky |
-| :--- | :--- | :--- |
-| `/gdpr export` | Stáhne kompletní přehled všech uložených dat o vás v JSON. | Ephemeral odpověď. |
-| `/gdpr delete` | Nevratně smaže všechna vaše data z databáze bota. | Přijdete o všechny XP a historii. |
-| `/privacy` | Přehled zásad ochrany osobních údajů. | Ephemeral odpověď. |
+### `/activity sync_names`
+Synchronizuje jména a role členů do databáze Metricord. Příkaz použijte po velkých změnách v rolích nebo přejmenování členů. Vyžaduje oprávnění **Administrator**.
 
-## Diagnostické příkazy
+### `/activity backfill`
+Načte historická data ze serveru (zprávy a akce) do analytických modulů. Vyžaduje oprávnění **Administrator**.
 
-| Příkaz | Popis | Oprávnění |
-| :--- | :--- | :--- |
-| `/health` | Diagnostika — verze bota, Redis status, uptime. | Všichni |
-| `/ping` | Latence bota k Discord API a Redisu. | Všichni |
+| Parametr | Povinný | Výchozí | Rozsah |
+| :--- | :--- | :--- | :--- |
+| `days` | Ne | 30 | Počet dní historie ke stažení. |
 
-::: info Slash vs. Prefix příkazy
-Většina příkazů je implementována jako **slash commands** (lomítkové). Jediný prefix příkaz je `*sync`, který slouží k synchronizaci slash příkazů s Discord API. Po spuštění `*sync` se nové příkazy zobrazí v nabídce při psaní `/`.
-:::
+> [!WARNING]
+> Backfill je náročný na výkon. U velkých serverů může trvat i desítky minut. Během procesu se v kanálech může objevit mírná latence.
+
+## Soukromí a GDPR (`/gdpr`)
+
+Příkazy pro správu vašich osobních údajů.
+
+### `/gdpr export`
+Zašle vám soukromý odkaz ke stažení všech dat, která o vás Metricord uchovává.
+
+### `/gdpr delete`
+Smaže veškerou vaši historii a profil z databáze Metricord.
+
+> [!CAUTION]
+> Tato operace je nevratná. Smazáním přijdete o všechny své XP, úrovně a historické statistiky.
+
+## Systémové příkazy
+
+Doplňkové funkce pro kontrolu stavu bota.
+
+- `/privacy` - Zobrazí podrobné zásady ochrany osobních údajů.
+- `/health` - Ukáže verzi bota a stav připojení k databázi.
+- `/ping` - Změří latenci k Discord API.
+- `/help` - Otevře interaktivní nabídku nápovědy.
+
+## Příkaz pro synchronizaci (`*sync`)
+
+Jediný prefixový příkaz. Slouží k registraci nových funkcí v Discord API. Používejte jej pouze po aktualizaci bota.
+
+```text
+*sync
+```

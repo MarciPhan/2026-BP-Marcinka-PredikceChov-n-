@@ -1,89 +1,96 @@
-# API Reference
+# Referenční příručka API (RESTful)
 
-Metricord poskytuje RESTful rozhraní pro integraci s dalšími systémy. Většina endpointů vyžaduje autentizaci pomocí sezení (session) nebo API klíče.
+Rozhraní API Metricord umožňuje programový přístup k nasbíraným datům, integraci s externími systémy a automatizaci správy. Celé API je postaveno na standardu REST s výstupy ve formátu JSON.
 
-::: tip Base URL
+::: tip Základní URL (Base URL)
 `https://dashboard.metricord.app/api/v1`
 :::
 
-## 1. Autentizace a Bezpečnost
+## Zabezpečení a autentizace
 
-Metricord API podporuje dva způsoby autentizace:
-- **Session Cookie:** Pro požadavky z prohlížeče (dashboard).
-- **Bearer Token:** Pro externí integrace a boty. Token získáte v nastavení profilu.
+Metricord API využívá dva hlavní způsoby ověření identity.
 
+### A. Autentizace pomocí sezení (Session-based)
+Tuto metodu využívá webový dashboard. Po přihlášení přes Discord systém vytvoří **HTTP-only cookie** se zašifrovaným ID uživatele. Tento přístup vás chrání před útoky typu XSS a CSRF.
+
+### B. Bearer Token (Statický klíč)
+Pro automatizované skripty použijte statické API klíče:
+-   Vložte klíč do hlavičky požadavku: `Authorization: Bearer <vas_token>`.
+-   API klíč vygenerujte v nastavení svého profilu na dashboardu.
+
+> [!WARNING]
+> API klíč považujte za ekvivalent hesla. Nikdy jej nepoužívejte ve veřejných skriptech na straně klienta (JavaScript v prohlížeči).
+
+## Omezení četnosti požadavků (Rate Limiting)
+
+Pro zajištění stability systému aplikujeme na každý uzel algoritmus **Token Bucket**:
+-   **Limit:** Maximálně 60 požadavků za minutu na jednu IP adresu.
 ---
 
-### `POST` /auth/request-otp
-Zašle 6-místný jednorázový kód na e-mail uživatele.
+## Endpointy: Analytika a metriky
 
-**Body:**
-```json
-{ "email": "string" }
-```
+### Získání klíčových metrik serveru
+Vrátí aktuální hodnoty DAU, MAU a Engagement Score.
 
-**Responses:**
-- `200`: `{ "success": true, "wait": 60 }`
-- `429`: `{ "error": "Rate limit exceeded" }`
+**`GET` /guild/{guild_id}/metrics**
 
----
+| Parametr | Typ | Povinný | Popis |
+| :--- | :--- | :--- | :--- |
+| `range` | Integer | Ne | Počet dní historie (výchozí 7). |
 
-## 2. Metriky a Statistiky (Metrics API)
-
-### `GET` /guild/{guild_id}/metrics/summary
-Vrátí klíčové ukazatele (DAU, MAU, MsgCount) pro daný server.
-
-**Params:** `guild_id` (Snowflake)
-
-**Response `200`:**
+**Příklad odpovědi (`200 OK`):**
 ```json
 {
-  "active_users": 1540,
-  "engagement_score": 88.5,
-  "trend": "up"
+  "guild_id": "123456789012345678",
+  "metrics": {
+    "active_users_dau": 1540,
+    "active_users_mau": 8500,
+    "total_messages": 125000,
+    "engagement_score": 88.5
+  },
+  "metadata": { "cached": true, "expiry": "2026-04-13T18:30:00Z" }
 }
 ```
 
-### `GET` /guild/{guild_id}/metrics/heatmap
-Vrátí data pro zobrazení hodinové aktivity (heatmapy).
+### Data pro Heatmapu aktivity
+Vrátí matici 7 × 24 s intenzitou zpráv pro vizualizaci.
 
-**Response `200`:**
-```json
-{
-  "data": { "0:14": 450, "1:15": 380 },
-  "timezone": "UTC"
-}
-```
+**`GET` /guild/{guild_id}/metrics/heatmap**
 
 ---
 
-## 3. Predikce a AI (Predictions API)
+## Endpointy: Predikce a AI
 
-### `GET` /guild/{guild_id}/predict/churn
-Vypočítá pravděpodobnost odchodu členů na základě Markovových řetězců.
+### Předpověď odchodu (Churn Prediction)
+Vypočítá pravděpodobnost odchodu uživatelů v následujících 7 dnech.
 
-**Response `200`:**
+**`GET` /guild/{guild_id}/predict/churn**
+
+**Příklad odpovědi (`200 OK`):**
 ```json
 {
   "churn_probability_7d": 0.12,
-  "at_risk_users": 42,
-  "confidence": 0.94
+  "at_risk_users_count": 42,
+  "confidence_score": 0.94
 }
 ```
 
 ---
 
-## 4. Administrace (Admin API)
+## Endpointy: Administrace a konfigurace
 
-### `POST` /admin/config/update
-Hromadná aktualizace konfigurace bota.
+### Aktualizace konfigurace XP systému
+Změní parametry pro přidělování zkušenostních bodů.
 
-**Body:**
+**`POST` /admin/config/update**
+
+**Tělo požadavku (JSON):**
 ```json
-{ "xp_per_msg": 15, "voice_multiplier": 1.5 }
+{
+  "xp_per_msg": 15,
+  "voice_multiplier": 1.5
+}
 ```
 
-**Response `200`:**
-```json
-{ "status": "updated" }
-```
+> [!TIP]
+> Kompletní interaktivní dokumentaci ve formátu **Swagger/OpenAPI** naleznete na adrese `/api/v1/docs` vaší instance.

@@ -36,7 +36,7 @@ const fetchStats = async (guildId) => {
 
 ## Automatizace s Webhooky
 
-Metricord umožňuje odesílat kritická varování (Alerts) přímo na váš webhook v JSON formátu:
+Metricord umožňuje odesílat kritická varování (Alerts) přímo na váš webhook v JSON formátu. To využijete pro okamžitou reakci na náhlý pokles aktivity:
 
 ```json
 {
@@ -48,3 +48,30 @@ Metricord umožňuje odesílat kritická varování (Alerts) přímo na váš we
   ]
 }
 ```
+
+## Komplexní integrace (Export dat)
+
+Pokud chcete provádět vlastní hloubkovou analýzu, můžete využít endpoint pro export kompletní historie serveru ve formátu JSON:
+
+```python
+import requests
+import json
+
+def export_guild_data(guild_id, token):
+    url = f"http://localhost:8092/api/v1/admin/export/{guild_id}"
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    response = requests.get(url, headers=headers, stream=True)
+    if response.status_code == 200:
+        with open(f"metricord_export_{guild_id}.json", "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        print("Export úspěšně dokončen.")
+
+# Použití
+export_guild_data("123456789", "VAŠ_API_TOKEN")
+```
+
+::: tip Doporučení
+Pro velké servery (> 10 000 členů) doporučujeme používat streamované stahování, abyste předešli přetížení operační paměti vašeho skriptu.
+:::

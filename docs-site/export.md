@@ -1,31 +1,72 @@
-# Centrum exportu
+# Export dat
 
-Vaše data patří vám. Metricord umožňuje exportovat surová data pro další zpracování, například pro reporty vedení, marketingové analýzy nebo tvorbu vlastních grafů.
+Metricord umožňuje exportovat nasbíraná data pro další zpracování v tabulkových procesorech nebo vlastních skriptech.
 
-## Kde najít export?
+## Přístup k exportu
 
-Tlačítko pro export se nachází v pravém horním rohu sekce **Analytics** v hlavním dashboardu.
+Export je dostupný z webového dashboardu v sekci **Analytics**. Tlačítko **Export** se nachází v pravém horním rohu.
+
+Předpoklady:
+- Přihlášení do dashboardu s oprávněním `Manage Server`.
 
 ## Dostupné formáty
 
-### CSV (Comma Separated Values)
-Nejvhodnější pro import do tabulkových procesorů:
-- Microsoft Excel
-- Google Sheets
-- LibreOffice Calc
+### CSV
 
-Struktura CSV obsahuje sloupce jako `date`, `messages`, `voice_minutes`, `joins`, `leaves`.
+Vhodný pro import do tabulkových procesorů (Microsoft Excel, Google Sheets, LibreOffice Calc).
 
-### JSON (JavaScript Object Notation)
-Strukturovaný formát vhodný pro vývojáře.
+Struktura CSV souboru:
+
+| Sloupec | Typ | Popis |
+| :--- | :--- | :--- |
+| `date` | string | Datum ve formátu `YYYY-MM-DD` |
+| `messages` | integer | Počet zpráv za den |
+| `voice_minutes` | float | Minuty ve voice kanálech |
+| `joins` | integer | Počet příchodů na server |
+| `leaves` | integer | Počet odchodů ze serveru |
+| `dau` | integer | Denní aktivní uživatelé (HyperLogLog odhad) |
+
+### JSON
+
+Strukturovaný formát pro strojové zpracování a integrace:
 
 ```json
 {
-  "date": "2023-10-25",
-  "stats": {
-    "messages": 1542,
-    "voice_users": 45,
-    "new_members": 12
-  }
+  "guild_id": "123456789012345678",
+  "period": {
+    "start": "2026-04-01",
+    "end": "2026-04-14"
+  },
+  "daily": [
+    {
+      "date": "2026-04-01",
+      "messages": 1542,
+      "voice_minutes": 320.5,
+      "dau": 245,
+      "joins": 12,
+      "leaves": 3
+    }
+  ]
 }
 ```
+
+## Export přes API
+
+Stejná data lze získat programově přes REST API:
+
+```bash
+curl -X GET "http://localhost:8092/api/v1/guild/{guild_id}/export?format=csv&range=30" \
+     -H "Authorization: Bearer YOUR_TOKEN" \
+     -o export.csv
+```
+
+| Parametr | Výchozí | Popis |
+| :--- | :--- | :--- |
+| `format` | `json` | Formát výstupu: `csv` nebo `json`. |
+| `range` | `7` | Počet dní zpětně. |
+
+## Omezení
+
+- Maximální rozsah jednoho exportu je 365 dní.
+- Export je omezen na 60 požadavků za minutu (rate limit).
+- Exportovaná data neobsahují obsah zpráv - pouze agregované metriky.

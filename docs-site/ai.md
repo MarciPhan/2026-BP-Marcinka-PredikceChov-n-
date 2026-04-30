@@ -1,57 +1,140 @@
-# Predikce a Machine Learning
+# Přehled predikce
 
-Metricord využívá pokročilý statistický aparát k pochopení dynamiky komunit. V této sekci vysvětlujeme, jak naše modely pracují s vašimi daty a co přesně znamenají jejich výstupy.
+Přehled prediktivních schopností systému Metricord - od klasifikace uživatelů po automatická doporučení pro moderátory.
 
-## 1. Technické detaily predikce
+## Datový tok
 
 ```mermaid
 graph TD
-    A[Zpráva od uživatele] --> B{Zpracování}
-    B -->|Analyzátor| C[XP & Rank]
-    B -->|Časová řada| D[Markovova matice]
-    D --> E[Stav: Aktivní]
-    D --> F[Stav: At-Risk]
-    D --> G[Stav: Inaktivní]
-    F -->|Signal| H[Smart Insight pro moderátora]
-    E -->|Validation| I[Kaplan-Meier Survival]
-    G -->|Historical| I
-    I --> J[Očekávaná délka života člena]
+    A[Discord Gateway Event] --> B[Bot: Event Decoder]
+    B --> C[Redis: Sorted Set]
+    C --> D[Dashboard: Data Fetch]
+    D --> E[NumPy: Vektorizace]
+    E --> F[Markov: Klasifikace stavů]
+    E --> G[Kaplan-Meier: Survival]
+    F --> H[Smart Insights]
+    G --> H
+    H --> I[Dashboard Widget]
+    H --> J[Discord Notifikace]
 ```
 
-### Markovovy řetězce (Transition Layers)
-Systém rozděluje uživatele do stavů podle jejich aktivity v posledních 7 dnech. Pravděpodobnost přechodu ze stavu *Aktivní* do *Inaktivní* je klíčovým indikátorem zdraví serveru. Pokud matice ukazuje náhlý posun pravděpodobností směrem k inaktivitě, systém vyhodnotí varování.
+## Klasifikace uživatelů
 
-### Kaplan-Meierův odhad
-Používáme k výpočtu "Survival rate" komunity. Pomáhá nám zodpovědět otázku: *"Pokud uživatel zůstane 30 dní, jaká je pravděpodobnost, že zůstane i příští měsíc?"*
+Systém rozděluje uživatele do 5 stavů podle aktivity za posledních 7 dní. Stav se přehodnocuje každou hodinu.
 
-## 2. Interpretace Confidence Scores
+| Stav | Index | Kritérium | Typická akce moderátora |
+| :--- | :--- | :--- | :--- |
+| New | $S_0$ | Na serveru < 24 hodin. | Uvítání, onboarding. |
+| Active | $S_1$ | Aktivita v posledních 7 dnech. | Udržování zapojení. |
+| Passive | $S_2$ | Poslední aktivita před 3–7 dny. | Přímé oslovení, zmínka v diskuzi. |
+| Inactive | $S_3$ | Poslední aktivita před 7–14 dny. | Osobní zpráva s pozvánkou. |
+| Churned | $S_4$ | Žádná aktivita > 14 dní. | Analýza příčiny pro budoucí prevenci. |
 
-Každá predikce v Metricord je doprovázena **Skóre spolehlivosti** (0–1.0).
-- **High (> 0.8):** Velmi spolehlivé. Doporučujeme akci moderátora.
-- **Medium (0.5 - 0.8):** Indikativní. Sledujte uživatele.
-- **Low (< 0.5):** Experimentální / málo dat.
+### Přechodový diagram
 
-## 3. Cyklus učení modelů (Retraining)
+```mermaid
+stateDiagram-v2
+    [*] --> New: Připojení na server
+    New --> Active: Zapojení do diskuze
+    New --> Churned: Špatný onboarding
+    Active --> Passive: Pokles aktivity
+    Active --> Active: Opakované zapojení
+    Passive --> Active: Reaktivace
+    Passive --> Inactive: 7+ dní ticha
+    Inactive --> Churned: 14+ dní bez aktivity
+    Inactive --> Active: Návrat
+    Churned --> [*]: Odchod
+```
 
-- **Incremental Updates:** Každou hodinu.
-- **Full Retraining:** Každých 24 hodin (obvykle ve 3:00 ráno).
+## Markovovy řetězce
 
-::: info
-Čím delší historii dat (Backfill) máte, tím přesnější jsou dlouhodobé predikce odchodu (Churn).
-:::
+### Princip
 
-## 4. Matice přechodu (Příklad)
+Systém modeluje komunitu jako diskrétní Markovův řetězec s 5 stavy. Pro každou dvojici stavů $(i, j)$ odhaduje pravděpodobnost přechodu $P_{ij}$ z empirických dat za posledních 30 dní.
 
-| Z / DO | Aktivní | Riziko | Inaktivní | Churn |
-| :--- | :--- | :--- | :--- | :--- |
-| **Aktivní** | 0.85 | 0.10 | 0.04 | 0.01 |
-| **Riziko** | 0.30 | 0.40 | 0.20 | 0.10 |
-| **Inaktivní** | 0.05 | 0.15 | 0.50 | 0.30 |
+### Matice přechodu (příklad)
 
-Z tabulky je patrné, že uživatel v "Riziku" má stále 30% šanci se vrátit k plné aktivitě při zásahu moderátora.
+|  | New | Active | Passive | Inactive | Churned |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **New** | 0,10 | 0,60 | 0,15 | 0,05 | 0,10 |
+| **Active** | 0,00 | 0,85 | 0,10 | 0,04 | 0,01 |
+| **Passive** | 0,00 | 0,30 | 0,40 | 0,20 | 0,10 |
+| **Inactive** | 0,00 | 0,05 | 0,15 | 0,50 | 0,30 |
+| **Churned** | 0,00 | 0,00 | 0,00 | 0,00 | 1,00 |
 
-## 5. Toxicity Index (MII)
+Interpretace: uživatel ve stavu Active má 85% pravděpodobnost, že zůstane aktivní, 10% že přejde do Passive a 4% do Inactive.
 
-**Moderator Intervention Index (MII):** Poměr moderátorských zásahů k celkovému objemu zpráv.
-- **Predikce konfliktů:** Pokud MII začne růst při stejné aktivitě, blíží se k "Drama".
-- **Doporučení týmu:** Algoritmus navrhuje, zda potřebujete více moderátorů.
+### Predikce na 7 dní
+
+Aktuální rozložení komunity $\mathbf{v}_0$ se vynásobí sedmou mocninou matice přechodu:
+
+$$\mathbf{v}_7 = \mathbf{v}_0 \cdot P^7$$
+
+Dashboard zobrazuje srovnání aktuálního a predikovaného rozložení ve sloupcovém grafu.
+
+## Kaplan-Meierova survival analýza
+
+### Princip
+
+Estimátor $\hat{S}(t)$ udává pravděpodobnost, že uživatel zůstane na serveru alespoň $t$ dní po připojení:
+
+$$\hat{S}(t) = \prod_{i: t_i \le t} \left(1 - \frac{d_i}{n_i}\right)$$
+
+kde:
+- $d_i$ je počet odchodů v čase $t_i$,
+- $n_i$ je počet uživatelů „na riziku" v čase $t_i$ (dosud neodešli ani nejsou cenzorováni).
+
+### Cenzorovaná data
+
+Uživatelé, kteří jsou stále aktivní, nejsou z analýzy vyloučeni, ale označeni jako cenzorovaní (`event_observed = False`). To zvyšuje přesnost odhadu oproti jednoduchému průměru.
+
+### Interpretace křivky
+
+- **Prudký pokles po 1–3 dnech** - špatný onboarding. Řešení: vylepšení uvítacího procesu.
+- **Pozvolný pokles** - přirozená fluktuace. Zdravý stav.
+- **Plateau po 30+ dnech** - stabilní jádro komunity. Uživatelé, kteří přežijí první měsíc, zůstávají dlouhodobě.
+
+### Střední délka setrvání
+
+Z křivky přežití se vypočítá střední délka setrvání jako plocha pod křivkou (viz [matematické základy](/math-foundations)):
+
+$$E[T] \approx \sum_{i} \hat{S}(t_i) \cdot \Delta t_i$$
+
+## Confidence Score
+
+Každá predikce má skóre spolehlivosti (0–1,0):
+
+| Rozsah | Klasifikace | Podmínka |
+| :--- | :--- | :--- |
+| > 0,8 | Vysoká | Historie > 30 dní, > 100 aktivních uživatelů. |
+| 0,5–0,8 | Střední | Historie 7–30 dní. |
+| < 0,5 | Nízká | Historie < 7 dní. Predikce zobrazeny s označením „experimentální". |
+
+Spolehlivost roste s objemem dat. Po [backfillu](/backfill) historických zpráv se confidence score zvýší okamžitě.
+
+## Cyklus přetrénování modelů
+
+| Typ | Interval | Popis |
+| :--- | :--- | :--- |
+| Inkrementální update | Každou hodinu | Přidání nových přechodů do matice. |
+| Plný retraining | Každých 24 hodin (3:00 UTC) | Přepočet celé matice z 30denní historie. |
+
+## MII (Moderator Intervention Index)
+
+Poměr moderátorských zásahů k celkovému objemu zpráv. Slouží jako nepřímá metrika toxicity:
+
+$$MII = \frac{\text{váž. moderátorské akce}}{\text{celkový počet zpráv}} \times 1000$$
+
+| MII | Engagement Score | Interpretace |
+| :--- | :--- | :--- |
+| Nízký | Nízký | Nízká aktivita i zásahy. |
+| Nízký | Vysoký | Ideální stav - aktivní komunita bez konfliktů. |
+| Vysoký | Vysoký | Aktivní, ale konfliktní - posilte pravidla. |
+| Vysoký | Nízký | Toxické prostředí odrazuje nové členy. |
+
+### Trendy MII
+
+Pokud MII roste při konstantní aktivitě, systém generuje Smart Insight s doporučením:
+- Kontrola pravidel serveru.
+- Zvýšení počtu moderátorů.
+- Analýza problémových kanálů nebo časových oken.

@@ -1,47 +1,74 @@
-# Vážený XP Systém a Správa Rolí
+# XP systém a automatické role
 
-Metricord nepoužívá statické body. Náš systém je dynamický a reaguje na kvalitu interakce. Cílem je vytvořit spravedlivé prostředí, kde "kvantita" neznamená automaticky "vliv".
+Systém přiděluje zkušenostní body (XP) za aktivitu na serveru. Body se kumulují a určují úroveň uživatele, na jejímž základě bot automaticky přiřazuje Discord role.
 
-## 1. Algoritmus výpočtu XP
+## Výpočet XP
 
-Každá akce uživatele prochází filtrem kvality předtím, než jsou připsány body.
+Každá akce prochází filtrem kvality. Systém neodměňuje pouhou přítomnost, ale smysluplnou interakci.
 
-| Typ Akce | Získané XP | Podmínky a Bonusy |
+| Typ akce | XP | Podmínky |
 | :--- | :--- | :--- |
-| **Krátká zpráva** (< 15 znaků) | 1 bod | Zahrnuje emojis a jednoslovné příkazy. |
-| **Standardní zpráva** (15 - 100 znaků) | 5 bodů | Základní stavební kámen konverzace. |
-| **Dlouhý příspěvek** (> 100 znaků) | 15+ bodů | Body rostou lineárně s délkou (max 50 XP). |
-| **Odpověď (Reply)** | +10 bodů | Bonus k základnímu XP za použití funkce 'Reply'. |
-| **Voice Aktivita** | 5 body / min | Musí být aktivní mikrofon (ne mute). |
+| Krátká zpráva (< 15 znaků) | 1 | Jednoslovné reakce, emoji. |
+| Standardní zpráva (15–100 znaků) | 5 | Běžná konverzace. |
+| Dlouhý příspěvek (> 100 znaků) | 15–50 | Lineární nárůst s délkou, maximum 50 XP. |
+| Odpověď (Reply) | +10 | Bonus za použití funkce Reply. |
+| Voice aktivita | 5 / min | Mikrofon musí být aktivní (ne mute). |
 
-::: info Variable Ratio Reinforcement
-Systém přidává náhodnou složku (±15%) ke každému XP zisku. Tato metoda zvyšuje psychologickou angažovanost uživatelů a ztěžuje předvídatelnost pro farmící boty.
-:::
+### Náhodná složka (Variable Ratio Reinforcement)
 
-## 2. Anti-Spam a Fraud Detekce
+Systém přidává náhodnou odchylku ±15 % ke každému XP zisku. Tato metoda zvyšuje angažovanost uživatelů a ztěžuje automatizované farmení.
 
-- **Message Cooldown (60s):** Omezení na 1 XP-profitující zprávu za minutu.
-- **Duplicate Check:** Odeslání stejné zprávy vícekrát za sebou dává 0 XP.
-- **Noční korekce (2:00-6:00):** Body jsou násobeny koeficientem `0.5`, aby se předešlo nočnímu farmení.
+## Anti-spam ochrana
 
-## 3. Úrovně a Progrese
+| Mechanismus | Pravidlo |
+| :--- | :--- |
+| **Message Cooldown** | Maximálně 1 XP-profitující zpráva za 60 sekund. |
+| **Duplicate Check** | Opakované odeslání stejné zprávy přiděluje 0 XP. |
+| **Noční korekce** | Mezi 2:00 a 6:00 jsou body násobeny koeficientem 0,5. |
 
-Výpočet úrovně $L$ z celkových XP $X$ se řídí kvadratickou funkcí:
+## Výpočet úrovně
+
+Úroveň $L$ se vypočítá z celkových XP $X$ podle kvadratické funkce:
 
 $$X(L) = 50 \cdot L^2 + 200 \cdot L + 100$$
 
-To znamená, že progrese je schválně náročná, aby role měly svou váhu a prestiž.
-- **Level 2:** 700 XP
-- **Level 10:** 7 100 XP
-- **Level 50:** 135 100 XP
+Příklady požadovaného XP pro vybrané úrovně:
 
-## 4. Automatizace rolí (Auto-Levels)
+| Úroveň | Požadované XP | Odhad doby dosažení |
+| :--- | :--- | :--- |
+| 2 | 700 | 1–2 dny aktivní konverzace |
+| 10 | 7 100 | cca 2 týdny |
+| 25 | 36 350 | cca 2 měsíce |
+| 50 | 135 100 | cca 6 měsíců |
 
-V dashboardu můžete propojit konkrétní úrovně s Discord rolemi. Bot provádí synchronizaci:
-1. Při každém získání nové úrovně.
-2. Pravidelně každých 24 hodin.
-3. Manuálně pomocí příkazu `/activity sync_names`.
+## Konfigurace automatických rolí
 
-::: tip Doporučení pro adminy
-Nenastavujte příliš mnoho rolí (např. každou úroveň). Ideální je odměnit úrovně 5, 10, 25, 50 a 100.
+V dashboardu propojte Discord role s konkrétními úrovněmi. Bot role přiděluje:
+
+1. Okamžitě při dosažení nové úrovně.
+2. Pravidelnou synchronizací každých 24 hodin.
+3. Ručně příkazem `/activity sync_names`.
+
+::: tip Doporučení
+Nastavte 4–6 rolí na milnících (úrovně 5, 10, 25, 50, 100). Příliš mnoho rolí snižuje jejich prestiž.
 :::
+
+## Úprava vah za běhu
+
+Váhy XP akcí lze měnit bez restartu bota:
+
+```bash
+# Přes redis-cli
+redis-cli HSET config:xp:weights msg_short 1 msg_medium 5 msg_long 15
+
+# Přes REST API
+curl -X POST http://localhost:8092/admin/config/weights \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"msg_short": 1, "msg_medium": 5}'
+```
+
+Po změně vah je nutné zvýšit verzi konfigurace, aby se denní statistiky přepočítaly:
+
+```bash
+redis-cli INCR config:weights_version
+```

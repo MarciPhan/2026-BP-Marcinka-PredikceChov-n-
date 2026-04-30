@@ -1,28 +1,66 @@
-# Inteligentní Backfill Systém
+# Backfill historických dat
 
-Při prvním přidání bota na server nemusíte začínat s prázdným grafem. Náš Backfill Engine dokáže zrekonstruovat historii serveru.
+Backfill doplní do databáze historii zpráv a moderátorských akcí z období před přidáním bota na server. Bez backfillu pracují analytické funkce pouze s daty nasbíranými od okamžiku instalace.
 
-## Jak funguje proces doplňování dat?
+## Kdy backfill spustit
 
-Proces je navržen tak, aby byl maximálně efektivní a bezpečný vůči limitům Discord API.
+- Ihned po přidání bota na existující server.
+- Po obnově databáze ze zálohy, pokud chybí část dat.
+- Po změně vah aktivit, pokud požadujete přepočet statistik.
 
-### 1. Fáze indexace
-Bot projde seznam všech textových kanálů, ke kterým má přístup, a vytvoří prioritizovanou frontu úloh. Nejaktivnější kanály jsou zpracovány jako první.
+## Spuštění backfillu
 
-### 2. Dávkové zpracování (Batch Processing)
-Zprávy jsou stahovány po blocích (100 zpráv na jeden API request). Tím snižujeme zátěž sítě o 99%.
+Předpoklady:
+- Přístup na server s oprávněním **Administrator**.
+- Bot musí mít oprávnění `Read Message History` a `View Audit Log`.
 
-### 3. Agregace a Anonymizace
+Zadejte příkaz:
+
+```
+/activity backfill days:30
+```
+
+| Parametr | Výchozí | Popis |
+| :--- | :--- | :--- |
+| `days` | 30 | Počet dní zpětně. Maximální rozsah závisí na historii Discord API. |
+
+## Průběh zpracování
+
+1. Bot smaže staré agregované statistiky pro daný server.
+2. Projde všechny textové kanály, ke kterým má přístup.
+3. Stáhne zprávy po dávkách (100 zpráv na API požadavek).
+4. Z každé zprávy uloží do Redisu pouze metadata:
+   - **Timestamp** - čas odeslání,
+   - **User ID** - identifikátor autora,
+   - **Délka zprávy** - počet znaků (`len`),
+   - **Reply flag** - zda jde o odpověď na jinou zprávu.
+5. Zpracuje audit log - bany, kicky, timeouty, smazané zprávy, změny rolí.
+6. Zpracuje verifikační záznamy z log kanálu (pokud existuje).
 
 ::: warning Ochrana soukromí
-Neukládáme a nikdy nečteme text vašich zpráv. Backfill systém extrahuje pouze metadata.
+Bot neukládá text zpráv. Backfill systém extrahuje pouze metadata potřebná pro výpočet metrik.
 :::
 
-**Ukládáme pouze:**
-- **Timestamp:** Kdy byla zpráva odeslána.
-- **UserID:** Identifikátor autora.
-- **ChannelID:** Kde byla zpráva odeslána.
-- **MessageLength:** Počet znaků (pro analýzu kvality diskuze).
+## Výstup po dokončení
 
-### 4. Rate-Limit Management
-Náš systém obsahuje "Smart Throttling". Pokud Discord API začne hlásit zpomalení (HTTP 429), backfill se automaticky pozastaví, aby neohrozil funkčnost ostatních botů na serveru.
+Bot zobrazí shrnutí:
+
+```
+Hotovo!
+Zpracováno: 12 450 zpráv, 89 audit akcí, 23 verifikací.
+Data uložena do event systému.
+Zkus: /activity stats after:01-01-2025.
+```
+
+## Rate limiting
+
+Backfill dodržuje limity Discord API. Pokud API vrátí HTTP 429, bot automaticky pozastaví stahování a pokračuje po uplynutí doby `Retry-After`. Stahování nepřeruší funkčnost bota ani ostatních příkazů.
+
+## Redis klíče vytvořené backfillem
+
+| Klíč | Typ | Obsah |
+| :--- | :--- | :--- |
+| `events:msg:{guild_id}:{user_id}` | Sorted Set | Metadata zpráv (score = timestamp) |
+| `events:action:{guild_id}:{user_id}` | Sorted Set | Moderátorské akce (score = timestamp) |
+| `events:voice:{guild_id}:{user_id}` | Sorted Set | Voice session data (score = timestamp) |
+| `user:info:{user_id}` | Hash | Jméno, avatar, role (TTL 7 dní) |
