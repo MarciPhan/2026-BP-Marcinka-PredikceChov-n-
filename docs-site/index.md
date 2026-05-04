@@ -17,12 +17,12 @@ hero:
       link: https://github.com/MarciPhan/2026-BP-Marcinka-PredikceChov-n-
 
 features:
-  - title: Real-time analytika
-    details: Sledování aktivity v momentě, kdy se děje. Sub-sekundové zpracování každé zprávy.
-    link: /analytics
   - title: Predikce chování
     details: Markovovy řetězce pro předpověď retence a churn rate na 7 dní dopředu.
     link: /predictions
+  - title: Real-time analytika
+    details: Sledování aktivity v momentě, kdy se děje. Sub-sekundové zpracování každé zprávy.
+    link: /analytics
   - title: Survival analýza
     details: Kaplan-Meier křivky ukazující střední délku setrvání uživatelů na serveru.
     link: /math-foundations
@@ -44,14 +44,14 @@ Pro přesné predikce doporučujeme nechat bota sbírat data alespoň 7 dní. Pr
 :::
 
 <div class="premium-grid">
-  <a href="/quickstart" class="premium-card">
-    <h3> Rychlý start</h3>
-    <p>Nastavení bota během 5 minut. Průvodce krok za krokem od instalace po první predikce.</p>
-  </a>
-
   <a href="/user-guide" class="premium-card">
     <h3> Uživatelská příručka</h3>
     <p>Příkazy, XP systém, leveling a ochrana osobních údajů.</p>
+  </a>
+
+  <a href="/quickstart" class="premium-card">
+    <h3> Rychlý start</h3>
+    <p>Nastavení bota během 5 minut. Průvodce krok za krokem od instalace po první predikce.</p>
   </a>
 
   <a href="/moderators" class="premium-card">
@@ -77,30 +77,31 @@ Pro přesné predikce doporučujeme nechat bota sbírat data alespoň 7 dní. Pr
 
 ---
 
-## Technický přehled
 
-Metricord je postavený na technologickém stacku optimalizovaném pro vysoký výkon:
+## Cílové skupiny a využití dokumentace
 
-- **Python 3.9+** — discord.py 2.6, FastAPI, NumPy.
-- **Redis / Valkey** — In-memory databáze, sub-ms latence.
-- **Chart.js** — Interaktivní grafy a vizualizace.
-- **VitePress** — Moderní dokumentační platforma.
-- **Docker** — Kontejnerizované nasazení.
+Tato dokumentace je strukturována podle rolí a konkrétních úkolů, které v systému Metricord řešíte. Vyberte si cestu, která odpovídá vašim potřebám.
 
-## Pro koho je tato dokumentace
+### Pro moderátory a správce komunit
+Metricord vám pomůže pochopit dynamiku vašeho serveru a činit rozhodnutí podložená daty.
+- **Řízení aktivity:** Naučte se interpretovat [analytické metriky](/analytics) a spravovat [XP systém](/roles).
+- **Prevence odchodů:** Včas identifikujte krizové signály pomocí [Smart Insights](/insights) a [predikce retence](/predictions).
+- **Bezpečnost a soukromí:** Nastavte správně [skóre bezpečnosti](/security) a seznamte se s [ochranou osobních údajů](/privacy).
 
-- **Moderátoři a správci serverů** — interpretace metrik a rozpoznávání krizových signálů.
-- **Vývojáři** — API reference, Redis schéma, architektura a příklady integrace.
-- **Členové komunity** — XP systém, příkazy a ochrana osobních údajů.
-- **Akademická sféra** — [Matematické základy](/math-foundations) prediktivních modelů a [srovnání ML algoritmů](/ml-comparison).
+### Pro vývojáře a technické administrátory
+Zde najdete vše potřebné pro instalaci, úpravu kódu a integraci bota do vaší infrastruktury.
+- **Nasazení a správa:** Postupujte podle [průvodce instalací](/setup) nebo [nasazením do cloudu](/cloud-deployment).
+- **Vývoj bota:** Prostudujte si [vývojářskou příručku](/dev-guide) a [příklady API požadavků](/api-examples).
+- **Integrace:** Propojte Metricord s dalšími nástroji pomocí [webhooků](/integrations) a [API Reference](/api).
 
-## Rychlý start za 4 řádky
+### Pro analytiky a akademický výzkum
+Pokud vás zajímá teoretické pozadí a matematické modely použité pro predikci chování uživatelů.
+- **Matematické modely:** Detailní popis [Markovových řetězců](/math-foundations) a statistických metod.
+- **Srovnání algoritmů:** Analýza [výběru ML algoritmů](/ml-comparison) a jejich přesnosti v čase.
+- **Struktura dat:** Kompletní přehled [Redis datového schématu](/data-schema) pro vlastní analýzy.
 
-```bash
-git clone https://github.com/MarciPhan/2026-BP-Marcinka-PredikceChov-n-
-cd 2026-BP-Marcinka-PredikceChov-n-
-cp .env.example .env    # Vyplňte BOT_TOKEN
-./start.sh              # Spustí bot + dashboard + docs
-```
+### Pro členy komunity
+Informace o tom, jak bot ovlivňuje vaši zkušenost na serveru.
+- **Funkce pro uživatele:** Přehled [příkazů bota](/commands) a fungování leveling systému.
+- **Transparentnost:** Jaká data Metricord sbírá a jak s nimi nakládá najdete v [Zásadách ochrany soukromí](/privacy).
 
-Podrobný návod: [Rychlý start](/quickstart) | [Instalace a konfigurace](/setup) | [Docker nasazení](/deployment)
