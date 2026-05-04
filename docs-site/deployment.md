@@ -41,7 +41,7 @@ python3 -c "import secrets; print(secrets.token_urlsafe(48))"
 
 Docker Compose automaticky spustí a propojí všechny potřebné služby: Redis, hlavního bota, dashboard a analytický engine.
 
-1.  Klonujte repozitář: `git clone https://github.com/MarciPhan/Metricord.git`
+1.  Klonujte repozitář: `git clone https://github.com/MarciPhan/2026-BP-Marcinka-PredikceChov-n-`
 2.  Vytvořte konfigurační soubor: `cp .env.example .env`
 3.  Upravte `.env` a vyplňte všechny povinné proměnné (viz Tabulka proměnných níže).
 4.  Spusťte stack: `docker-compose up -d --build`

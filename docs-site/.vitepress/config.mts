@@ -27,7 +27,7 @@ export default withMermaid(defineConfig({
       { text: 'Domů', link: '/' },
       { text: 'Vývoj', link: '/dev-guide' },
       { text: 'Rychlý start', link: '/quickstart' },
-      { text: 'GitHub', link: 'https://github.com/MarciPhan/2026-BP-Marcuska-PredikceChov-n-' }
+      { text: 'GitHub', link: 'https://github.com/MarciPhan/2026-BP-Marcinka-PredikceChov-n-' }
     ],
 
     sidebar: [
@@ -110,7 +110,7 @@ export default withMermaid(defineConfig({
     ],
 
     socialLinks: [
-      { icon: 'discord', link: 'https://discord.gg/metricord' }
+      { icon: 'discord', link: 'https://discord.gg/35yeT32Knf' }
     ],
 
     search: {

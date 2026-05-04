@@ -73,4 +73,4 @@ Metricord podporuje provoz dvou instancí bota současně. Primary instance má 
 ---
 
 > [!TIP]
-> Nenašli jste odpověď na svůj dotaz? Podívejte se do [Troubleshootingu](/troubleshooting) nebo nás kontaktujte na [Support Serveru](https://discord.gg/metricord).
+> Nenašli jste odpověď na svůj dotaz? Podívejte se do [Troubleshootingu](/troubleshooting) nebo nás kontaktujte na [Support Serveru](https://discord.gg/35yeT32Knf).

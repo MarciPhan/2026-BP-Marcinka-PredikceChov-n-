@@ -177,5 +177,5 @@ docker exec -it discord-bot-primary /bin/bash
 ```
 
 ::: tip Podpora
-Pokud problém přetrvává, nahlédněte do logů (`docker-compose logs --tail=100`) a pošlete výstup na náš [Support Server](https://discord.gg/metricord).
+Pokud problém přetrvává, nahlédněte do logů (`docker-compose logs --tail=100`) a pošlete výstup na náš [Support Server](https://discord.gg/35yeT32Knf).
 :::
