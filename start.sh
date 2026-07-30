@@ -37,8 +37,11 @@ if ! pgrep -x "redis-server" >/dev/null && ! pgrep -x "valkey-server" >/dev/null
         redis-server --daemonize yes
     elif command -v valkey-server &>/dev/null; then
         valkey-server --daemonize yes
+    elif command -v docker &>/dev/null; then
+        echo "Starting Redis via Docker..."
+        docker compose up -d redis
     else
-        echo "Error: Redis/Valkey not found" && exit 1
+        echo -e "${R}Warning: Redis/Valkey not found and Docker not available. Using in-memory FakeRedis fallback.${N}"
     fi
     sleep 1
 fi
