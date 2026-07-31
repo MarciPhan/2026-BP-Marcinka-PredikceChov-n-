@@ -1,6 +1,6 @@
 # Advanced API: Action Triggers
 
-Vzdálené ovládání vašeho bota přes REST API. Metricord není jen o datech, je o akci.
+Vzdálené ovládání vašeho bota přes REST API. CommunityMetrics není jen o datech, je o akci.
 
 ## 1. Odesílání zpráv (Webhooks 2.0)
 

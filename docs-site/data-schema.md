@@ -1,6 +1,6 @@
 # Architektura dat v databázi Redis
 
-Metricord využívá Redis jako primární in-memory úložiště pro extrémní výkon analytiky. Tento dokument slouží jako technická reference pro správu datových struktur a optimalizaci paměti.
+CommunityMetrics využívá Redis jako primární in-memory úložiště pro extrémní výkon analytiky. Tento dokument slouží jako technická reference pro správu datových struktur a optimalizaci paměti.
 
 ::: tip Konvence pojmenování
 Všechny klíče definuj v centrálním souboru `shared/keys.py`. Dodržuj formát:
@@ -39,7 +39,7 @@ Dynamické klíče pro sledování "zdraví" systému a přítomnosti na servere
 
 ## Životnost dat (Retention Policy)
 
-Aby nedošlo k přeplnění operační paměti (RAM), Metricord uplatňuje automatickou expiraci dat (TTL).
+Aby nedošlo k přeplnění operační paměti (RAM), CommunityMetrics uplatňuje automatickou expiraci dat (TTL).
 
 | Kategorie | Retence | Odůvodnění |
 | :--- | :--- | :--- |

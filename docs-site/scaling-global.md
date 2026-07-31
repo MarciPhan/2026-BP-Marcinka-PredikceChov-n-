@@ -1,6 +1,6 @@
 # Global Scaling & High Availability
 
-Průvodce škálováním Metricord pro velké komunity (50k+ členů) a zajištění vysoké dostupnosti pro produkční nasazení.
+Průvodce škálováním CommunityMetrics pro velké komunity (50k+ členů) a zajištění vysoké dostupnosti pro produkční nasazení.
 
 ## 1. Redis Sentinel (High Availability)
 

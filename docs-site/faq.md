@@ -1,10 +1,10 @@
 # Často kladené dotazy (FAQ)
 
-Zde najdete odpovědi na nejčastější dotazy týkající se instalace, fungování a bezpečnosti systému Metricord.
+Zde najdete odpovědi na nejčastější dotazy týkající se instalace, fungování a bezpečnosti systému CommunityMetrics.
 
 ## Instalace a nastavení
 
-::: details Jak rychle zprovozním Metricord na svém serveru?
+::: details Jak rychle zprovozním CommunityMetrics na svém serveru?
 1. Naklonujte repozitář a vytvořte `.env` z šablony (viz [Rychlý start](/quickstart)).
 2. Vyplňte `BOT_TOKEN` z Discord Developer Portalu.
 3. Spusťte `./start.sh` pro lokální vývoj nebo `docker-compose up -d` pro produkci.
@@ -16,7 +16,7 @@ Zkontrolujte, zda jste správně nastavili proměnnou `BOT_TOKEN` v souboru `.en
 :::
 
 ::: details Musím zapínat všechna Privileged Intents?
-Ano. Metricord ke správnému fungování analytiky potřebuje **Message Content Intent** (pro výpočet délky zpráv) a **Server Members Intent** (pro sledování příchodů a odchodů). Bez nich bude většina metrik vykazovat nulové hodnoty.
+Ano. CommunityMetrics ke správnému fungování analytiky potřebuje **Message Content Intent** (pro výpočet délky zpráv) a **Server Members Intent** (pro sledování příchodů a odchodů). Bez nich bude většina metrik vykazovat nulové hodnoty.
 :::
 
 ::: details Jaký je rozdíl mezi lokálním spuštěním a Docker Compose?
@@ -31,7 +31,7 @@ Bot zaznamenává moment připojení (`JoinEvent`) a odpojení (`LeaveEvent`). C
 :::
 
 ::: details Ukládá bot text mých zpráv?
-**Ne.** Metricord byl navržen pro maximální soukromí. Zpracováváme pouze metadata: čas odeslání, délku zprávy v počtu znaků a ID kanálu. Samotný obsah zpráv se nikam neukládá ani nepřenáší.
+**Ne.** CommunityMetrics byl navržen pro maximální soukromí. Zpracováváme pouze metadata: čas odeslání, délku zprávy v počtu znaků a ID kanálu. Samotný obsah zpráv se nikam neukládá ani nepřenáší.
 :::
 
 ::: details Proč se mi v dashboardu nezobrazuje Engagement Score?
@@ -67,7 +67,7 @@ Ano, v sekci „Centrum exportu" na dashboardu si můžete stáhnout data ve for
 :::
 
 ::: details Jak funguje Dual-bot režim (Lite Mode)?
-Metricord podporuje provoz dvou instancí bota současně. Primary instance má plnou funkčnost (příkazy, tracking, backfill). Secondary instance (`BOT_LITE_MODE=1`) pouze sbírá data bez registrace slash příkazů. Obě instance zapisují do stejné Redis databáze. Viz [Správa instance](/admin-guide#dual-bot-rezim-lite-mode).
+CommunityMetrics podporuje provoz dvou instancí bota současně. Primary instance má plnou funkčnost (příkazy, tracking, backfill). Secondary instance (`BOT_LITE_MODE=1`) pouze sbírá data bez registrace slash příkazů. Obě instance zapisují do stejné Redis databáze. Viz [Správa instance](/admin-guide#dual-bot-rezim-lite-mode).
 :::
 
 ---

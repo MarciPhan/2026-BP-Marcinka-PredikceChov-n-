@@ -1,6 +1,6 @@
 # Správa instance
 
-Příručka pro správce, kteří provozují vlastní instanci Metricord. Pokrývá konfiguraci, Redis údržbu, škálování a každodenní provoz.
+Příručka pro správce, kteří provozují vlastní instanci CommunityMetrics. Pokrývá konfiguraci, Redis údržbu, škálování a každodenní provoz.
 
 ## Konfigurace prostředí
 
@@ -110,7 +110,7 @@ Provádějte tyto kroky, abyste zajistili stabilitu systému a předešli ztrát
     `redis-cli INFO memory | grep used_memory_human`
 2.  **Zálohování databáze:** Každý den zkopírujte soubor `dump.rdb` na externí úložiště.
 3.  **Monitoring logů:** Pravidelně kontrolujte, zda bot nevykazuje chyby `429 Too Many Requests` (Rate limiting od Discordu).
-4.  **Aktualizace:** Před aktualizací Metricord na novou verzi vždy vytvořte snapshot Redis databáze příkazem `SAVE`.
+4.  **Aktualizace:** Před aktualizací CommunityMetrics na novou verzi vždy vytvořte snapshot Redis databáze příkazem `SAVE`.
 
 ### Obnova ze zálohy
 
@@ -197,7 +197,7 @@ docker-compose logs --tail=200 web-dashboard
 
 ## Dual-bot režim (Lite Mode)
 
-Metricord podporuje provoz dvou instancí bota současně:
+CommunityMetrics podporuje provoz dvou instancí bota současně:
 
 | Instance | `BOT_LITE_MODE` | Funkce |
 | :--- | :--- | :--- |

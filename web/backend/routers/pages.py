@@ -376,7 +376,7 @@ async def profile_page(request: Request, _=Depends(require_auth)):
     # ADD DEMO GUILD FOR TESTING
     servers.append({
         "id": "demo-guild",
-        "name": "Demo Server (Metricord)",
+        "name": "Demo Server (CommunityMetrics)",
         "icon": "https://cdn.discordapp.com/embed/avatars/0.png",
         "active": True,
         "dashboard_url": "/activity?guild_id=demo-guild",

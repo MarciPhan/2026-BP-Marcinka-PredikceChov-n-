@@ -1,6 +1,6 @@
 # Osvědčené postupy
 
-Doporučení a osvědčené strategie pro efektivní využití Metricord při správě a růstu vaší Discord komunity.
+Doporučení a osvědčené strategie pro efektivní využití CommunityMetrics při správě a růstu vaší Discord komunity.
 
 ## Zlepšete onboarding nováčků
 

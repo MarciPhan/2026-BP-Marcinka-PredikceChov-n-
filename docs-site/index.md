@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: Metricord
+  name: CommunityMetrics
   text: Analytická platforma pro Discord komunity
   tagline: Zpracování událostí v reálném čase. Predikce chování uživatelů. Správa založená na datech.
   actions:
@@ -80,10 +80,10 @@ Pro přesné predikce doporučujeme nechat bota sbírat data alespoň 7 dní. Pr
 
 ## Cílové skupiny a využití dokumentace
 
-Tato dokumentace je strukturována podle rolí a konkrétních úkolů, které v systému Metricord řešíte. Vyberte si cestu, která odpovídá vašim potřebám.
+Tato dokumentace je strukturována podle rolí a konkrétních úkolů, které v systému CommunityMetrics řešíte. Vyberte si cestu, která odpovídá vašim potřebám.
 
 ### Pro moderátory a správce komunit
-Metricord vám pomůže pochopit dynamiku vašeho serveru a činit rozhodnutí podložená daty.
+CommunityMetrics vám pomůže pochopit dynamiku vašeho serveru a činit rozhodnutí podložená daty.
 - **Řízení aktivity:** Naučte se interpretovat [analytické metriky](/analytics) a spravovat [XP systém](/roles).
 - **Prevence odchodů:** Včas identifikujte krizové signály pomocí [Smart Insights](/insights) a [predikce retence](/predictions).
 - **Bezpečnost a soukromí:** Nastavte správně [skóre bezpečnosti](/security) a seznamte se s [ochranou osobních údajů](/privacy).
@@ -92,7 +92,7 @@ Metricord vám pomůže pochopit dynamiku vašeho serveru a činit rozhodnutí p
 Zde najdete vše potřebné pro instalaci, úpravu kódu a integraci bota do vaší infrastruktury.
 - **Nasazení a správa:** Postupujte podle [průvodce instalací](/setup) nebo [nasazením do cloudu](/cloud-deployment).
 - **Vývoj bota:** Prostudujte si [vývojářskou příručku](/dev-guide) a [příklady API požadavků](/api-examples).
-- **Integrace:** Propojte Metricord s dalšími nástroji pomocí [webhooků](/integrations) a [API Reference](/api).
+- **Integrace:** Propojte CommunityMetrics s dalšími nástroji pomocí [webhooků](/integrations) a [API Reference](/api).
 
 ### Pro analytiky a akademický výzkum
 Pokud vás zajímá teoretické pozadí a matematické modely použité pro predikci chování uživatelů.
@@ -103,5 +103,5 @@ Pokud vás zajímá teoretické pozadí a matematické modely použité pro pred
 ### Pro členy komunity
 Informace o tom, jak bot ovlivňuje vaši zkušenost na serveru.
 - **Funkce pro uživatele:** Přehled [příkazů bota](/commands) a fungování leveling systému.
-- **Transparentnost:** Jaká data Metricord sbírá a jak s nimi nakládá najdete v [Zásadách ochrany soukromí](/privacy).
+- **Transparentnost:** Jaká data CommunityMetrics sbírá a jak s nimi nakládá najdete v [Zásadách ochrany soukromí](/privacy).
 

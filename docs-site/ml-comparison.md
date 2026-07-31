@@ -1,6 +1,6 @@
 # Srovnání ML algoritmů
 
-Přehled prediktivních algoritmů použitých v Metricord a důvody volby konkrétních metod.
+Přehled prediktivních algoritmů použitých v CommunityMetrics a důvody volby konkrétních metod.
 
 ## Implementované metody
 
@@ -26,7 +26,7 @@ Výběr algoritmů vychází z provozních omezení Discord bota:
 
 ### LSTM (Recurrent Neural Network)
 
-Zachycuje dlouhodobé závislosti v časových řadách. Nevhodné pro Metricord z důvodu:
+Zachycuje dlouhodobé závislosti v časových řadách. Nevhodné pro CommunityMetrics z důvodu:
 - Vysoké nároky na trénovací data (> 10 000 vzorků na server).
 - Vyžaduje GPU pro rozumnou dobu trénování.
 - Výstup je skóre, ne interpretovatelná pravděpodobnost.

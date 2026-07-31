@@ -1,6 +1,6 @@
 # Řešení potíží (Troubleshooting)
 
-Tento průvodce vám pomůže identifikovat a vyřešit nejčastější problémy, se kterými se můžete při provozu Metricord setkat.
+Tento průvodce vám pomůže identifikovat a vyřešit nejčastější problémy, se kterými se můžete při provozu CommunityMetrics setkat.
 
 ## Rychlá diagnostika
 

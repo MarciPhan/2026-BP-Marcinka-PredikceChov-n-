@@ -1,6 +1,6 @@
 # Glosář pojmů
 
-Kompletní přehled termínů a zkratek, se kterými se v dokumentaci Metricord setkáte.
+Kompletní přehled termínů a zkratek, se kterými se v dokumentaci CommunityMetrics setkáte.
 
 ### A
 - **Aktivní uživatel (Active User):** Uživatel, který v daném období (24h nebo 30d) provedl alespoň jednu aktivní akci (zpráva, voice).
@@ -29,10 +29,10 @@ Kompletní přehled termínů a zkratek, se kterými se v dokumentaci Metricord 
 - **HyperLogLog (HLL):** Efektivní datová struktura v Redisu používaná pro odhad počtu unikátních prvků (DAU) s minimální paměťovou náročností (12 KB).
 
 ### K
-- **Kaplan-Meierův estimátor:** Statistická metoda používaná v Metricordu pro výpočet pravděpodobnosti setrvání uživatelů na serveru v čase.
+- **Kaplan-Meierův estimátor:** Statistická metoda používaná v CommunityMetricsu pro výpočet pravděpodobnosti setrvání uživatelů na serveru v čase.
 
 ### M
-- **Markovův řetězec (Markov Chain):** Matematický model, který Metricord používá k předpovědi budoucího stavu uživatele na základě jeho současné aktivity.
+- **Markovův řetězec (Markov Chain):** Matematický model, který CommunityMetrics používá k předpovědi budoucího stavu uživatele na základě jeho současné aktivity.
 - **Matice přechodu (Transition Matrix):** Tabulka pravděpodobností popisující šance, že uživatel přejde z jednoho stavu (např. Active) do jiného (např. Passive).
 - **MAU (Monthly Active Users):** Počet unikátních uživatelů aktivních za posledních 30 dní.
 - **MII (Moderator Intervention Index):** Poměr moderátorských zásahů k celkovému objemu zpráv. Indikátor toxicity nebo konfliktů na serveru.
@@ -45,7 +45,7 @@ Kompletní přehled termínů a zkratek, se kterými se v dokumentaci Metricord 
 - **Sezónní korekce (Seasonality):** Úprava predikcí s ohledem na týdenní cykly (např. vyšší aktivita o víkendech).
 - **Sharding:** Rozdělení zátěže bota mezi více procesů pro obsluhu velkého množství serverů.
 - **Smart Insights:** Automaticky generovaná doporučení pro moderátory založená na detekovaných trendech v datech.
-- **Sorted Set (ZSET):** Datová struktura v Redisu, kde jsou prvky řazeny podle skóre (v Metricordu UNIX timestamp).
+- **Sorted Set (ZSET):** Datová struktura v Redisu, kde jsou prvky řazeny podle skóre (v CommunityMetricsu UNIX timestamp).
 - **Střední délka setrvání (Mean Survival Time):** Průměrná doba, po kterou uživatel zůstává aktivním členem komunity.
 
 ### T

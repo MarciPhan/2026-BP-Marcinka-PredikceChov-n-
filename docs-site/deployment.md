@@ -1,6 +1,6 @@
 # Průvodce produkčním nasazením
 
-Tento dokument vás provede nasazením systému Metricord do produkčního prostředí. Pokrývá instalaci přes Docker, nastavení reverzní proxy (Nginx) a zajištění vysoké dostupnosti a bezpečnosti.
+Tento dokument vás provede nasazením systému CommunityMetrics do produkčního prostředí. Pokrývá instalaci přes Docker, nastavení reverzní proxy (Nginx) a zajištění vysoké dostupnosti a bezpečnosti.
 
 ## Systémové požadavky
 
@@ -52,7 +52,7 @@ Pro bezpečný přístup k dashboardu přes HTTPS využijte Nginx jako reverzní
 
 ### Konfigurace Nginx
 
-Vytvořte konfigurační soubor `/etc/nginx/sites-available/metricord` s tímto obsahem:
+Vytvořte konfigurační soubor `/etc/nginx/sites-available/communitymetrics` s tímto obsahem:
 
 ```nginx
 server {
@@ -96,11 +96,11 @@ Pro minimalizaci rizika ztráty dat nastavte pravidelnou zálohu RDB souboru:
 redis-cli BGSAVE
 
 # Kopírování zálohy (nastavte jako cron úlohu)
-cp /var/lib/redis/dump.rdb /backup/metricord-$(date +%Y%m%d).rdb
+cp /var/lib/redis/dump.rdb /backup/communitymetrics-$(date +%Y%m%d).rdb
 ```
 
 ### Strategie Disaster Recovery
-Metricord podporuje dva režimy persistence v Redisu. Pro optimální výkon zvolte:
+CommunityMetrics podporuje dva režimy persistence v Redisu. Pro optimální výkon zvolte:
 - **RDB (Snapshotting):** Vhodné pro analytická data. Nastavte interval na 15 minut.
 - **AOF (Append-Only File):** Vhodné pro kritickou konfiguraci a XP body. Povolte v produkci pro maximální integritu.
 

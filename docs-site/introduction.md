@@ -1,6 +1,6 @@
-# Úvod do Metricord
+# Úvod do CommunityMetrics
 
-Vítejte v oficiální dokumentaci **Metricord** — analytické platformy nové generace pro Discord komunity. Metricord zpracovává události v reálném čase a poskytuje prediktivní analýzy, které vám pomohou aktivně řídit zdraví a růst vaší komunity.
+Vítejte v oficiální dokumentaci **CommunityMetrics** — analytické platformy nové generace pro Discord komunity. CommunityMetrics zpracovává události v reálném čase a poskytuje prediktivní analýzy, které vám pomohou aktivně řídit zdraví a růst vaší komunity.
 
 Od sledování aktivity jednotlivých členů, přes analýzu voice kanálů, predikci budoucího růstu až po identifikaci krizových vzorců — vše máte pod kontrolou v jednom přehledném dashboardu.
 
@@ -33,7 +33,7 @@ Pro dosažení nejlepších výsledků doporučujeme nechat bota běžet alespo�
 
 ## Technický stack
 
-Metricord je postaven na moderních technologiích optimalizovaných pro vysoký výkon:
+CommunityMetrics je postaven na moderních technologiích optimalizovaných pro vysoký výkon:
 
 | Technologie | Verze | Účel |
 | :--- | :--- | :--- |

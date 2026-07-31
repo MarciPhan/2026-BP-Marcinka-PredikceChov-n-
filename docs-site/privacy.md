@@ -2,10 +2,10 @@
 
 *Účinné od: 25. ledna 2026*
 
-Vítejte. Tyto Zásady ochrany osobních údajů vysvětlují, jakým způsobem shromažďuje, používá, uchovává a chrání osobní a jiná data provozovatel služby **Metricord**. Respektujeme vaše soukromí a zavazujeme se chránit vaše údaje v souladu s GDPR.
+Vítejte. Tyto Zásady ochrany osobních údajů vysvětlují, jakým způsobem shromažďuje, používá, uchovává a chrání osobní a jiná data provozovatel služby **CommunityMetrics**. Respektujeme vaše soukromí a zavazujeme se chránit vaše údaje v souladu s GDPR.
 
 ## 1. Správce údajů
-Správcem vašich osobních údajů je nezávislý vývojář provozující službu Metricord. V případě dotazů nás kontaktujte na e-mailu: `info@email.cz`.
+Správcem vašich osobních údajů je nezávislý vývojář provozující službu CommunityMetrics. V případě dotazů nás kontaktujte na e-mailu: `info@email.cz`.
 
 ## 2. Shromažďovaná data
 

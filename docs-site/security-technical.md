@@ -1,10 +1,10 @@
 # Technické zabezpečení a soukromí
 
-Jak Metricord chrání vaše data na infrastrukturní úrovni.
+Jak CommunityMetrics chrání vaše data na infrastrukturní úrovni.
 
 ## 1. Autentizace a Autorizace
 
-- **Discord OAuth2:** Přihlašování probíhá výhradně přes oficiální bránu Discordu. Metricord nikdy neukládá vaše heslo.
+- **Discord OAuth2:** Přihlašování probíhá výhradně přes oficiální bránu Discordu. CommunityMetrics nikdy neukládá vaše heslo.
 - **Stateful Sessions:** Sezení jsou uložena v Redisu s expirací 24 hodin a jsou podepsána kryptografickým klíčem `SECRET_KEY`.
 - **Role-Based Access (RBAC):** Přístup k datům serveru je povolen pouze uživatelům s oprávněním `Manage Server`.
 

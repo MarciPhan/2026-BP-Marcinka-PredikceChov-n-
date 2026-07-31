@@ -1,11 +1,11 @@
-# Uživatelská příručka – Metricord
+# Uživatelská příručka – CommunityMetrics
 
-Vítejte v systému **Metricord**! Tento dokument vám pomůže pochopit, jak bot funguje, co o vás ví a jak můžete sledovat svůj pokrok na serveru.
+Vítejte v systému **CommunityMetrics**! Tento dokument vám pomůže pochopit, jak bot funguje, co o vás ví a jak můžete sledovat svůj pokrok na serveru.
 
 ---
 
 ## 1. Základní příkazy
-Metricord využívá **lomítkové příkazy** (Slash Commands). Stačí do chatu napsat `/` a vyhledat Metricord.
+CommunityMetrics využívá **lomítkové příkazy** (Slash Commands). Stačí do chatu napsat `/` a vyhledat CommunityMetrics.
 
 | Příkaz | Co dělá |
 | :--- | :--- |
@@ -38,7 +38,7 @@ Vaše data jsou u nás v bezpečí. **Nikdy neukládáme obsah vašich zpráv**,
 ---
 
 ## 4. O botovi
-Metricord není jen obyčejný bot na statistiky. Je součástí výzkumu v rámci bakalářské práce, který zkoumá, jak se komunity vyvíjejí v čase. Vaše aktivita (anonymizovaná) pomáhá vytvářet přesnější modely pro lepší správu Discord serverů.
+CommunityMetrics není jen obyčejný bot na statistiky. Je součástí výzkumu v rámci bakalářské práce, který zkoumá, jak se komunity vyvíjejí v čase. Vaše aktivita (anonymizovaná) pomáhá vytvářet přesnější modely pro lepší správu Discord serverů.
 
 ---
 *Děkujeme, že jste součástí komunity!*

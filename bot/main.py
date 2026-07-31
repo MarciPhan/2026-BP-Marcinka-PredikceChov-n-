@@ -1,4 +1,4 @@
-# Metricord Bot - Main Entry Point
+# CommunityMetrics Bot - Main Entry Point
 # Author: Marcipan
 # Last updated: Feb 2026
 
@@ -212,7 +212,7 @@ async def on_ready():
     
     
     is_lite = os.getenv("BOT_LITE_MODE") == "1"
-    status_msg = "Analytics" if is_lite else "Metricord"
+    status_msg = "Analytics" if is_lite else "CommunityMetrics"
     activity = discord.Activity(type=discord.ActivityType.watching, name=status_msg)
     await bot.change_presence(status=discord.Status.online, activity=activity)
     

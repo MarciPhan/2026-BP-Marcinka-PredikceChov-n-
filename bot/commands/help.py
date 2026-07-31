@@ -2,8 +2,8 @@ import discord
 from discord.ext import commands
 from typing import List, Optional
 
-TITLE = "Metricord - Analytika serveru"
-FOOTER = "Metricord – Analýza a predikce"
+TITLE = "CommunityMetrics - Analytika serveru"
+FOOTER = "CommunityMetrics – Analýza a predikce"
 
 
 PAGE_DATA = [
@@ -192,7 +192,7 @@ class HelpCustom(commands.Cog):
             pages.append(embed)
         return pages
 
-    @commands.hybrid_command(name="help", description="Zobrazí přehled Metricord analytics bota")
+    @commands.hybrid_command(name="help", description="Zobrazí přehled CommunityMetrics analytics bota")
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def help_command(self, ctx: commands.Context, modul: Optional[str] = None):
         """

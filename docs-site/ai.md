@@ -1,6 +1,6 @@
 # Přehled predikce
 
-Přehled prediktivních schopností systému Metricord - od klasifikace uživatelů po automatická doporučení pro moderátory.
+Přehled prediktivních schopností systému CommunityMetrics - od klasifikace uživatelů po automatická doporučení pro moderátory.
 
 ## Datový tok
 

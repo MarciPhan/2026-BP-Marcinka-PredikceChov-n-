@@ -1,6 +1,6 @@
-#  Metricord: Komplexní příručka pro moderátory
+#  CommunityMetrics: Komplexní příručka pro moderátory
 
-Vítejte u podrobné dokumentace systému **Metricord**. Tento dokument slouží jako hlavní zdroj informací pro moderátory a správce komunit, kteří chtějí naplno využít potenciál analytických a prediktivních nástrojů pro rozvoj svého serveru.
+Vítejte u podrobné dokumentace systému **CommunityMetrics**. Tento dokument slouží jako hlavní zdroj informací pro moderátory a správce komunit, kteří chtějí naplno využít potenciál analytických a prediktivních nástrojů pro rozvoj svého serveru.
 
 ---
 
@@ -18,7 +18,7 @@ Vítejte u podrobné dokumentace systému **Metricord**. Tento dokument slouží
 ---
 
 ## 1. Úvod a filozofie systému
-Metricord není jen "další bot na statistiky". Je to analytický ekosystém postavený na vědeckých základech (Markovovy řetězce, Survival analýza), který se snaží pochopit **životní cyklus uživatele**.
+CommunityMetrics není jen "další bot na statistiky". Je to analytický ekosystém postavený na vědeckých základech (Markovovy řetězce, Survival analýza), který se snaží pochopit **životní cyklus uživatele**.
 
 **Cíl moderátora:** Udržet uživatele co nejdéle v aktivních stavech a minimalizovat "Churn" (odchod ze serveru).
 
@@ -63,7 +63,7 @@ Ukazuje "střední délku života" uživatele na vašem serveru.
 - **Vysoký MII + Vysoký Engagement:** Komunita je živá, ale konfliktní (typické pro politické nebo herní servery).
 
 **Doporučení pro tým:**
-Metricord automaticky vypočítává `N_mod` – ideální počet moderátorů pro aktuální zátěž. Pokud systém hlásí "Nedostatek moderátorů", hrozí vyhoření týmu nebo nárůst neřešené toxicity.
+CommunityMetrics automaticky vypočítává `N_mod` – ideální počet moderátorů pro aktuální zátěž. Pokud systém hlásí "Nedostatek moderátorů", hrozí vyhoření týmu nebo nárůst neřešené toxicity.
 
 ---
 
@@ -87,7 +87,7 @@ Vynutí aktualizaci přezdívek a rolí v databázi dashboardu. Spusťte po velk
 ---
 
 ## 6. Gamifikace a XP systém
-Metricord používá **Anti-Spam XP systém**. Body se získávají maximálně jednou za minutu.
+CommunityMetrics používá **Anti-Spam XP systém**. Body se získávají maximálně jednou za minutu.
 - **Logika:** Delší zprávy a zapojení do diskuzí (odpovědi) dávají bonusové body.
 - **Leveling:** Křivka je kvadratická. Dosažení vyšších úrovní vyžaduje exponenciálně více úsilí, což podporuje dlouhodobou věrnost.
 

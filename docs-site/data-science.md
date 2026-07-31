@@ -1,6 +1,6 @@
 # Data Science Integrace (Jupyter & Pandas)
 
-Metricord data jsou rájem pro datové analytiky. Zde je návod, jak je analyzovat v Jupyter Notebooku.
+CommunityMetrics data jsou rájem pro datové analytiky. Zde je návod, jak je analyzovat v Jupyter Notebooku.
 
 ## 1. Export dat pro Pandas
 

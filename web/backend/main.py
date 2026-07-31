@@ -1,4 +1,4 @@
-# Backend pro Metricord Dashboard
+# Backend pro CommunityMetrics Dashboard
 
 from fastapi import FastAPI, Request, Form, Cookie, Response, Depends, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -93,7 +93,7 @@ from .otp_utils import (
     check_rate_limit, send_otp_email, mask_email
 )
 
-app = FastAPI(title="Metricord", docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(title="CommunityMetrics", docs_url=None, redoc_url=None, openapi_url=None)
 # Vypneme automatickou dokumentaci pro čistotu
 
 

@@ -1,6 +1,6 @@
 # Technické metriky a KPI
 
-Metricord vypočítává širokou škálu ukazatelů výkonnosti (KPI). Tento dokument podrobně vysvětluje jejich matematický základ, způsob uložení v databázi a správnou interpretaci.
+CommunityMetrics vypočítává širokou škálu ukazatelů výkonnosti (KPI). Tento dokument podrobně vysvětluje jejich matematický základ, způsob uložení v databázi a správnou interpretaci.
 
 ## Měření unikátní aktivity (DAU a MAU)
 

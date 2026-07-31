@@ -1,6 +1,6 @@
 # ML pipeline
 
-Popis prediktivního systému Metricord - od sběru dat přes klasifikaci uživatelů až po vizualizaci výsledků.
+Popis prediktivního systému CommunityMetrics - od sběru dat přes klasifikaci uživatelů až po vizualizaci výsledků.
 
 ::: warning Predikce jsou odhady
 Všechny predikce vycházejí z historických dat. Nepředvídatelné události (raid, zmínka influencera, sezónní výkyvy) mohou realitu výrazně změnit.
@@ -145,7 +145,7 @@ Model odhaduje počet členů v horizontu 30, 60 a 90 dní.
 
 ### Sezónní korekce (Weekly Seasonality)
 
-Aktivita na Discordu vykazuje silné týdenní vzorce. Aby Metricord předešel falešně pozitivním trendům (např. nárůst aktivity v pátek), aplikujeme sezónní indexy $I_d$ vypočítané jako:
+Aktivita na Discordu vykazuje silné týdenní vzorce. Aby CommunityMetrics předešel falešně pozitivním trendům (např. nárůst aktivity v pátek), aplikujeme sezónní indexy $I_d$ vypočítané jako:
 
 $$
 I_d = \frac{\text{Průměrná aktivita v den } d}{\text{Celková průměrná denní aktivita}}

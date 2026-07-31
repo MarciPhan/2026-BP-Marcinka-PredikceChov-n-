@@ -1,14 +1,14 @@
 # Referenční příručka API (RESTful)
 
-Rozhraní API Metricord umožňuje programový přístup k nasbíraným datům, integraci s externími systémy a automatizaci správy. Celé API je postaveno na standardu REST s výstupy ve formátu JSON.
+Rozhraní API CommunityMetrics umožňuje programový přístup k nasbíraným datům, integraci s externími systémy a automatizaci správy. Celé API je postaveno na standardu REST s výstupy ve formátu JSON.
 
 ::: tip Základní URL (Base URL)
-`https://dashboard.metricord.app/api/v1`
+`https://dashboard.communitymetrics.app/api/v1`
 :::
 
 ## Zabezpečení a autentizace
 
-Metricord API využívá dva hlavní způsoby ověření identity.
+CommunityMetrics API využívá dva hlavní způsoby ověření identity.
 
 ### A. Autentizace pomocí sezení (Session-based)
 Tuto metodu využívá webový dashboard. Po přihlášení přes Discord systém vytvoří **HTTP-only cookie** se zašifrovaným ID uživatele. Tento přístup vás chrání před útoky typu XSS a CSRF.

@@ -1,6 +1,6 @@
 # Monitoring systému
 
-Průvodce sledováním stavu Metricord instance - Redis, bot procesy a webový dashboard.
+Průvodce sledováním stavu CommunityMetrics instance - Redis, bot procesy a webový dashboard.
 
 ## Rychlá diagnostika
 
@@ -56,7 +56,7 @@ docker-compose restart web-dashboard
 
 ## Automatický health check
 
-Skript pro kontrolu heartbeatu (`/opt/metricord/check_health.sh`):
+Skript pro kontrolu heartbeatu (`/opt/communitymetrics/check_health.sh`):
 
 ```bash
 #!/bin/bash
@@ -72,7 +72,7 @@ fi
 
 Přidání do crontabu:
 ```bash
-*/5 * * * * /opt/metricord/check_health.sh >> /var/log/metricord-health.log 2>&1
+*/5 * * * * /opt/communitymetrics/check_health.sh >> /var/log/communitymetrics-health.log 2>&1
 ```
 
 ## Interpretace `redis-cli INFO`

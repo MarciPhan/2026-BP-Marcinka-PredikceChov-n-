@@ -25,7 +25,7 @@ class GDPRCommands(commands.Cog):
     async def privacy(self, interaction: discord.Interaction):
         # Zobrazí info o tom, co se o lidech sbírá
         embed = discord.Embed(
-            title="Ochrana osobních údajů - Metricord",
+            title="Ochrana osobních údajů - CommunityMetrics",
             description="Informace o tom, jaká data sbíráme a jak je chráníme.",
             color=discord.Color.blue()
         )
@@ -93,7 +93,7 @@ class GDPRCommands(commands.Cog):
             inline=False
         )
 
-        embed.set_footer(text="Metricord • GDPR Compliant")
+        embed.set_footer(text="CommunityMetrics • GDPR Compliant")
         
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
@@ -161,7 +161,7 @@ class GDPRCommands(commands.Cog):
             
             # Format output
             embed = discord.Embed(
-                title="Tvoje data v Metricord",
+                title="Tvoje data v CommunityMetrics",
                 description="Export všech dat uložených v databázi",
                 color=discord.Color.green()
             )

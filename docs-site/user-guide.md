@@ -1,10 +1,10 @@
 # Uživatelská příručka
 
-Vítejte v Metricord! Tato příručka vám vysvětlí, jak bot funguje, jaká data o vás shromažďuje a jak se zapojíte do života své komunity.
+Vítejte v CommunityMetrics! Tato příručka vám vysvětlí, jak bot funguje, jaká data o vás shromažďuje a jak se zapojíte do života své komunity.
 
 ## Jak používat příkazy
 
-Metricord ovládáte pomocí lomítkových příkazů (Slash Commands). Do chatu napište `/` a vyberte si ze seznamu dostupných funkcí.
+CommunityMetrics ovládáte pomocí lomítkových příkazů (Slash Commands). Do chatu napište `/` a vyberte si ze seznamu dostupných funkcí.
 
 | Příkaz | Co udělá | Kdo výsledek uvidí |
 | :--- | :--- | :--- |
@@ -41,7 +41,7 @@ $$ \text{Potřebné XP} = 50 \cdot (\text{Level})^2 + 150 \cdot (\text{Level}) +
 
 ## Ochrana vašich osobních údajů (GDPR)
 
-Metricord respektuje vaše soukromí a sbírá pouze data nezbytná pro fungování analytiky.
+CommunityMetrics respektuje vaše soukromí a sbírá pouze data nezbytná pro fungování analytiky.
 
 ### Jaká data sbíráme?
 Ukládáme pouze metadata, nikoliv obsah vašich zpráv:

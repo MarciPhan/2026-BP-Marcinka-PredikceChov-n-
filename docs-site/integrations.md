@@ -1,6 +1,6 @@
 # Integrace a webhooky
 
-Metricord odesílá HTTP notifikace (webhooky) při výskytu definovaných událostí. Tato sekce popisuje formát zpráv a dostupné události.
+CommunityMetrics odesílá HTTP notifikace (webhooky) při výskytu definovaných událostí. Tato sekce popisuje formát zpráv a dostupné události.
 
 ## Odchozí webhooky
 
@@ -40,7 +40,7 @@ V dashboardu přejděte do sekce **Settings → Webhooks**:
 
 ### Ověření doručení
 
-Každý webhook požadavek obsahuje hlavičku `X-Metricord-Signature` s HMAC-SHA256 podpisem payloadu. Ověření na straně příjemce:
+Každý webhook požadavek obsahuje hlavičku `X-CommunityMetrics-Signature` s HMAC-SHA256 podpisem payloadu. Ověření na straně příjemce:
 
 ```python
 import hmac, hashlib
@@ -52,7 +52,7 @@ def verify_webhook(payload: bytes, signature: str, secret: str) -> bool:
 
 ## Integrace s Discourse
 
-Metricord podporuje propojení Discord účtů s účty na fóru Discourse:
+CommunityMetrics podporuje propojení Discord účtů s účty na fóru Discourse:
 
 - **Synchronizace rolí:** Automatické přidělení Discord rolí podle aktivity na fóru.
 - **XP Merge:** Sloučení bodů z obou platforem.
@@ -69,4 +69,4 @@ Redis klíče:
 
 ## Zapier a Make
 
-REST API Metricord podporuje integraci s automatizačními platformami. V nástroji Zapier nebo Make použijte modul **HTTP Request** a směřujte jej na endpointy popsané v [API Reference](/api).
+REST API CommunityMetrics podporuje integraci s automatizačními platformami. V nástroji Zapier nebo Make použijte modul **HTTP Request** a směřujte jej na endpointy popsané v [API Reference](/api).

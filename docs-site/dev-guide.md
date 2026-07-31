@@ -1,6 +1,6 @@
 # Vývojářský průvodce
 
-Podrobný technický návod pro zprovoznění celého ekosystému Metricord na lokálním stroji a orientaci v kódu.
+Podrobný technický návod pro zprovoznění celého ekosystému CommunityMetrics na lokálním stroji a orientaci v kódu.
 
 ## Prerekvizity
 
@@ -97,7 +97,7 @@ cd docs-site && npm run docs:dev
 ## Adresářová struktura projektu
 
 ```text
-metricord/
+communitymetrics/
  bot/
     main.py              # Entry point, event loop, background tasks
     commands/

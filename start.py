@@ -48,7 +48,7 @@ def run_service(name, cmd_args, env, log_file):
         return proc
 
 def main():
-    print_color("Starting Metricord (Cross-Platform)...", "1;32")
+    print_color("Starting CommunityMetrics (Cross-Platform)...", "1;32")
     
     # 1. Env & Deps
     venv_dir = os.path.abspath(".venv")
@@ -80,7 +80,7 @@ def main():
     # 3. Redis check
     redis_running = not check_port_free(6379)
     if not redis_running:
-        print_color("Warning: Redis on port 6379 not detected. Metricord will fallback to FakeRedis.", "1;33")
+        print_color("Warning: Redis on port 6379 not detected. CommunityMetrics will fallback to FakeRedis.", "1;33")
     else:
         print_color("Redis detected.", "1;32")
 
@@ -107,7 +107,7 @@ def main():
 
     time.sleep(3)
     if bot_proc.poll() is None and web_proc.poll() is None:
-        print_color("Metricord is up!", "1;32")
+        print_color("CommunityMetrics is up!", "1;32")
         print(f"  Dashboard: http://localhost:{dashboard_port}")
         print("  Logs are in bot.log and web.log")
         print("\nPress Ctrl+C to stop services...")

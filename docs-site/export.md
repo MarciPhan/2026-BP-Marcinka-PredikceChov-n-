@@ -1,6 +1,6 @@
 # Export dat
 
-Metricord umožňuje exportovat nasbíraná data pro další zpracování v tabulkových procesorech nebo vlastních skriptech.
+CommunityMetrics umožňuje exportovat nasbíraná data pro další zpracování v tabulkových procesorech nebo vlastních skriptech.
 
 ## Přístup k exportu
 

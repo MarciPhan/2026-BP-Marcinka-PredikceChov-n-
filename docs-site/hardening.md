@@ -1,6 +1,6 @@
 # Zabezpečení infrastruktury (Hardening)
 
-Aplikace Metricord je bezpečná již na úrovni kódu, ale pro provoz v produkci musíte zajistit ochranu na úrovni operačního systému, sítě a kontejnerů. Tento průvodce vás provede kroky pro minimalizaci útočné plochy vašeho serveru.
+Aplikace CommunityMetrics je bezpečná již na úrovni kódu, ale pro provoz v produkci musíte zajistit ochranu na úrovni operačního systému, sítě a kontejnerů. Tento průvodce vás provede kroky pro minimalizaci útočné plochy vašeho serveru.
 
 ## Konfigurace síťového firewallu (UFW)
 
@@ -51,7 +51,7 @@ Upravte konfigurační soubor `/etc/ssh/sshd_config` pro zamezení útokům hrub
 
 1.  Zakažte přihlášení uživatele root: `PermitRootLogin no`.
 2.  Zakažte přihlášení heslem a vyžadujte SSH klíče: `PasswordAuthentication no`.
-3.  Omezte přihlášení pouze na konkrétního uživatele: `AllowUsers metricord`.
+3.  Omezte přihlášení pouze na konkrétního uživatele: `AllowUsers communitymetrics`.
 4.  Restartujte službu: `sudo systemctl restart ssh`.
 
 ## Zabezpečení kontejnerů (Docker Hardening)
@@ -84,7 +84,7 @@ services:
 
 ## Soulad s předpisy a ochrana soukromí
 
-Metricord implementuje principy **Privacy by Design** pro soulad s nařízením GDPR:
+CommunityMetrics implementuje principy **Privacy by Design** pro soulad s nařízením GDPR:
 
 1.  **Minimalizace dat:** Neukládáme obsah zpráv, pouze metadata potřebná pro analytiku (čas, délka, metadata autora).
 2.  **Právo na zapomnění:** Příkaz `/gdpr delete` okamžitě a nevratně odstraní všechny záznamy o uživateli ze všech Redis struktur (`Sorted Sets`, `Hashes`).

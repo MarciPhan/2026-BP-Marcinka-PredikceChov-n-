@@ -1,6 +1,6 @@
 # Průvodce rychlým startem
 
-S Metricordem získáte první analytické přehledy během 5 minut. Tento průvodce vás provede nezbytnými kroky od autorizace až po první predikce.
+S CommunityMetricsem získáte první analytické přehledy během 5 minut. Tento průvodce vás provede nezbytnými kroky od autorizace až po první predikce.
 
 ::: tip Předpoklady
 - Discord účet s oprávněním **Manage Server** na cílovém serveru.
@@ -12,7 +12,7 @@ S Metricordem získáte první analytické přehledy během 5 minut. Tento prův
 Pokud ještě nemáte bota, vytvořte si jej:
 
 1.  Přejděte na [Discord Developer Portal](https://discord.com/developers/applications).
-2.  Klikněte na **New Application** a pojmenujte ji (např. „Metricord").
+2.  Klikněte na **New Application** a pojmenujte ji (např. „CommunityMetrics").
 3.  V sekci **Bot** klikněte na **Add Bot** a zkopírujte si `BOT_TOKEN`.
 4.  V sekci **OAuth2 → URL Generator** zaškrtněte scope `bot` a `applications.commands`.
 
@@ -36,7 +36,7 @@ Pomocí vygenerované OAuth2 URL pozvěte bota na váš Discord server. Doporuč
 
 ## 3. Instalace a spuštění
 
-Metricord můžete spustit lokálně nebo přes Docker. Vyberte si cestu, která vám vyhovuje:
+CommunityMetrics můžete spustit lokálně nebo přes Docker. Vyberte si cestu, která vám vyhovuje:
 
 ::: code-group
 
@@ -89,7 +89,7 @@ Po spuštění by měly běžet tři služby:
 
 1.  Přejděte na `http://localhost:8092` (nebo vaši produkční doménu).
 2.  Klikněte na **Login** a autorizujte se přes Discord OAuth2.
-3.  Metricord automaticky zobrazí servery, kde máte právo **Manage Server**.
+3.  CommunityMetrics automaticky zobrazí servery, kde máte právo **Manage Server**.
 4.  Vyberte cílový server z postranního panelu.
 
 ## 5. První synchronizace dat (Backfill)
@@ -124,7 +124,7 @@ redis-cli INCR config:weights_version
 
 ## Časový plán sběru dat
 
-Analytika Metricord pracuje v několika cyklech. Očekávejte tyto milníky:
+Analytika CommunityMetrics pracuje v několika cyklech. Očekávejte tyto milníky:
 
 | Časový horizont | Co uvidíte | Účel |
 | :--- | :--- | :--- |
@@ -139,5 +139,5 @@ Analytika Metricord pracuje v několika cyklech. Očekávejte tyto milníky:
 1. **[Uživatelská příručka](/user-guide)** — Naučte se základní příkazy a XP systém.
 2. **[Průvodce pro moderátory](/moderators)** — Interpretujte metriky a pracujte s predikcemi.
 3. **[Osvědčené postupy](/best-practices)** — 30denní plán pro maximální využití analytiky.
-4. **[Architektura systému](/architecture)** — Pochopte, jak Metricord funguje pod kapotou.
+4. **[Architektura systému](/architecture)** — Pochopte, jak CommunityMetrics funguje pod kapotou.
 :::

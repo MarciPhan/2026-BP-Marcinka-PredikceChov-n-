@@ -1,10 +1,10 @@
 # Privacy Builder
 
-Nástroj pro generování zásad ochrany osobních údajů pro Discord server, který používá Metricord. Výsledný text vložte do kanálu `#pravidla` nebo `#privacy`.
+Nástroj pro generování zásad ochrany osobních údajů pro Discord server, který používá CommunityMetrics. Výsledný text vložte do kanálu `#pravidla` nebo `#privacy`.
 
 ## Rozsah sběru dat
 
-Metricord sbírá pouze metadata nutná pro výpočet analytických metrik. Obsah zpráv se neukládá.
+CommunityMetrics sbírá pouze metadata nutná pro výpočet analytických metrik. Obsah zpráv se neukládá.
 
 ### Sbíraná data
 
@@ -75,7 +75,7 @@ Doporučený text pro vložení na Discord server:
 ```
 ZÁSADY OCHRANY OSOBNÍCH ÚDAJŮ
 
-Tento server používá analytického bota Metricord.
+Tento server používá analytického bota CommunityMetrics.
 
 CO SBÍRÁME:
 - Metadata zpráv (čas, délka textu, kanál) - NE obsah zpráv

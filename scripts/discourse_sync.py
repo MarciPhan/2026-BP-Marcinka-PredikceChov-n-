@@ -6,7 +6,7 @@ from shared.redis_client import get_redis
 
 class DiscourseSync:
     """
-    Konektor pro synchronizaci dat z Discourse fóra do Metricord databáze.
+    Konektor pro synchronizaci dat z Discourse fóra do CommunityMetrics databáze.
     Tato třída slouží k integraci událostí (témata, příspěvky) z externího fóra.
     """
     
@@ -47,7 +47,7 @@ class DiscourseSync:
                 about_resp = await client.get(f"{url}/about.json", headers=headers)
                 about_data = about_resp.json() if about_resp.status_code == 200 else {}
                 
-                # Zpracování statistik (simulace Metricord eventů)
+                # Zpracování statistik (simulace CommunityMetrics eventů)
                 stats = about_data.get("about", {}).get("stats", {})
                 
                 total_topics = stats.get("topic_count", 0)

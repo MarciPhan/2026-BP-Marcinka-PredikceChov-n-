@@ -1,4 +1,4 @@
-star.# Metricord
+star.# CommunityMetrics
 
 Discord bot s pokročilou analytikou, prediktivními modely a interaktivním dashboardem pro správu a rozvoj komunit.
 
@@ -93,7 +93,7 @@ docker-compose up -d
 
 ## Technická analýza a predikce
 
-Metricord poskytuje:
+CommunityMetrics poskytuje:
 - **Engagement Score** – Hodnocení zapojení komunity (0–100)
 - **Security Audit** – Vyhodnocování bezpečnosti serveru
 - **Prediktivní modely** – Odhady růstu pomocí lineární regrese a sezónních indexů
@@ -104,5 +104,5 @@ Podrobnosti: [Technická dokumentace](docs/TECHNICAL_DESCRIPTION.md)
 ---
 
 ## Licence & Autor
-Projekt Metricord je proprietární software vytvořený jako součást bakalářské práce v roce 2026.
+Projekt CommunityMetrics je proprietární software vytvořený jako součást bakalářské práce v roce 2026.
 Všechna práva vyhrazena.

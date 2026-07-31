@@ -3,8 +3,8 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 
 export default withMermaid(defineConfig({
   lang: 'cs-CZ',
-  title: 'Metricord Docs',
-  description: 'Dokumentace pro analytický systém Metricord',
+  title: 'CommunityMetrics Docs',
+  description: 'Dokumentace pro analytický systém CommunityMetrics',
   base: '/2026-BP-Marcinka-PredikceChov-n-/',
   appearance: 'force-dark',
   ignoreDeadLinks: [

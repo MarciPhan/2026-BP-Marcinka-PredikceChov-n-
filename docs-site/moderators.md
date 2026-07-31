@@ -4,7 +4,7 @@ Tato příručka vám pomůže interpretovat nasbíraná data, pracovat s predik
 
 ## Sledování životního cyklu uživatele
 
-Každý člen komunity se nachází v jednom z pěti stavů. Metricord tyto stavy monitoruje a pomocí Markovových řetězců předpovídá, zda uživatel na serveru zůstane, nebo odejde.
+Každý člen komunity se nachází v jednom z pěti stavů. CommunityMetrics tyto stavy monitoruje a pomocí Markovových řetězců předpovídá, zda uživatel na serveru zůstane, nebo odejde.
 
 ```mermaid
 stateDiagram-v2

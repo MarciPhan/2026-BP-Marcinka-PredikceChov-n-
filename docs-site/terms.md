@@ -2,7 +2,7 @@
 
 *Účinné od: 25. ledna 2026*
 
-Vítejte v Metricord. Prosíme, přečtěte si pečlivě tyto Podmínky služby. Používáním naší služby vyjadřujete svůj souhlas s těmito Podmínkami. Pokud s nimi nesouhlasíte, nesmíte Službu používat.
+Vítejte v CommunityMetrics. Prosíme, přečtěte si pečlivě tyto Podmínky služby. Používáním naší služby vyjadřujete svůj souhlas s těmito Podmínkami. Pokud s nimi nesouhlasíte, nesmíte Službu používat.
 
 ## 1. Licence a přístup
 Poskytujeme vám omezenou, nevýhradní licenci k používání Služby pro účely správy vašich Discord serverů. Licence nezahrnuje:

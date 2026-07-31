@@ -1,6 +1,6 @@
 # Instalace a konfigurace
 
-Tento průvodce vás provede kompletním procesem od přípravy prostředí až po spuštění všech komponent systému Metricord.
+Tento průvodce vás provede kompletním procesem od přípravy prostředí až po spuštění všech komponent systému CommunityMetrics.
 
 ## Systémové požadavky
 
@@ -18,7 +18,7 @@ Tento průvodce vás provede kompletním procesem od přípravy prostředí až 
 ### 1. Vytvoření aplikace a bota
 
 1.  Přejděte na [Discord Developer Portal](https://discord.com/developers/applications).
-2.  Klikněte na **New Application**, zadejte název (např. „Metricord") a potvrďte.
+2.  Klikněte na **New Application**, zadejte název (např. „CommunityMetrics") a potvrďte.
 3.  V sekci **Bot** klikněte na **Reset Token** a bezpečně si zkopírujte `BOT_TOKEN`.
 4.  V sekci **Bot → Privileged Gateway Intents** zapněte všechny tři:
     - **Presence Intent**

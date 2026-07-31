@@ -1,18 +1,18 @@
 # Cloud Deployment (AWS, GCP, Azure)
 
-Metricord je plně "Cloud Ready". Zde jsou konfigurace pro profesionální nasazení v cloudu.
+CommunityMetrics je plně "Cloud Ready". Zde jsou konfigurace pro profesionální nasazení v cloudu.
 
 ## 1. Terraform (Infrastruktura jako kód)
 
 Použijte tento Terraform snippet pro vytvoření instance s předinstalovaným Dockerem na AWS.
 
 ```hcl
-resource "aws_instance" "metricord_prod" {
+resource "aws_instance" "communitymetrics_prod" {
   ami           = "ami-0c55b159cbfafe1f0" # Ubuntu 24.04
   instance_type = "t3.medium"
   
   tags = {
-    Name = "Metricord-Production"
+    Name = "CommunityMetrics-Production"
   }
 
   user_data = <<-EOF
@@ -28,16 +28,16 @@ resource "aws_instance" "metricord_prod" {
 Automatizujte instalaci závislostí a stažení bota na vašem serveru.
 
 ```yaml
-- name: Setup Metricord Node
+- name: Setup CommunityMetrics Node
   hosts: all
   tasks:
     - name: Install Docker
       apt: name=docker.io state=present
     - name: Copy .env
-      copy: src=.env dest=/opt/metricord/.env
-    - name: Launch Metricord
+      copy: src=.env dest=/opt/communitymetrics/.env
+    - name: Launch CommunityMetrics
       docker_service:
-        project_src: /opt/metricord
+        project_src: /opt/communitymetrics
         state: present
 ```
 
@@ -49,14 +49,14 @@ Pro deployment v GKE nebo EKS využijte tento manifest:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: metricord-bot
+  name: communitymetrics-bot
 spec:
   replicas: 2
   template:
     spec:
       containers:
       - name: bot
-        image: metricord/bot:latest
+        image: communitymetrics/bot:latest
         envFrom:
         - dotEnv: .env
 ```

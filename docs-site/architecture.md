@@ -1,6 +1,6 @@
 # Architektura systému
 
-Metricord je distribuovaný systém navržený pro zpracování milionů událostí v reálném čase. Tato stránka podrobně popisuje všechny komponenty, jejich komunikaci a datový tok.
+CommunityMetrics je distribuovaný systém navržený pro zpracování milionů událostí v reálném čase. Tato stránka podrobně popisuje všechny komponenty, jejich komunikaci a datový tok.
 
 ## 1. High-level přehled
 
@@ -63,7 +63,7 @@ graph TB
 ## 3. Adresářová struktura projektu
 
 ```text
-metricord/
+communitymetrics/
  bot/
     main.py              # Entry point, event loop, background tasks
     commands/
@@ -87,7 +87,7 @@ metricord/
 
 ## 4. Detailní datový tok (Event-Driven Flow)
 
-Metricord využívá plně asynchronní architekturu postavenou na `asyncio`.
+CommunityMetrics využívá plně asynchronní architekturu postavenou na `asyncio`.
 
 ::: info A. Ingesce (Bot Layer)
 Discord Gateway pošle JSON událost (např. `MESSAGE_CREATE`). Bot ji dekóduje a okamžitě předává do `ActivityTracker`. Zde se provádí *Deduplikace* (zabránění započítání stejné zprávy dvakrát).
@@ -110,7 +110,7 @@ PIPELINE:
 
 ## 5. Redis Schéma - Deep Dive
 
-Metricord využívá pokročilé datové struktury Redis pro maximální efektivitu.
+CommunityMetrics využívá pokročilé datové struktury Redis pro maximální efektivitu.
 
 **HyperLogLog (HLL):**
 Umožňuje sledovat unikátní uživatele (DAU/MAU) s fixní paměťovou náročností 12 KB bez ohledu na počet členů (i miliony). Chyba odhadu je pouze 0.81%.
@@ -137,7 +137,7 @@ Náročné maticové operace pro Markovovy řetězce jsou prováděny pomocí `N
 Každá zpráva na Discordu projde následujícím řetězcem zpracování:
 
 1.  **Ingesce:** Gateway WebSocket bota přijme událost `GUILD_CREATE_MESSAGE`.
-2.  **Validace:** Bot ověří, zda zpráva nepochází od jiného bota a zda má Metricord přístup k obsahu zprávy (Message Intent).
+2.  **Validace:** Bot ověří, zda zpráva nepochází od jiného bota a zda má CommunityMetrics přístup k obsahu zprávy (Message Intent).
 3.  **Extrakce metadat:** Získá se `user_id`, `guild_id`, timestamp a délka zprávy.
 4.  **Asynchronní zápis:** Bot odešle data do Redis pipeline. Akce nezamyká hlavní vlákno bota, což zajišťuje plynulý chod.
 5.  **HyperLogLog Sync:** ID uživatele se započítá do denní HLL struktury pro sledování DAU.
@@ -146,13 +146,13 @@ Každá zpráva na Discordu projde následujícím řetězcem zpracování:
 
 ## 7. Škálovatelnost a Vysoká dostupnost (HA)
 
-Metricord je navržen tak, aby dokázal obsloužit desetitisíce Discord serverů současně.
+CommunityMetrics je navržen tak, aby dokázal obsloužit desetitisíce Discord serverů současně.
 
 ### A. Horizontální škálování botů (Sharding)
-Discord API omezuje jeden WebSocket na cca 2500 serverů. Metricord implementuje **Discord Sharding**, kde lze spustit více instancí bota, přičemž každá instance zpracovává pouze svou část (shard) celkového provozu. Díky Redisu jako centrálnímu úložišti sdílejí všechny shardy stejná data.
+Discord API omezuje jeden WebSocket na cca 2500 serverů. CommunityMetrics implementuje **Discord Sharding**, kde lze spustit více instancí bota, přičemž každá instance zpracovává pouze svou část (shard) celkového provozu. Díky Redisu jako centrálnímu úložišti sdílejí všechny shardy stejná data.
 
 ### B. Redis Cluster & Sentinel
-Pro kritické nasazení podporuje Metricord:
+Pro kritické nasazení podporuje CommunityMetrics:
 - **Redis Sentinel:** Zajišťuje automatický failover. Pokud hlavní Redis selže, Sentinel automaticky povýší repliku na mastera a bot se k němu během několika sekund připojí.
 - **Redis Cluster:** Umožňuje horizontální dělení dat (Sharding) napříč více servery, což eliminuje omezení paměti RAM na jediném stroji a zvyšuje výkon zápisu.
 

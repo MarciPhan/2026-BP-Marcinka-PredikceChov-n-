@@ -23,8 +23,8 @@ except ImportError:
     SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
     SMTP_USER = os.getenv("SMTP_USER", "")
     SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-    SMTP_FROM = os.getenv("SMTP_FROM", "Dashboard <noreply@metricord.app>")
-    ALLOWED_EMAIL_DOMAIN = "@metricord.app"
+    SMTP_FROM = os.getenv("SMTP_FROM", "Dashboard <noreply@communitymetrics.app>")
+    ALLOWED_EMAIL_DOMAIN = "@communitymetrics.app"
     OTP_LENGTH = 6
     OTP_EXPIRY_SECONDS = 300
     OTP_MAX_ATTEMPTS = 5
@@ -47,7 +47,7 @@ def validate_email(email: str) -> Tuple[bool, str]:
 
 def get_user_role(email: str) -> str:
     """Return user role based on email domain."""
-    ADMIN_DOMAINS = ["@metricord.app"]
+    ADMIN_DOMAINS = ["@communitymetrics.app"]
     for domain in ADMIN_DOMAINS:
         if email.lower().endswith(domain):
             return "admin"
@@ -128,7 +128,7 @@ async def send_otp_email(email: str, otp: str) -> bool:
     try:
         
         message = MIMEMultipart("alternative")
-        message["Subject"] = "Your Metricord Dashboard Login Code"
+        message["Subject"] = "Your CommunityMetrics Dashboard Login Code"
         message["From"] = SMTP_FROM
         message["To"] = email
         
@@ -136,7 +136,7 @@ async def send_otp_email(email: str, otp: str) -> bool:
         text = f"""
 Hi,
 
-Your one-time password (OTP) for Metricord Dashboard is:
+Your one-time password (OTP) for CommunityMetrics Dashboard is:
 
     {otp}
 
@@ -145,7 +145,7 @@ This code will expire in {OTP_EXPIRY_SECONDS // 60} minutes.
 If you didn't request this, please ignore this email.
 
 ---
-Metricord
+CommunityMetrics
 """
         
         html = f"""
@@ -153,14 +153,14 @@ Metricord
   <body style="font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5;">
     <div style="max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
       <h2 style="color: #8b5cf6; margin-top: 0;">🔐 Your Login Code</h2>
-      <p style="color: #666; font-size: 16px;">Your one-time password for Metricord Dashboard is:</p>
+      <p style="color: #666; font-size: 16px;">Your one-time password for CommunityMetrics Dashboard is:</p>
       <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 30px 0;">
         {otp}
       </div>
       <p style="color: #999; font-size: 14px;">This code will expire in {OTP_EXPIRY_SECONDS // 60} minutes.</p>
       <p style="color: #999; font-size: 14px;">If you didn't request this, please ignore this email.</p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-      <p style="color: #999; font-size: 12px; text-align: center;">Metricord</p>
+      <p style="color: #999; font-size: 12px; text-align: center;">CommunityMetrics</p>
     </div>
   </body>
 </html>

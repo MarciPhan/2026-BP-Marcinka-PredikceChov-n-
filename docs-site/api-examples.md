@@ -1,6 +1,6 @@
 # Pokročilé API příklady
 
-Jak integrovat Metricord data do vašich vlastních projektů, botů nebo firemních dashboardů.
+Jak integrovat CommunityMetrics data do vašich vlastních projektů, botů nebo firemních dashboardů.
 
 ## Příklady implementace
 
@@ -36,7 +36,7 @@ const fetchStats = async (guildId) => {
 
 ## Automatizace s Webhooky
 
-Metricord umožňuje odesílat kritická varování (Alerts) přímo na váš webhook v JSON formátu. To využijete pro okamžitou reakci na náhlý pokles aktivity:
+CommunityMetrics umožňuje odesílat kritická varování (Alerts) přímo na váš webhook v JSON formátu. To využijete pro okamžitou reakci na náhlý pokles aktivity:
 
 ```json
 {
@@ -63,7 +63,7 @@ def export_guild_data(guild_id, token):
     
     response = requests.get(url, headers=headers, stream=True)
     if response.status_code == 200:
-        with open(f"metricord_export_{guild_id}.json", "wb") as f:
+        with open(f"communitymetrics_export_{guild_id}.json", "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
         print("Export úspěšně dokončen.")

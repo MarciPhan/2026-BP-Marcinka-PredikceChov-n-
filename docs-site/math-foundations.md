@@ -1,4 +1,4 @@
-# Matematické základy Metricord
+# Matematické základy CommunityMetrics
 
 Tato sekce slouží jako teoretický podklad pro bakalářskou práci a zájemce o datovou vědu v oblasti komunitního managementu.
 
@@ -50,7 +50,7 @@ Většina uživatelů v databázi stále na serveru je. Jejich data jsou tzv. **
 
 ## 3. Pravděpodobnostní počítání (HyperLogLog)
 
-Pro sledování DAU/MAU u extrémně velkých komunit využívá Metricord algoritmus **HyperLogLog (HLL)**. Ten umožňuje odhadnout kardinalitu (počet unikátních prvků) s chybou cca 0.81 % při použití pouze 12 KB paměti.
+Pro sledování DAU/MAU u extrémně velkých komunit využívá CommunityMetrics algoritmus **HyperLogLog (HLL)**. Ten umožňuje odhadnout kardinalitu (počet unikátních prvků) s chybou cca 0.81 % při použití pouze 12 KB paměti.
 
 Základem je sledování počtu počátečních nul v hashované hodnotě identifikátoru uživatele. Odhad $E$ je dán harmonickým průměrem:
 
@@ -68,7 +68,7 @@ $$
 ES = w_1 \cdot M + w_2 \cdot S + w_3 \cdot E + w_4 \cdot T
 $$
 
-Kde váhy $w_i$ jsou normalizovány tak, aby $\sum w_i = 1$. Výchozí nastavení Metricord využívá rovnoměrné rozložení (0.25 pro každou složku):
+Kde váhy $w_i$ jsou normalizovány tak, aby $\sum w_i = 1$. Výchozí nastavení CommunityMetrics využívá rovnoměrné rozložení (0.25 pro každou složku):
 
 1.  **$M$ (Moderation Index):** Inverzní hodnota počtu banů a kicků vůči celkové aktivitě. Vyšší hodnota značí klidnější komunitu.
 2.  **$S$ (Security Score):** Hodnocení nastavení serveru (MFA, verifikace, filtry obsahu).
@@ -79,7 +79,7 @@ Tento index slouží k rychlé identifikaci "zdraví" komunity bez nutnosti stud
 
 ## 5. Analýza časové složitosti (Big O)
 
-Metricord je optimalizován pro real-time zpracování milionů událostí.
+CommunityMetrics je optimalizován pro real-time zpracování milionů událostí.
 
 | Operace | Složitost | Datová struktura |
 | :--- | :--- | :--- |

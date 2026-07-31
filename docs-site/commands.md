@@ -1,6 +1,6 @@
 # Přehled příkazů
 
-Zde najdete seznam všech dostupných příkazů Metricord. Všechny funkce vyvoláte pomocí lomítkových příkazů (Slash Commands).
+Zde najdete seznam všech dostupných příkazů CommunityMetrics. Všechny funkce vyvoláte pomocí lomítkových příkazů (Slash Commands).
 
 ## Metriky a statistiky (`/activity`)
 
@@ -33,7 +33,7 @@ Ukáže žebříček 10 nejaktivnějších členů celého serveru.
 Vytvoří souhrnný report aktivity moderátorského týmu. Tento příkaz vyžaduje oprávnění **Administrator**.
 
 ### `/activity sync_names`
-Synchronizuje jména a role členů do databáze Metricord. Příkaz použijte po velkých změnách v rolích nebo přejmenování členů. Vyžaduje oprávnění **Administrator**.
+Synchronizuje jména a role členů do databáze CommunityMetrics. Příkaz použijte po velkých změnách v rolích nebo přejmenování členů. Vyžaduje oprávnění **Administrator**.
 
 ### `/activity backfill`
 Načte historická data ze serveru (zprávy a akce) do analytických modulů. Vyžaduje oprávnění **Administrator**.
@@ -50,10 +50,10 @@ Načte historická data ze serveru (zprávy a akce) do analytických modulů. Vy
 Příkazy pro správu vašich osobních údajů.
 
 ### `/gdpr export`
-Zašle vám soukromý odkaz ke stažení všech dat, která o vás Metricord uchovává.
+Zašle vám soukromý odkaz ke stažení všech dat, která o vás CommunityMetrics uchovává.
 
 ### `/gdpr delete`
-Smaže veškerou vaši historii a profil z databáze Metricord.
+Smaže veškerou vaši historii a profil z databáze CommunityMetrics.
 
 > [!CAUTION]
 > Tato operace je nevratná. Smazáním přijdete o všechny své XP, úrovně a historické statistiky.
