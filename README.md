@@ -1,4 +1,4 @@
-# Metricord
+star.# Metricord
 
 Discord bot s pokročilou analytikou, prediktivními modely a interaktivním dashboardem pro správu a rozvoj komunit.
 

@@ -128,6 +128,18 @@
         </div>
     </div>
 </div>
+{% elif id == 'chart_survival' %}
+<div class="card" data-id="chart_survival" style="min-height: 350px;">
+    <h3 style="margin-bottom: 16px;">Křivka přežití (Kaplan-Meier)</h3>
+    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Pravděpodobnost setrvání uživatele v čase.</p>
+    <div style="height: 300px;"><canvas id="survivalChart"></canvas></div>
+</div>
+{% elif id == 'chart_state_dist' %}
+<div class="card" data-id="chart_state_dist" style="min-height: 350px;">
+    <h3 style="margin-bottom: 16px;">Markovovo rozložení stavů</h3>
+    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Aktuální vs. predikované rozložení uživatelů.</p>
+    <div style="height: 300px;"><canvas id="stateDistChart"></canvas></div>
+</div>
 {% elif id == 'widget_stability' %}
 <div class="card" data-id="widget_stability">
     <h3 style="margin-bottom: 16px;">Predikce stability</h3>
@@ -198,7 +210,7 @@
 {% endmacro %}
 
 {% set default_order = ['card_pred_members', 'card_pred_msgs', 'chart_main_pred', 'chart_activity_forecast',
-'chart_dau_pred', 'widget_mau', 'widget_research', 'widget_stability', 'chart_peak', 'chart_seasonal', 'chart_engagement',
+'chart_dau_pred', 'widget_mau', 'widget_research', 'chart_survival', 'chart_state_dist', 'widget_stability', 'chart_peak', 'chart_seasonal', 'chart_engagement',
 'chart_new_returning', 'chart_voice', 'chart_channels'] %}
 {% set active_order = widget_order if widget_order else default_order %}
 
@@ -217,7 +229,7 @@
 
     {% set default_span = 1 %}
     {% if widget_id in ['chart_main_pred', 'chart_activity_forecast', 'chart_dau_pred', 'widget_mau',
-    'widget_stability', 'widget_research'] %}{% set default_span = 2 %}{% endif %}
+    'widget_stability', 'widget_research', 'chart_survival', 'chart_state_dist'] %}{% set default_span = 2 %}{% endif %}
     {% set span_val = saved_spans.get(widget_id, default_span) %}
 
     <div class="widget-wrapper span-{{span_val}}" data-id="{{widget_id}}" data-span="{{span_val}}"
@@ -261,7 +273,7 @@
 
         {% set default_span = 1 %}
         {% if widget_id in ['chart_main_pred', 'chart_activity_forecast', 'chart_dau_pred', 'widget_mau',
-        'widget_stability', 'widget_research', 'chart_voice', 'chart_channels'] %}{% set default_span = 2 %}{% endif %}
+        'widget_stability', 'widget_research', 'chart_survival', 'chart_state_dist', 'chart_voice', 'chart_channels'] %}{% set default_span = 2 %}{% endif %}
         {% set span_val = saved_spans.get(widget_id, default_span) %}
 
         <div class="widget-wrapper span-{{span_val}}" data-id="{{widget_id}}" data-span="{{span_val}}"
@@ -648,6 +660,85 @@
                     const toxEl = document.getElementById('res-tox');
                     if(toxEl){
                         toxEl.style.color = resData.toxicity_index_pct > 2.0 ? '#ef4444' : (resData.toxicity_index_pct > 1.0 ? '#f59e0b' : '#10b981');
+                    }
+                    
+                    // Survival Chart
+                    if (document.getElementById('survivalChart') && resData.survival_curve && Object.keys(resData.survival_curve).length > 0) {
+                        const days = Object.keys(resData.survival_curve).map(Number).sort((a,b)=>a-b);
+                        const probs = days.map(d => (resData.survival_curve[d] * 100).toFixed(1));
+                        
+                        new Chart(document.getElementById('survivalChart'), {
+                            type: 'line',
+                            data: {
+                                labels: days,
+                                datasets: [{
+                                    label: 'Šance na setrvání (%)',
+                                    data: probs,
+                                    borderColor: '#ec4899',
+                                    backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                                    fill: true,
+                                    tension: 0.2,
+                                    stepped: true
+                                }]
+                            },
+                            options: {
+                                scales: {
+                                    x: { title: { display: true, text: 'Dny od připojení' } },
+                                    y: { title: { display: true, text: 'Pravděpodobnost přežití (%)' }, min: 0, max: 100 }
+                                },
+                                plugins: { legend: { display: false } }
+                            }
+                        });
+                    }
+                    
+                    // State Distribution Chart
+                    if (document.getElementById('stateDistChart') && resData.state_distribution) {
+                        const dist = resData.state_distribution;
+                        const p_dist = resData.predicted_distribution || {};
+                        const states = ['New (S0)', 'Active (S1)', 'Passive (S2)', 'Inactive (S3)', 'Churned (S4)'];
+                        
+                        const total_current = Object.values(dist).reduce((a,b)=>a+b, 0) || 1;
+                        
+                        const currentData = [
+                            dist.new || 0,
+                            dist.active || 0,
+                            dist.passive || 0,
+                            dist.inactive || 0,
+                            dist.churned || 0
+                        ].map(v => (v/total_current*100).toFixed(1));
+                        
+                        const predictedData = [
+                            p_dist.new || 0,
+                            p_dist.active || 0,
+                            p_dist.passive || 0,
+                            p_dist.inactive || 0,
+                            p_dist.churned || 0
+                        ].map(v => (v*100).toFixed(1));
+                        
+                        new Chart(document.getElementById('stateDistChart'), {
+                            type: 'bar',
+                            data: {
+                                labels: states,
+                                datasets: [
+                                    {
+                                        label: 'Aktuální (%)',
+                                        data: currentData,
+                                        backgroundColor: '#3b82f6',
+                                        borderRadius: 4
+                                    },
+                                    {
+                                        label: 'Predikce (+7 dní)',
+                                        data: predictedData,
+                                        backgroundColor: 'rgba(236, 72, 153, 0.8)',
+                                        borderRadius: 4
+                                    }
+                                ]
+                            },
+                            options: {
+                                scales: { y: { min: 0, max: 100 } },
+                                plugins: { legend: { display: true, position: 'bottom' } }
+                            }
+                        });
                     }
                 }
             } catch(e) {

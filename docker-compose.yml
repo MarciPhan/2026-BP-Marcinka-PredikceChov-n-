@@ -69,7 +69,6 @@ services:
 networks:
   botnet:
     name: botnet
-    external: true
 
 volumes:
   redis_data:

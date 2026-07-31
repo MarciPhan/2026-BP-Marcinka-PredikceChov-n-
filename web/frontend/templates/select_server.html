@@ -188,6 +188,7 @@
                 try {
                     const formData = new FormData();
                     formData.append('token', token);
+                    formData.append('csrf_token', '{{ csrf_token }}');
                     
                     const response = await fetch('/api/admin/config/bot-token', {
                         method: 'POST',

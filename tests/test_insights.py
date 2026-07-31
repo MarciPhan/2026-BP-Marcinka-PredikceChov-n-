@@ -6,7 +6,7 @@ import os
 
 sys.path.append(os.path.join(os.getcwd()))
 
-from utils import generate_security_insights
+from web.backend.utils import generate_security_insights
 
 class TestSecurityInsights(unittest.TestCase):
     def test_high_churn_insight(self):

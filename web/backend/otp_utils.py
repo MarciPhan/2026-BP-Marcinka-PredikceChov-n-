@@ -77,26 +77,26 @@ async def verify_otp(email: str, otp: str) -> Tuple[bool, str]:
         r = await get_redis()
         
         print(f"[DEBUG] Verifying OTP for email: '{email}'")
-        key = f"otp:{email}"
         
+        # Atomický inkrement (ochrana proti race condition)
+        attempts = await r.incr(f"otp_attempts:{email}")
+        
+        if attempts > OTP_MAX_ATTEMPTS:
+            await r.delete(f"otp:{email}")
+            return False, "Příliš mnoho neúspěšných pokusů"
+            
+        key = f"otp:{email}"
         stored_otp = await r.get(key)
         
         if not stored_otp:
             return False, "OTP kód vypršel nebo neexistuje"
-        
-        attempts = int(await r.get(f"otp_attempts:{email}") or "0")
-        if attempts >= OTP_MAX_ATTEMPTS:
-            await r.delete(f"otp:{email}")
-            await r.delete(f"otp_attempts:{email}")
-            return False, "Příliš mnoho neúspěšných pokusů"
         
         if stored_otp == otp:
             await r.delete(f"otp:{email}")
             await r.delete(f"otp_attempts:{email}")
             return True, "Valid"
         else:
-            await r.incr(f"otp_attempts:{email}")
-            return False, f"Neplatný kód (zbývá {OTP_MAX_ATTEMPTS - attempts - 1} pokusů)"
+            return False, f"Neplatný kód (zbývá {OTP_MAX_ATTEMPTS - attempts} pokusů)"
     
     except Exception as e:
         print(f"Error verifying OTP: {e}")
@@ -108,16 +108,15 @@ async def check_rate_limit(email: str) -> Tuple[bool, int]:
         r = await get_redis()
         
         rate_key = f"otp_rate:{email}"
-        count = await r.get(rate_key)
         
-        if count and int(count) >= OTP_RATE_LIMIT:
+        # Atomický inkrement pro rate limit
+        count = await r.incr(rate_key)
+        if count == 1:
+            await r.expire(rate_key, 600)
+            
+        if count > OTP_RATE_LIMIT:
             ttl = await r.ttl(rate_key)
             return False, ttl
-        
-        if count:
-            await r.incr(rate_key)
-        else:
-            await r.setex(rate_key, 600, "1")  
         
         return True, 0
     except Exception as e:
