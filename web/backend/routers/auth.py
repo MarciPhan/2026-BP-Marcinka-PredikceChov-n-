@@ -8,10 +8,7 @@ import httpx
 import base64
 import os
 
-from ..otp_utils import (
-    validate_email, get_user_role, generate_otp, store_otp, 
-    verify_otp, check_rate_limit, send_otp_email, mask_email
-)
+# OTP email auth removed – přihlášení pouze přes Discord OAuth2 nebo Demo
 
 # Nastavení šablon
 templates = Jinja2Templates(directory="web/frontend/templates")
@@ -50,66 +47,7 @@ async def demo_login(request: Request):
     request.session["login_time"] = datetime.now().isoformat()
     return RedirectResponse(url="/", status_code=303)
 
-@router.get("/login-email", response_class=HTMLResponse)
-async def login_email_page(request: Request, error: Optional[str] = None):
-    """Zobrazení stránky pro zadání emailu (OTP)."""
-    return templates.TemplateResponse("login_email.html", {"request": request, "error": error})
 
-@router.post("/api/auth/request-otp")
-async def request_otp(request: Request, email: str = Form(...)):
-    """Validace a odeslání OTP na e-mail."""
-    is_valid, msg = validate_email(email)
-    if not is_valid:
-        return templates.TemplateResponse("login_email.html", {"request": request, "error": msg})
-    
-    allowed, wait_time = await check_rate_limit(email)
-    if not allowed:
-        return templates.TemplateResponse("login_email.html", {"request": request, "error": f"Příliš mnoho žádostí. Zkuste to za {wait_time} sekund."})
-    
-    otp = generate_otp()
-    if await store_otp(email, otp):
-        if await send_otp_email(email, otp):
-            return RedirectResponse(url=f"/verify-otp?email={email}", status_code=303)
-        else:
-            return templates.TemplateResponse("login_email.html", {"request": request, "error": "Chyba při odesílání e-mailu."})
-    else:
-        return templates.TemplateResponse("login_email.html", {"request": request, "error": "Chyba databáze při ukládání kódu."})
-
-@router.get("/verify-otp", response_class=HTMLResponse)
-async def verify_otp_page(request: Request, email: str, error: Optional[str] = None):
-    """Zobrazení stránky pro zadání OTP kódu."""
-    masked = mask_email(email)
-    return templates.TemplateResponse("verify_otp_page.html", {
-        "request": request, 
-        "email": email, 
-        "masked_email": masked, 
-        "error": error
-    })
-
-@router.post("/api/auth/verify-otp")
-async def process_verify_otp(request: Request, email: str = Form(...), otp: str = Form(...)):
-    """Ověření OTP kódu a přihlášení."""
-    is_valid, msg = await verify_otp(email, otp)
-    if is_valid:
-        request.session["authenticated"] = True
-        request.session["discord_user"] = {
-            "id": f"email:{email}",
-            "username": email.split('@')[0],
-            "avatar": None,
-            "email": email
-        }
-        request.session["role"] = get_user_role(email)
-        request.session["login_time"] = datetime.now().isoformat()
-        
-        if request.session["role"] == "admin":
-             return RedirectResponse(url="/select-server", status_code=303)
-        else:
-             return RedirectResponse(url="/", status_code=303)
-    else:
-        masked = mask_email(email)
-        return templates.TemplateResponse("verify_otp_page.html", {
-            "request": request, "email": email, "masked_email": masked, "error": msg
-        })
 
 @router.get("/login")
 async def login_page(request: Request):

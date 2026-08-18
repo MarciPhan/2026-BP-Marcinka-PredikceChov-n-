@@ -1,5 +1,6 @@
 import asyncio
 import sys
+import pytest
 from pathlib import Path
 from typing import Dict, Any, List
 
@@ -57,6 +58,7 @@ class MockRepository(BaseRepository):
     async def get_cached_roles(self, guild_id: int) -> List[Dict[str, str]]:
         return []
 
+@pytest.mark.asyncio
 async def test_swappable_architecture():
     print("="*50)
     print("1. Spouštím test s originálním Redis repozitářem (může selhat, pokud Redis neběží)")

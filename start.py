@@ -58,24 +58,26 @@ def main():
     
     if platform.system() == "Windows":
         python_bin = os.path.join(venv_dir, "Scripts", "python.exe")
-        pip_bin = os.path.join(venv_dir, "Scripts", "pip.exe")
     else:
         python_bin = os.path.join(venv_dir, "bin", "python3")
-        pip_bin = os.path.join(venv_dir, "bin", "pip")
 
     if not os.path.exists(python_bin):
         # Fallback to python
         python_bin = os.path.join(venv_dir, "bin", "python")
 
     print("Installing dependencies...")
-    subprocess.run([pip_bin, "install", "-q", "-r", "requirements.txt"])
+    subprocess.run([python_bin, "-m", "pip", "install", "-q", "-r", "requirements.txt"])
 
     # 2. Config check
     if not os.path.exists(".env"):
-        print_color("Error: .env missing", "1;31")
         if os.path.exists(".env.example"):
-            print("Copy .env.example to .env and fill in BOT_TOKEN")
-        sys.exit(1)
+            import shutil
+            shutil.copy(".env.example", ".env")
+            print_color("Warning: .env missing, automatically copied from .env.example", "1;33")
+            print_color("Please edit .env to add your actual BOT_TOKEN if necessary.", "1;33")
+        else:
+            print_color("Error: Both .env and .env.example are missing.", "1;31")
+            sys.exit(1)
 
     # 3. Redis check
     redis_running = not check_port_free(6379)

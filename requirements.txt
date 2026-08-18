@@ -12,3 +12,6 @@ aiosmtplib==5.1.2
 numpy==2.3.2
 itsdangerous==2.2.0
 fakeredis==2.37.0
+pytest==8.0.0
+pytest-asyncio==0.23.5
+pytest-cov==4.1.0

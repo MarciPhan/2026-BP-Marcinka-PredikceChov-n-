@@ -112,11 +112,16 @@ def get_demo_stats(start_date: str = None, end_date: str = None) -> Dict[str, An
     total_hours_30d = 1450.5
     
     leaderboard = [
-        {"rank": 1, "name": "AdminMaster", "avatar": None, "action_count": 150, "weighted_h": 45.2, "role_names": ["Admin", "Mod"]},
-        {"rank": 2, "name": "ModSarah", "avatar": None, "action_count": 120, "weighted_h": 38.5, "role_names": ["Mod"]},
-        {"rank": 3, "name": "HelperJoe", "avatar": None, "action_count": 85, "weighted_h": 22.1, "role_names": ["Helper"]},
-        {"rank": 4, "name": "BotDev", "avatar": None, "action_count": 40, "weighted_h": 15.0, "role_names": ["Dev"]},
-        {"rank": 5, "name": "CommunityMgr", "avatar": None, "action_count": 25, "weighted_h": 40.0, "role_names": ["Manager"]}
+        {"rank": 1, "name": "AdminMaster", "user_id": "demo-1", "avatar": None, "action_count": 150, "weighted_h": 45.2, "role_names": ["Admin", "Mod"]},
+        {"rank": 2, "name": "ModSarah", "user_id": "demo-2", "avatar": None, "action_count": 120, "weighted_h": 38.5, "role_names": ["Mod"]},
+        {"rank": 3, "name": "HelperJoe", "user_id": "demo-3", "avatar": None, "action_count": 85, "weighted_h": 22.1, "role_names": ["Helper"]},
+        {"rank": 4, "name": "BotDev", "user_id": "demo-4", "avatar": None, "action_count": 40, "weighted_h": 15.0, "role_names": ["Dev"]},
+        {"rank": 5, "name": "CommunityMgr", "user_id": "demo-5", "avatar": None, "action_count": 25, "weighted_h": 40.0, "role_names": ["Manager"]},
+        {"rank": 6, "name": "ActiveUser99", "user_id": "demo-6", "avatar": None, "action_count": 15, "weighted_h": 20.5, "role_names": ["Member"]},
+        {"rank": 7, "name": "GamerDude", "user_id": "demo-7", "avatar": None, "action_count": 12, "weighted_h": 18.0, "role_names": ["Member"]},
+        {"rank": 8, "name": "ChatterBox", "user_id": "demo-8", "avatar": None, "action_count": 10, "weighted_h": 12.3, "role_names": ["Member", "VIP"]},
+        {"rank": 9, "name": "NightOwl", "user_id": "demo-9", "avatar": None, "action_count": 8, "weighted_h": 30.1, "role_names": ["Member"]},
+        {"rank": 10, "name": "Newbie", "user_id": "demo-10", "avatar": None, "action_count": 5, "weighted_h": 5.0, "role_names": ["New"]},
     ]
     
     # Stickiness
@@ -338,7 +343,7 @@ def get_demo_logs() -> List[str]:
         logs.append(msg)
     return logs
 
-def get_demo_user_activity(uid: int) -> Dict[str, Any]:
+def get_demo_user_activity(uid: str) -> Dict[str, Any]:
     """Mock activity data for a specific user."""
     days = 30
     now = datetime.now()
@@ -370,3 +375,138 @@ def get_demo_user_activity(uid: int) -> Dict[str, Any]:
         }
     }
 
+
+def get_demo_health_overview() -> Dict[str, Any]:
+    import time
+    now = time.time()
+    return {
+        "config": {
+            "community_type": "general",
+            "question_mode": "heuristic",
+            "help_timeout_hours": 24,
+            "conflict_window_days": 14,
+            "support_channel_ids": [],
+            "help_requests_enabled": True,
+            "moderation_context_enabled": True,
+            "departure_context_enabled": True,
+            "event_conversion_enabled": True,
+        },
+        "conflicts": {
+            "repeated_pairs": 2,
+            "pairs": [
+                {
+                    "target": {"name": "DemoSpammer"},
+                    "moderator": {"name": "ModSarah"},
+                    "event_count": 3,
+                    "actions": {"Timeout": 2, "Delete": 1},
+                    "severity": "medium",
+                    "is_repeated": True
+                },
+                {
+                    "target": {"name": "AngryUser"},
+                    "moderator": {"name": "AdminMaster"},
+                    "event_count": 4,
+                    "actions": {"Kick": 1, "Timeout": 3},
+                    "severity": "high",
+                    "is_repeated": True
+                }
+            ]
+        },
+        "help_requests": {
+            "open": 3,
+            "overdue": 1,
+            "items": [
+                {
+                    "author": {"name": "Newbie123"},
+                    "channel_name": "podpora",
+                    "status": "open",
+                    "overdue": True,
+                    "acknowledged_by_reaction": False,
+                    "response_seconds": None,
+                    "created_at": now - 90000
+                },
+                {
+                    "author": {"name": "UserXYZ"},
+                    "channel_name": "pomoc",
+                    "status": "answered",
+                    "overdue": False,
+                    "acknowledged_by_reaction": True,
+                    "response_seconds": 600,
+                    "created_at": now - 3600
+                }
+            ]
+        },
+        "departures": {
+            "with_preceding_signal": 2,
+            "items": [
+                {
+                    "user": {"name": "LeavingUser"},
+                    "left_at": now - 40000,
+                    "recent_moderation_events": 2,
+                    "recent_help_requests": 0
+                },
+                {
+                    "user": {"name": "SadMember"},
+                    "left_at": now - 150000,
+                    "recent_moderation_events": 0,
+                    "recent_help_requests": 3
+                }
+            ]
+        },
+        "moderator_workload": {
+            "team_average": 15.5,
+            "items": [
+                {
+                    "moderator": {"name": "ModSarah"},
+                    "actions": 45,
+                    "above_team_distribution": True
+                },
+                {
+                    "moderator": {"name": "HelperJoe"},
+                    "actions": 12,
+                    "above_team_distribution": False
+                }
+            ]
+        },
+        "events": {
+            "items": [
+                {
+                    "name": "Páteční pokec",
+                    "scheduled_start": now - 86400,
+                    "interested": 45,
+                    "attended": 28,
+                    "conversion_percent": 62.2
+                },
+                {
+                    "name": "Turnaj v CS:GO",
+                    "scheduled_start": now - 400000,
+                    "interested": 120,
+                    "attended": 95,
+                    "conversion_percent": 79.1
+                }
+            ]
+        },
+        "principles": {
+            "human_decision_required": True,
+            "causality_not_inferred": True,
+            "message_content_stored": False,
+        }
+    }
+
+def get_demo_health_evidence(user_id: str) -> Dict[str, Any]:
+    return {
+        "user": {"name": f"Uživatel {user_id}"},
+        "period_days": 90,
+        "observable": {
+            "messages": 145,
+            "replies": 32,
+            "active_channels": 4,
+            "received_reactions": 87,
+            "moderation_incidents": 2
+        },
+        "notice": "Toto jsou ilustrativní data pro ukázkového uživatele.",
+        "human_review": {
+            "judgement": "observe",
+            "note": "Zatím necháme být, možná jen špatný den."
+        }
+    }

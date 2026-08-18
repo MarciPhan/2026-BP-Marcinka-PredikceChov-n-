@@ -19,16 +19,17 @@
 
 ## English
 
-CommunityMetrics is a high-performance analytics engine designed to manage, measure, and analyze large-scale Discord communities. It processes real-time events to model user retention, map server growth, and audit community health using applied data science models (Markov Chains, Kaplan-Meier).
+CommunityMetrics is an analytics engine designed to manage, measure, and analyze Discord servers and Discourse forums. It processes real-time events and API data to calculate user retention, map community growth, evaluate moderator workload, and provide prototype predictive indicators.
 
-Built with Python, FastAPI, and Redis, it features a modular Service-Oriented Architecture (SOA) optimized for high throughput and horizontal scalability.
+Built with Python, FastAPI, and Redis, it features a modular Service-Oriented Architecture (SOA) optimized for high throughput and clean data ingestion.
 
 ### Core Features
 
-#### 1. Data-Driven Analytics
-- **Behavioral Modeling:** Built-in calculation of user churn probability, daily active users (DAU) estimation, and long-term growth trends without storing private messages.
-- **Community Health Audit:** Automatically assesses server configuration, moderation metrics, and active member ratios to calculate a comprehensive security and engagement score.
-- **Smart Insights:** Generates actionable feedback for community managers based on statistically significant shifts in user behavior.
+#### 1. Multi-Platform Data Analytics
+- **Discord & Discourse Support:** Event-based real-time ingestion from Discord bots alongside periodic polling via Discourse HTTP API connectors.
+- **Behavioral & Retention Modeling:** Automated calculation of user activity trends, DAU/WAU/MAU estimation via HyperLogLog, and prototype retention modeling (Markov chains & Kaplan-Meier survival curves).
+- **Moderation Workload Tracking:** Moderator Intervention Index (MII) to monitor community safety and mod team burden.
+- **Smart Insights:** Generates actionable feedback for community managers based on shifts in user behavior.
 
 #### 2. High-Performance Infrastructure
 - **Asynchronous Execution:** Handles thousands of events per second (EPS) using native Python `asyncio` coupled with `httpx` for Discord API interactions.
@@ -81,7 +82,7 @@ To collect accurate data and process analytics, the Discord Bot requires specifi
    - `Presence Intent`
    - `Server Members Intent`
    - `Message Content Intent` (required exclusively for command processing and metadata logging)
-3. Generate an OAuth2 invite link with the `Administrator` permission scope and add the bot to your server.
+3. Generate an OAuth2 invite link with the `View Channels, Send Messages, Read Message History` permissions and add the bot to your server.
 
 ### System Architecture
 
@@ -104,16 +105,17 @@ Contributions are highly encouraged. When submitting a Pull Request, ensure your
 
 ## Čeština
 
-CommunityMetrics je výkonný analytický systém navržený pro správu, měření a analýzu rozsáhlých komunit na platformě Discord. Zpracovává události v reálném čase a aplikuje modely datové vědy (Markovovy řetězce, Kaplan-Meier) pro výpočet retence uživatelů, mapování růstu serveru a komplexní audit zdraví komunity.
+CommunityMetrics je analytický systém navržený pro správu, měření a analýzu komunit na platformách Discord a Discourse. Zpracovává události v reálném čase i data z Discourse API a aplikuje statistické metody pro odhad aktivity uživatelů, zátěž moderátorů a výpočet indikátorů udržení členů.
 
-Platforma je postavena na Pythonu, FastAPI a Redisu. Vyznačuje se plně modulární servisně orientovanou architekturou (SOA), která je optimalizována pro vysokou zátěž a horizontální škálovatelnost.
+Platforma je postavena na Pythonu, FastAPI a Redisu. Vyznačuje se modulární servisně orientovanou architekturou (SOA), která je optimalizována pro vysokou zátěž a čisté oddělení sběru dat od výpočtů.
 
 ### Hlavní funkce
 
-#### 1. Analytika založená na datech
-- **Modelování chování:** Integrované výpočty pravděpodobnosti odchodu uživatelů (churn), odhady denně aktivních uživatelů (DAU) a analýza dlouhodobých trendů růstu komunity.
-- **Audit komunity:** Systém automaticky vyhodnocuje konfiguraci serveru, efektivitu moderace a poměr aktivních členů, na základě čehož generuje bezpečnostní skóre a skóre zapojení.
-- **Chytré přehledy (Smart Insights):** Generuje konkrétní doporučení pro administrátory na základě statisticky významných odchylek v aktivitě uživatelů.
+#### 1. Víceplatformní analytika
+- **Podpora Discordu a Discourse:** Průběžný událostní sběr událostí z Discordu a HTTP API konektor s možností automatické synchronizace pro Discourse fóra.
+- **Modelování chování a retence:** Výpočty trendů aktivity, odhady denně aktivních uživatelů (DAU/WAU/MAU) přes HyperLogLog a prototypy matematických modelů retence (Markovovy řetězce, Kaplan-Meier).
+- **Sledování moderační zátěže:** Ukazatel Moderator Intervention Index (MII) pro dohled nad bezpečností a vytížením moderačního týmu.
+- **Chytré přehledy (Smart Insights):** Generuje doporučení pro administrátory na základě statistických odchylek v aktivitě uživatelů.
 
 #### 2. Vysoce výkonná infrastruktura
 - **Asynchronní běh:** Zvládá zpracovat tisíce událostí za vteřinu (EPS) pomocí nativní knihovny `asyncio` a `httpx` pro komunikaci s Discord API.
@@ -166,7 +168,7 @@ Aby mohl bot správně sbírat statistická metadata, musí mít na [Discord Dev
    - `Presence Intent`
    - `Server Members Intent`
    - `Message Content Intent` (zcela nezbytné pro detekci aktivity a zpracování příkazů)
-3. Vygenerujte OAuth2 odkaz s právy `Administrator` a přidejte bota na svůj server.
+3. Vygenerujte OAuth2 odkaz s právy pro čtení a posílání zpráv (View Channels, Send Messages, Read Message History) a přidejte bota na svůj server.
 
 ### Architektura systému
 
@@ -184,3 +186,53 @@ python3 tests/test_architecture.py
 
 ### Jak přispět
 Příspěvky formou Pull Requestů jsou vítány. Před odesláním PR prosím zkontrolujte, že váš kód splňuje formátovací konvence projektu (pomocí `flake8` a `black`).
+
+## Modul Zdraví komunity
+
+Nová stránka `/community-health` rozšiřuje původní objemovou analytiku o kontextové funkce vycházející z dotazníkového šetření mezi správci komunit:
+
+- opakované moderační události mezi stejným členem a moderátorem;
+- nevyřešené žádosti o pomoc v explicitně zvolených kanálech;
+- časový kontext před odchodem člena bez tvrzení příčinné souvislosti;
+- popis rozložení moderační zátěže bez automatického hodnocení kvality moderátora;
+- porovnání zájmu o Discord Scheduled Event se skutečnou účastí v připojeném hlasovém kanálu;
+- měřitelné podklady pro lidské rozhodování o rolích doplněné ručním stanoviskem týmu.
+
+Obsah zpráv se neukládá. Ukládají se pouze identifikátory, čas, kanál, vazba odpovědi, počet reakcí a další nezbytná metadata s expirací.
+
+### Nastavení
+
+1. Otevřete `/community-health` jako administrátor.
+2. Vyberte typ komunity a zapněte pouze relevantní moduly.
+3. Pro analýzu pomoci vložte ID podpůrných kanálů.
+4. Historická data lze doplnit příkazem `/health backfill` (maximálně 180 dní).
+
+### Integrační API v1
+
+Dokumentace je dostupná na `/api/docs`. API klíč se vytváří na stránce Zdraví komunity a posílá se v hlavičce:
+
+```http
+X-API-Key: mtr_...
+```
+
+Příklady endpointů:
+
+```text
+GET /api/v1/health/overview
+GET /api/v1/health/moderation/conflicts
+GET /api/v1/health/help-requests
+GET /api/v1/health/departures
+GET /api/v1/health/events
+GET /api/v1/health/role-evidence/{user_id}
+GET /api/v1/channels
+```
+
+Klíče mají omezené rozsahy oprávnění. Hodnocení vhodnosti člověka pro roli API záměrně nevrací.
+
+### Testy
+
+```bash
+pytest -q
+```
+
+Aktuální sada obsahuje také testy kontextové analytiky a principu lidského rozhodování.

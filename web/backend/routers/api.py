@@ -11,7 +11,7 @@ def require_auth(request: Request):
     return True
 
 from ..utils import *
-
+from ..demo_data import get_demo_stats
 @router.post("/api/admin/config/bot-token")
 async def set_bot_token(request: Request, token: str = Form(...), csrf_token: str = Form(...)):
     # Nastavení Discord bot tokenu administrátorem
@@ -33,8 +33,14 @@ async def api_add_discourse(
     request: Request,
     url: str = Form(...),
     api_key: str = Form(...),
-    api_user: str = Form(...)
+    api_user: str = Form(...),
+    csrf_token: str = Form(...)
 ):
+    import secrets
+    session_csrf = request.session.get("csrf_token")
+    if not session_csrf or not secrets.compare_digest(session_csrf, csrf_token):
+        return JSONResponse({"error": "Neplatný CSRF token"}, status_code=403)
+        
     # API pro přidání Discourse
     user = request.session.get("discord_user")
     if not user:
@@ -115,23 +121,26 @@ async def api_add_discourse(
         return JSONResponse({"error": f"Database error: {str(e)}"}, status_code=500)
 
 
+try:
+    from scripts.discourse_sync import DiscourseSync
+except ImportError:
+    DiscourseSync = None
+
 @router.post("/api/discourse/sync")
-async def api_trigger_sync(request: Request, guild_id: str = Form(...)):
+async def api_trigger_sync(request: Request, guild_id: str = Form(...), csrf_token: str = Form(...)):
     # Ruční spuštění synchronizace s Discoursem
     user = request.session.get("discord_user")
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    
-    # Check permissions (admins or owners)
-    # We can use get_dashboard_permissions logic or just check ownership
-    # For now, simplistic check: is user in user:discourse:{user_id}?
-    # Actually, let's trust the session guild_id logic or check redis
+        
+    import secrets
+    session_csrf = request.session.get("csrf_token")
+    if not session_csrf or not secrets.compare_digest(session_csrf, csrf_token):
+        return JSONResponse({"error": "Neplatný CSRF token"}, status_code=403)
     
     r = await get_redis_client()
     is_owner = await r.sismember(f"user:discourse:{user['id']}", guild_id)
     if not is_owner and request.session.get("role") != "admin":
-         # Check if it is a real guild and user has perms?
-         # Discourse sync is strictly for discourse guilds which are owned by creators
          return JSONResponse({"error": "Permission denied"}, status_code=403)
 
     if not DiscourseSync:
@@ -231,10 +240,10 @@ async def get_predictions_data(request: Request, _=Depends(require_auth)):
     if not guild_id: return JSONResponse({"status": "error"}, status_code=400)
 
     if guild_id == "demo-guild":
-        from .demo_data import get_demo_predictions_data
+        from ..demo_data import get_demo_predictions_data
         return JSONResponse(get_demo_predictions_data())
     
-    from .utils import load_member_stats, get_redis, get_activity_stats
+    from ..utils import load_member_stats, get_redis, get_activity_stats
     import datetime
     
     end_dt = datetime.datetime.now()
@@ -270,12 +279,21 @@ async def get_predictions_data(request: Request, _=Depends(require_auth)):
         avg_monthly_joins = 0
         avg_monthly_leaves = 0
     
+    from ..utils import get_health_research_data
+    research_data = await get_health_research_data(guild_id)
     
-    predicted_growth_30d = round(avg_monthly_growth)
-    predicted_members_30d = current_members + predicted_growth_30d
+    if research_data.get("success"):
+        p_stay_active = research_data.get("retention_pct", 0) / 100.0
+        p_churn = research_data.get("churn_risk_pct", 0) / 100.0
+        # Predikce na základě Markovova modelu (odchozí uživatelé dle modelu, noví z heuristiky)
+        predicted_growth_30d = round(avg_monthly_joins - (current_members * p_churn))
+        predicted_members_30d = current_members + predicted_growth_30d
+    else:
+        predicted_growth_30d = round(avg_monthly_growth)
+        predicted_members_30d = current_members + predicted_growth_30d
     
-    
-    growth_pct = round((predicted_growth_30d / current_members * 100), 2) if current_members > 0 else 0
+    # Růst v procentech
+    growth_pct = round((predicted_growth_30d / max(1, current_members) * 100), 2)
     
     
     forecast_dates = []
@@ -299,7 +317,7 @@ async def get_predictions_data(request: Request, _=Depends(require_auth)):
     
     
     
-    from .utils import get_redis
+    from ..utils import get_redis
     r = await get_redis()
     
     activity_history = []
@@ -457,11 +475,14 @@ async def get_predictions_data(request: Request, _=Depends(require_auth)):
         mau_forecast.append(round(mau_forecast[-1] * mau_growth_rate))
     
     
-    recent_leaves_3m = leaves_history[-3:] if len(leaves_history) >= 3 else leaves_history
-    total_recent_leaves = sum(recent_leaves_3m) if recent_leaves_3m else 0
-    churn_rate = (total_recent_leaves / current_members) if current_members > 0 else 0
-    churn_score = min(round(churn_rate * 100 * 10), 100)
-    if total_recent_leaves == 0: churn_score = 0
+    if research_data.get("success"):
+        churn_score = research_data.get("churn_risk_pct", 0)
+    else:
+        recent_leaves_3m = leaves_history[-3:] if len(leaves_history) >= 3 else leaves_history
+        total_recent_leaves = sum(recent_leaves_3m) if recent_leaves_3m else 0
+        churn_rate = (total_recent_leaves / max(1, current_members))
+        churn_score = min(round(churn_rate * 100 * 10), 100)
+        if total_recent_leaves == 0: churn_score = 0
     
     
     res_dict = {
@@ -504,7 +525,7 @@ async def get_predictions_data(request: Request, _=Depends(require_auth)):
     }
     
     try:
-        from .utils import get_channel_distribution
+        from ..utils import get_channel_distribution
         
         dist = await get_channel_distribution(int(guild_id), days=30)
         
@@ -531,13 +552,21 @@ async def get_predictions_data(request: Request, _=Depends(require_auth)):
 
 
 @router.post("/api/trigger-backfill")
-async def trigger_backfill(request: Request, guild_id: Optional[str] = Form(None), _=Depends(require_admin)):
+async def trigger_backfill(request: Request, guild_id: Optional[str] = Form(None), csrf_token: str = Form(None), _=Depends(require_admin)):
     """Trigger manual backfill from dashboard (Admin only)."""
+    import secrets
+    session_csrf = request.session.get("csrf_token")
+    if not session_csrf or not csrf_token or not secrets.compare_digest(session_csrf, csrf_token):
+        return JSONResponse({"status": "error", "message": "Neplatný CSRF token"}, status_code=403)
+
     target_gid = guild_id or request.session.get("guild_id")
     print(f"DEBUG: trigger_backfill - Form guild_id: {guild_id}, Session guild_id: {request.session.get('guild_id')}, Resolved: {target_gid}")
 
     if not target_gid:
          return JSONResponse({"status": "error", "message": "No guild ID found in session or request"}, status_code=400)
+    
+    if target_gid == "demo-guild":
+         return JSONResponse({"status": "error", "message": "Přístup odepřen: Akce není v demo režimu povolena."}, status_code=403)
 
     
     import subprocess
@@ -567,7 +596,7 @@ async def trigger_backfill(request: Request, guild_id: Optional[str] = Form(None
     
     
     
-    from .utils import get_redis_client
+    from ..utils import get_redis_client
     r = await get_redis_client()
     
     
@@ -609,7 +638,7 @@ async def backfill_status(request: Request, _=Depends(require_admin)):
     if not guild_id:
         return JSONResponse({"status": "error", "message": "No guild selected"}, status_code=400)
     
-    from .utils import get_redis_client
+    from ..utils import get_redis_client
     r = await get_redis_client()
     
     progress_key = f"backfill:progress:{guild_id}"
@@ -623,13 +652,21 @@ async def backfill_status(request: Request, _=Depends(require_admin)):
 
 
 @router.post("/api/delete-server-data")
-async def delete_server_data(request: Request, _=Depends(require_admin)):
+async def delete_server_data(request: Request, csrf_token: str = Form(None), _=Depends(require_admin)):
     """Delete all Redis data for the current server (Admin only)."""
+    import secrets
+    session_csrf = request.session.get("csrf_token")
+    if not session_csrf or not csrf_token or not secrets.compare_digest(session_csrf, csrf_token):
+        return JSONResponse({"status": "error", "message": "Neplatný CSRF token"}, status_code=403)
+
     guild_id = request.session.get("guild_id")
     if not guild_id:
         return JSONResponse({"status": "error", "message": "No guild selected"}, status_code=400)
     
-    from .utils import get_redis_client
+    if guild_id == "demo-guild":
+        return JSONResponse({"status": "error", "message": "Přístup odepřen: Akce není v demo režimu povolena."}, status_code=403)
+    
+    from ..utils import get_redis_client
     r = await get_redis_client()
     
     
@@ -660,11 +697,19 @@ async def delete_server_data(request: Request, _=Depends(require_admin)):
 
 
 @router.post("/api/leave-server")
-async def leave_server(request: Request, _=Depends(require_admin)):
+async def leave_server(request: Request, csrf_token: str = Form(None), _=Depends(require_admin)):
     """Remove bot from current server (Admin only)."""
+    import secrets
+    session_csrf = request.session.get("csrf_token")
+    if not session_csrf or not csrf_token or not secrets.compare_digest(session_csrf, csrf_token):
+        return JSONResponse({"status": "error", "message": "Neplatný CSRF token"}, status_code=403)
+
     guild_id = request.session.get("guild_id")
     if not guild_id:
         return JSONResponse({"status": "error", "message": "No guild selected"}, status_code=400)
+    
+    if guild_id == "demo-guild":
+        return JSONResponse({"status": "error", "message": "Přístup odepřen: Akce není v demo režimu povolena."}, status_code=403)
     
     import httpx
     import os
@@ -682,7 +727,7 @@ async def leave_server(request: Request, _=Depends(require_admin)):
                     dashboard_token = line.split("=")[1].strip().strip('"').strip("'")
     
     
-    from .utils import get_redis_client
+    from ..utils import get_redis_client
     r = await get_redis_client()
     primary_guilds = await r.smembers("bot:guilds:primary") or set()
     dashboard_guilds = await r.smembers("bot:guilds:dashboard") or set()
@@ -722,7 +767,7 @@ async def leave_server(request: Request, _=Depends(require_admin)):
 async def get_analytics_tools(request: Request, start_date: Optional[str] = None, end_date: Optional[str] = None, _=Depends(require_auth)):
     """Get data for analytical tools."""
     try:
-        guild_id = get_guild_id(request, start_date) # Helper handles session/param
+        guild_id = get_guild_id(request)
         
         if guild_id == "demo-guild":
             s = get_demo_stats(start_date, end_date)
@@ -730,23 +775,37 @@ async def get_analytics_tools(request: Request, start_date: Optional[str] = None
                 "status": "ok",
                 "trends": s["trends"],
                 "engagement": s["engagement"],
-                "insights": s["insights"]
+                "insights": s["insights"],
+                "dqs": {
+                    "score": 95,
+                    "is_sufficient": True,
+                    "history_days": 120,
+                    "total_events": 15420,
+                    "reasons": ["Není připojeno fórum Discourse (zobrazují se pouze data z Discordu)."]
+                }
             })
     except Exception as e:
         print(f"Error in analytics-tools initial check: {e}")
 
-    from .utils import get_trend_analysis, get_engagement_score, get_insights
+    from ..utils import get_trend_analysis, get_engagement_score, get_insights
+    from ..services.analytics_service import DefaultAnalyticsService
+    from ..repositories.redis_repo import RedisRepository
     
     try:
         trends = await get_trend_analysis(guild_id)
         engagement = await get_engagement_score(guild_id, start_date=start_date, end_date=end_date)
         insights = await get_insights(guild_id)
         
+        repo = RedisRepository()
+        service = DefaultAnalyticsService(repo)
+        dqs = await service.get_data_quality_score(int(guild_id)) if str(guild_id).isdigit() else None
+        
         return JSONResponse({
             "status": "ok",
             "trends": trends,
             "engagement": engagement,
-            "insights": insights
+            "insights": insights,
+            "dqs": dqs
         })
     except Exception as e:
          return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
@@ -778,7 +837,7 @@ async def get_extended_stats(request: Request, start_date: str = None, end_date:
     
     print(f"[EXTENDED STATS] Request for guild: {guild_id}")
     
-    from .utils import get_deep_stats_redis, get_redis_dashboard_stats, load_member_stats
+    from ..utils import get_deep_stats_redis, get_redis_dashboard_stats, load_member_stats
     
     try:
         
@@ -841,7 +900,7 @@ async def export_data(
     if guild_id == "demo-guild":
         return JSONResponse({"status": "error", "message": "Export is not available in demo mode."}, status_code=403)
     
-    from .utils import get_redis_client, get_activity_stats, get_leaderboard_data, get_channel_distribution
+    from ..utils import get_redis_client, get_activity_stats, get_leaderboard_data, get_channel_distribution
     import io
     import csv
     
@@ -964,7 +1023,7 @@ async def export_data(
                 data_rows.append([u["user_id"], u["name"], u["total_messages"], joined, roles])
 
         elif export_type == "traffic":
-            from .utils import load_member_stats
+            from ..utils import load_member_stats
             headers = ["Month", "Joins", "Leaves", "Total Members"]
             
             m_stats = await load_member_stats(guild_id, start_date=start_date, end_date=end_date)
@@ -980,7 +1039,7 @@ async def export_data(
                 data_rows.append([lbl, j, l, t])
 
         elif export_type == "hourly_heatmap":
-            from .utils import get_redis_dashboard_stats
+            from ..utils import get_redis_dashboard_stats
             headers = ["Day/Hour", "Messages Count"]
             
             
@@ -1123,7 +1182,7 @@ async def api_leaderboard(request: Request, limit: int = 15, start_date=None, en
     try:
         gid = get_guild_id(request)
         if gid == "demo-guild":
-            from .demo_data import get_demo_stats
+            from ..demo_data import get_demo_stats
             stats = get_demo_stats()
             # Standardize 'name' vs 'username' for frontend to avoid empty rows
             lb_data = []
@@ -1294,6 +1353,30 @@ async def api_health_research(request: Request):
             "retention_pct": 82.3,
             "churn_risk_pct": 17.7,
             "life_expectancy_days": 42.5,
-            "half_life_days": 29.3
+            "half_life_days": 29.3,
+            "survival_curve": {
+                "0": 1.0,
+                "7": 0.95,
+                "14": 0.88,
+                "21": 0.84,
+                "30": 0.81,
+                "60": 0.75,
+                "90": 0.68,
+                "180": 0.55
+            },
+            "state_distribution": {
+                "new": 120,
+                "active": 350,
+                "passive": 150,
+                "inactive": 80,
+                "churned": 40
+            },
+            "predicted_distribution": {
+                "new": 140,
+                "active": 330,
+                "passive": 180,
+                "inactive": 110,
+                "churned": 60
+            }
         }
     return await get_health_research_data(gid)

@@ -460,6 +460,15 @@ body::before {
     margin-bottom: 8px;
 }
 
+.title-gradient {
+    background: linear-gradient(135deg, #fff, #9ca3af);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
 
 
 
@@ -473,7 +482,6 @@ body::before {
 }
 
 @media (min-width: 768px) {
-
     #dashboard-grid.grid,
     #analytics-grid.grid,
     #predictions-grid.grid {
@@ -482,7 +490,6 @@ body::before {
 }
 
 @media (min-width: 1200px) {
-
     #dashboard-grid.grid,
     #analytics-grid.grid,
     #predictions-grid.grid {

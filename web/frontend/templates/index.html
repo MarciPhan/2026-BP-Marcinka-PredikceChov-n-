@@ -1,81 +1,63 @@
 {% extends "base.html" %}
+{% from "components/layout_editor.html" import layout_controls, layout_drawer, layout_scripts %}
 
 {% block content %}
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
     <div>
-        <h1 class="title">CommunityMetrics Dashboard</h1>
-        <p style="color: var(--text-secondary);">Statistiky serveru v reálném čase</p>
+        <h1 class="title title-gradient">CommunityMetrics Dashboard</h1>
+        <p style="color: var(--text-secondary); margin-top: 8px;">Statistiky serveru v reálném čase.
+            <a href="/docs/overview" style="color: var(--accent); text-decoration: none; margin-left: 8px; font-size: 13px; font-weight: 600; transition: color 0.2s;">
+                <i class="fas fa-question-circle"></i> Jak to funguje?
+            </a>
+        </p>
     </div>
 
-    <div style="display: flex; gap: 16px; align-items: center;">
+    <div style="display: flex; gap: 12px; align-items: center;">
         <div class="live-indicator">
             <span class="live-dot"></span>
-            <span>LIVE</span>
+            <span style="font-size: 13px;">LIVE</span>
         </div>
 
         {% if is_discourse %}
         <button id="syncDiscourseBtn" onclick="triggerDiscourseSync()" class="btn"
-            style="padding: 6px 12px; white-space: nowrap; display: flex; align-items: center; gap: 8px; background: var(--bg-card);">
-            Synchronizovat Discourse
+            style="padding: 6px 12px; white-space: nowrap; display: flex; align-items: center; gap: 8px; background: var(--bg-card); font-size: 13px;">
+            Synchronizovat
         </button>
         {% endif %}
 
-        <button id="editLayoutBtn" onclick="toggleEditMode()" class="btn"
-            style="padding: 6px 12px; white-space: nowrap; display: flex; align-items: center; gap: 8px; background: var(--bg-card);">
-            Upravit rozložení
-        </button>
-        <button id="saveLayoutBtn" onclick="saveLayout()" class="btn"
-            style="padding: 6px 12px; white-space: nowrap; display: none; align-items: center; gap: 8px; background: var(--success-gradient); color: white;">
-            Uložit
-        </button>
-        <button id="resetLayoutBtn" onclick="resetLayout()" class="btn"
-            style="padding: 6px 12px; white-space: nowrap; display: none; align-items: center; gap: 8px; background: var(--danger-gradient); color: white;">
-            Reset
-        </button>
-
-        <form method="GET" action="/"
-            style="display: flex; gap: 12px; align-items: center; background: var(--bg-card); padding: 8px 16px; border-radius: 12px; border: 1px solid var(--glass-border);">
-            <div>
-                <label
-                    style="font-size: 12px; color: var(--text-secondary); display: block; margin-bottom: 4px;">Role</label>
-                <select name="role_id"
-                    style="background: var(--bg-secondary); border: 1px solid var(--glass-border); color: var(--text-primary); padding: 6px; border-radius: 6px; min-width: 120px;">
-                    <option value="all" {% if selected_role=='all' %}selected{% endif %}>Všechny role</option>
-                    {% for rid, rname in roles %}
-                    <option value="{{ rid }}" {% if selected_role==rid %}selected{% endif %}>{{ rname }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label style="font-size: 12px; color: var(--text-secondary); display: block; margin-bottom: 4px;">Start
-                    Date</label>
-                <input type="date" name="start_date" value="{{ start_date|default('2025-12-21') }}"
-                    style="background: var(--bg-secondary); border: 1px solid var(--glass-border); color: var(--text-primary); padding: 6px; border-radius: 6px;">
-            </div>
-            <div>
-                <label style="font-size: 12px; color: var(--text-secondary); display: block; margin-bottom: 4px;">End
-                    Date</label>
-                <input type="date" name="end_date" value="{{ end_date|default('2026-01-20') }}"
-                    style="background: var(--bg-secondary); border: 1px solid var(--glass-border); color: var(--text-primary); padding: 6px; border-radius: 6px;">
-            </div>
-            <button type="submit"
-                style="height: 32px; padding: 0 16px; background: var(--primary-gradient); border: none; border-radius: 6px; color: white; font-weight: 600; cursor: pointer; margin-top: 16px;">
-                Filter
-            </button>
-        </form>
+        {{ layout_controls('dashboard-grid', 'overview') }}
     </div>
 </div>
 
-
-<div id="hidden-drawer" class="hidden-drawer"
-    style="display: none; margin-bottom: 30px; background: var(--bg-secondary); padding: 20px; border-radius: 16px; border: 2px dashed var(--glass-border);">
-    <h3 style="margin-bottom: 15px; color: var(--text-secondary);">Skryté widgety (přetáhněte zpět pro zobrazení)</h3>
-    <div id="hidden-widgets-grid" class="grid"
-        style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; min-height: 100px;">
-
-    </div>
+<div style="margin-bottom: 40px;">
+    <form method="GET" action="/"
+        style="display: flex; gap: 12px; align-items: center; background: var(--bg-card); padding: 8px 16px; border-radius: 12px; border: 1px solid var(--glass-border);">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Role</label>
+            <select name="role_id" style="min-width: 140px;">
+                <option value="all" {% if selected_role=='all' %}selected{% endif %}>Všechny role</option>
+                {% for rid, rname in roles %}
+                <option value="{{ rid }}" {% if selected_role==rid %}selected{% endif %}>{{ rname }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Start Date</label>
+            <input type="date" name="start_date" value="{{ start_date|default('2025-12-21') }}">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">End Date</label>
+            <input type="date" name="end_date" value="{{ end_date|default('2026-01-20') }}">
+        </div>
+        <button type="submit" class="btn" style="height: 42px; margin-top: auto; display: flex; align-items: center; gap: 8px;">
+            <span>Filtrovat</span>
+        </button>
+    </form>
 </div>
+
+
+{{ layout_drawer() }}
 
 
 {% macro render_widget(id) %}
@@ -386,179 +368,7 @@
     }
 </style>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
-<script>
-    // --- Sortable / Drag-and-Drop Implementation ---
-    let sortableMain = null;
-    let sortableHidden = null;
-    const grid = document.getElementById('dashboard-grid');
-    const drawer = document.getElementById('hidden-drawer');
-    const hiddenGrid = document.getElementById('hidden-widgets-grid');
-    const editBtn = document.getElementById('editLayoutBtn');
-    const saveBtn = document.getElementById('saveLayoutBtn');
-    const resetBtn = document.getElementById('resetLayoutBtn');
-
-    // Move hidden widgets to drawer on load
-    document.addEventListener('DOMContentLoaded', () => {
-        const bucket = document.getElementById('hidden-bucket');
-        while (bucket.children.length > 0) {
-            hiddenGrid.appendChild(bucket.children[0]);
-        }
-    });
-
-    function toggleEditMode() {
-        if (sortableMain) {
-            // Cancel/Exit
-            sortableMain.destroy();
-            sortableHidden.destroy();
-            sortableMain = null;
-            sortableHidden = null;
-
-            editBtn.innerHTML = 'Upravit rozložení';
-            editBtn.classList.remove('btn-active');
-            editBtn.style.background = '';
-            saveBtn.style.display = 'none';
-            resetBtn.style.display = 'none';
-            drawer.style.display = 'none';
-            grid.classList.remove('draggable-mode');
-            hiddenGrid.classList.remove('draggable-mode');
-
-            // Hide Controls explicitly
-            document.querySelectorAll('.resize-controls').forEach(el => el.style.display = 'none');
-
-            window.location.reload();
-        } else {
-            // Enable
-            drawer.style.display = 'block';
-            grid.classList.add('draggable-mode');
-            hiddenGrid.classList.add('draggable-mode');
-
-            // Show Controls explicitly
-            document.querySelectorAll('.resize-controls').forEach(el => el.style.display = 'flex');
-
-            sortableMain = new Sortable(grid, {
-                group: 'dashboard',
-                animation: 150,
-                ghostClass: 'sortable-ghost',
-                handle: '.card'
-            });
-
-            sortableHidden = new Sortable(hiddenGrid, {
-                group: 'dashboard',
-                animation: 150,
-                ghostClass: 'sortable-ghost',
-                handle: '.card'
-            });
-
-            editBtn.innerHTML = 'Zrušit';
-            editBtn.style.background = 'var(--bg-tertiary)';
-            saveBtn.style.display = 'flex';
-            resetBtn.style.display = 'flex';
-        }
-    }
-
-    async function resetLayout() {
-        if (!confirm('Opravdu chcete resetovat rozložení na výchozí hodnoty?')) return;
-        const formData = new FormData();
-        formData.append('page', 'overview');
-        try {
-            const resp = await fetch('/settings/dashboard/reset', {
-                method: 'POST',
-                body: formData
-            });
-            if (resp.ok) {
-                window.location.reload();
-            } else {
-                alert('Chyba při resetování rozložení');
-            }
-        } catch (e) {
-            console.error(e);
-            alert('Chyba spojení');
-        }
-    }
-
-    // --- Robust Resize Logic (Capture Phase Delegation) ---
-    // Handle mousedown/touchstart FIRST to block Sortable
-    grid.addEventListener('mousedown', (e) => {
-        if (e.target.closest('.resize-controls')) {
-            e.stopPropagation(); // Stop Sortable from seeing this event
-        }
-    }, { capture: true });
-
-    grid.addEventListener('touchstart', (e) => {
-        if (e.target.closest('.resize-controls')) {
-            e.stopPropagation();
-        }
-    }, { capture: true });
-
-    // Handle Clicks
-    grid.addEventListener('click', (e) => {
-        const btn = e.target.closest('.resize-btn');
-        if (!btn) return;
-
-        e.preventDefault();
-        e.stopPropagation();
-
-        const wrapper = btn.closest('.widget-wrapper');
-        const isIncrease = btn.classList.contains('action-increase');
-        const delta = isIncrease ? 1 : -1;
-
-        if (wrapper) {
-            let currentSpan = parseInt(wrapper.dataset.span || 1);
-            let newSpan = Math.max(1, Math.min(4, currentSpan + delta));
-
-            // Update Class and Data
-            wrapper.classList.remove('span-1', 'span-2', 'span-3', 'span-4');
-            wrapper.classList.add(`span-${newSpan}`);
-            wrapper.dataset.span = newSpan;
-
-            // Direct CSS Injection Fallback
-            wrapper.style.gridColumn = `span ${newSpan}`;
-
-            // Visual Feedback
-            wrapper.style.transform = 'scale(1.02)';
-            wrapper.style.boxShadow = '0 0 20px var(--accent)';
-            setTimeout(() => {
-                wrapper.style.transform = '';
-                wrapper.style.boxShadow = '';
-            }, 200);
-        }
-    });
-
-    async function saveLayout() {
-        if (!sortableMain) return;
-        // Sortable works on the grid children (wrappers now)
-        const wrappers = document.querySelectorAll('#dashboard-grid .widget-wrapper');
-        const visibleOrder = [];
-        const spans = {};
-
-        wrappers.forEach(w => {
-            const id = w.dataset.id;
-            visibleOrder.push(id);
-            spans[id] = parseInt(w.dataset.span || 1);
-        });
-
-        const formData = new FormData();
-        formData.append('widget_order', JSON.stringify(visibleOrder));
-        formData.append('widget_spans', JSON.stringify(spans));
-        formData.append('page', 'overview');
-
-        try {
-            const resp = await fetch('/settings/dashboard', {
-                method: 'POST',
-                body: formData
-            });
-            if (resp.ok) {
-                window.location.reload();
-            } else {
-                alert('Chyba při ukládání rozložení');
-            }
-        } catch (e) {
-            console.error(e);
-            alert('Chyba spojení');
-        }
-    }
-</script>
+{{ layout_scripts() }}
 
 <script>
     // Load Security Score
@@ -860,12 +670,11 @@
         const btn = document.getElementById('syncDiscourseBtn');
         if (!btn) return;
 
-        // confirm
-        if (!confirm("Spustit manuální synchronizaci s Discourse?")) return;
-
-        const originalText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '⏳ Syncing...';
+        // confirm using showModal
+        showModal("Synchronizace", "Spustit manuální synchronizaci s Discourse?", true, async () => {
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Syncing...';
 
         const formData = new FormData();
         // Use rawData from main script block
@@ -884,16 +693,17 @@
                 btn.style.borderColor = '#4ade80';
                 setTimeout(() => window.location.reload(), 1500);
             } else {
-                alert("Chyba: " + (res.error || "Neznámá chyba"));
+                showModal("Chyba", res.error || res.message || "Tato akce není v demo režimu povolena.");
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
         } catch (e) {
             console.error(e);
-            alert("Chyba spojení");
+            showModal("Chyba spojení", "Nepodařilo se spojit se serverem.");
             btn.innerHTML = originalText;
             btn.disabled = false;
         }
+        }); // End of showModal confirm callback
     }
 </script>
 {% endif %}

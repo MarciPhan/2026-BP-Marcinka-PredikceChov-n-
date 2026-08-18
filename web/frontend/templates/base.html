@@ -35,6 +35,9 @@
             <a href="/analytics" class="nav-link {% if request.url.path == '/analytics' %}active{% endif %}">
                 <i class="fas fa-chart-line"></i> Analytics
             </a>
+            <a href="/community-health" class="nav-link {% if request.url.path == '/community-health' %}active{% endif %}">
+                <i class="fas fa-heartbeat"></i> Zdraví komunity
+            </a>
             <a href="/predictions" class="nav-link {% if request.url.path == '/predictions' %}active{% endif %}">
                 <i class="fas fa-lightbulb"></i> Predikce
             </a>
@@ -177,6 +180,60 @@
             });
         })();
     </script>
+<div id="customModal"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+    <div
+        style="background: var(--bg-secondary); padding: 24px; border-radius: 12px; border: 1px solid var(--glass-border); max-width: 400px; width: 90%; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+        <h3 id="modalTitle" style="margin-bottom: 12px;">Upozornění</h3>
+        <p id="modalMessage" style="color: var(--text-secondary); margin-bottom: 24px;">Zpráva...</p>
+        <div style="display: flex; justify-content: center; gap: 12px;">
+            <button id="modalConfirmBtn"
+                style="display: none; padding: 8px 16px; background: var(--primary-gradient); border: none; border-radius: 6px; color: white; cursor: pointer;">Potvrdit</button>
+            <button onclick="closeModal()"
+                style="padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--glass-border); color: var(--text-primary); border-radius: 6px; cursor: pointer;">Zavřít</button>
+        </div>
+    </div>
+</div>
+<script>
+// Modal Logic
+    const modal = document.getElementById('customModal');
+    const mTitle = document.getElementById('modalTitle');
+    const mMsg = document.getElementById('modalMessage');
+    const mConfirm = document.getElementById('modalConfirmBtn');
+    let onConfirmAction = null;
+
+    function showModal(title, message, isConfirm = false, onConfirm = null) {
+        mTitle.innerText = title;
+        mMsg.innerHTML = message; // Allow HTML
+        modal.style.display = 'flex';
+
+        if (isConfirm && onConfirm) {
+            mConfirm.style.display = 'block';
+            onConfirmAction = onConfirm;
+        } else {
+            mConfirm.style.display = 'none';
+        }
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+
+    mConfirm.onclick = () => {
+        if (onConfirmAction) onConfirmAction();
+        closeModal();
+    };
+
+    // Global Error Handler for Demo Mode
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('error') === 'demo_restricted') {
+        showModal("Přístup odepřen", "Tato akce není v demo režimu povolena.");
+        urlParams.delete('error');
+        const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+        window.history.replaceState({}, '', newUrl);
+    }
+
+</script>
 </body>
 
 </html>

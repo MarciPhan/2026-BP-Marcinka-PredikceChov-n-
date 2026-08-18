@@ -77,3 +77,35 @@ class DiscourseSync:
             raise e
         finally:
             await r.close()
+
+    async def sync_all(self):
+        """
+        Synchronizuje všechna nakonfigurovaná Discourse fóra uložená v databázi Redis.
+        """
+        r = await get_redis()
+        try:
+            guild_ids = await r.smembers("discourse:ids")
+            if not guild_ids:
+                return
+            for gid in guild_ids:
+                try:
+                    await self.sync_guild(gid)
+                except Exception as e:
+                    print(f"Chyba při hromadné synchronizaci fóra {gid}: {e}")
+        finally:
+            await r.close()
+
+
+if __name__ == "__main__":
+    async def main_loop():
+        syncer = DiscourseSync()
+        print("[DiscourseSync] Služba pro synchronizaci Discourse fór byla spuštěna.")
+        while True:
+            try:
+                await syncer.sync_all()
+            except Exception as e:
+                print(f"[DiscourseSync] Chyba v cyklu synchronizace: {e}")
+            await asyncio.sleep(300)
+
+    asyncio.run(main_loop())
+

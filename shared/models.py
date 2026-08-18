@@ -6,7 +6,7 @@ from typing import List, Dict, Tuple
 class CommunityModels:
     """
     Mathematical implementations of Markov Chains and Survival Analysis
-    for community behavior prediction.
+    for prototypical analytical models.
     """
 
     @staticmethod

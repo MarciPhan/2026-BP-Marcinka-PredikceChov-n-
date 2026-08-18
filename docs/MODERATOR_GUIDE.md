@@ -18,7 +18,7 @@ Vítejte u podrobné dokumentace systému **CommunityMetrics**. Tento dokument s
 ---
 
 ## 1. Úvod a filozofie systému
-CommunityMetrics není jen "další bot na statistiky". Je to analytický ekosystém postavený na vědeckých základech (Markovovy řetězce, Survival analýza), který se snaží pochopit **životní cyklus uživatele**.
+CommunityMetrics není jen "další bot na statistiky". Je to analytický ekosystém, který se snaží pomocí agregace aktivity a jednoduchých heuristik pochopit **životní cyklus uživatele**.
 
 **Cíl moderátora:** Udržet uživatele co nejdéle v aktivních stavech a minimalizovat "Churn" (odchod ze serveru).
 
@@ -45,14 +45,10 @@ Klíčový indikátor problému. Pokud Churn Rate náhle vzroste, zkontrolujte:
 
 ## 3. Prediktivní modely a včasné varování
 
-###  Markovovy řetězce (Retence)
-Systém rozděluje uživatele do stavů: `New`, `Active`, `Passive`, `Inactive`, `Churned`.
-- **Predikce:** Dashboard vám ukáže, kolik uživatelů pravděpodobně přejde do stavu `Churned` v příštích 7 dnech.
-- **Akce:** Targetujte uživatele ve stavu `Passive` nebo `Inactive` speciálními eventy, abyste je "reaktivovali".
-
-###  Kaplan-Meier (Survival analýza)
-Ukazuje "střední délku života" uživatele na vašem serveru.
-- **Příklad:** Pokud graf ukazuje prudký pád po 3 dnech, máte špatný **onboarding**. Uživatelé přijdou, ale nenajdou důvod zůstat déle než 72 hodin.
+### 📊 Prediktivní analýza (Retence a růst)
+Systém analyzuje historická data (vstupy a výstupy uživatelů) a extrapoluje trend vývoje členů a denní aktivity na nadcházejících 30 dní.
+- **Predikce:** Dashboard ukazuje odhadovaný počet členů a zpráv s ohledem na týdenní sezónnost (např. víkendové výkyvy).
+- **Akce:** Targetujte uživatele speciálními eventy, pokud predikce ukazuje pokles aktivity, abyste je "reaktivovali".
 
 ---
 
@@ -95,15 +91,15 @@ CommunityMetrics používá **Anti-Spam XP systém**. Body se získávají maxim
 
 ## 7. GDPR a ochrana soukromí
 Jako moderátoři máte přístup k analytickým datům. Respektujte soukromí uživatelů:
-- **Právo na smazání:** Pokud uživatel požádá o smazání dat, odkažte ho na příkaz `/privacy delete`.
-- **Transparentnost:** Příkaz `/privacy info` ukáže uživateli, co všechno o něm bot ví.
+- **Právo na smazání:** Pokud uživatel požádá o smazání dat, odkažte ho na příkaz `/gdpr delete`.
+- **Transparentnost:** Příkaz `/gdpr export` stáhne uživateli vše, co o něm bot ví. Pro rychlý přehled slouží `/privacy`.
 
 ---
 
 ## 8. Best Practices pro růst komunity
 
 1. **Sledujte Peak Times:** Podle Heatmapy v dashboardu plánujte eventy na hodiny s nejvyšší přirozenou aktivitou.
-2. **Reagujte na Exodus:** Pokud predikce Markovových řetězců ukazuje nárůst odchodů, uspořádejte "Community Meeting".
+2. **Reagujte na Exodus:** Pokud predikce ukazuje nárůst odchodů, uspořádejte "Community Meeting".
 3. **Odměňujte věrnost:** Používejte leaderboard pro identifikaci klíčových členů ("Evangelists") a dejte jim speciální role.
 4. **Kalibrace toxicity:** Pokud je MII dlouhodobě vysoký, zvažte úpravu pravidel pro automatické filtry Discordu.
 
@@ -111,11 +107,11 @@ Jako moderátoři máte přístup k analytickým datům. Respektujte soukromí u
 
 ## 9. Glosář pojmů a Architektura
 Pro hlubší pochopení technických termínů (HLL, SARIMA, DQS) nebo fungování systému na pozadí navštivte:
-- [Glosář pojmů](file:///home/marcipan/Dokumenty/2026-BP-Marcinka-PredikceChov-n-/web/frontend/templates/docs/glossary.html)
-- [Technická architektura](file:///home/marcipan/Dokumenty/2026-BP-Marcinka-PredikceChov-n-/web/frontend/templates/docs/architecture.html)
-- [API Reference](file:///home/marcipan/Dokumenty/2026-BP-Marcinka-PredikceChov-n-/web/frontend/templates/docs/api.html)
-- [Nasazení a údržba](file:///home/marcipan/Dokumenty/2026-BP-Marcinka-PredikceChov-n-/web/frontend/templates/docs/deployment.html)
-- [Troubleshooting](file:///home/marcipan/Dokumenty/2026-BP-Marcinka-PredikceChov-n-/web/frontend/templates/docs/troubleshooting.html)
+- [Glosář pojmů](/docs/glossary)
+- [Technická architektura](/docs/architecture)
+- [API Reference](/docs/api)
+- [Nasazení a údržba](/docs/deployment)
+- [Troubleshooting](/docs/troubleshooting)
 
 ---
 *Dokumentace verze 2.3 (Stripe-style Edition, Březen 2026)*

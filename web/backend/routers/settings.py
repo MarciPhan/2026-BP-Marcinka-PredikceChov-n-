@@ -17,12 +17,7 @@ class TeamUser(pydantic.BaseModel):
     avatar: Optional[str] = None
     permissions: List[str]
 
-async def require_admin(request: Request):
-    user = request.session.get("discord_user")
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    # simplified admin check
-    return True
+from ..utils import require_admin
 router = APIRouter(tags=["settings"])
 templates = Jinja2Templates(directory="web/frontend/templates")
 
@@ -82,9 +77,8 @@ async def add_team_member(request: Request, member: TeamUser):
 
 
 @router.get("/settings/team", response_class=HTMLResponse)
-async def team_settings_page(request: Request):
+async def team_settings_page(request: Request, _=Depends(require_auth)):
     """Team Management Page."""
-    await require_auth(request)
     guild_id = request.session.get("guild_id")
     if not guild_id: return RedirectResponse("/select-server")
     
@@ -121,8 +115,15 @@ async def team_settings_page(request: Request):
 
 
 @router.get("/settings", response_class=HTMLResponse)
-async def settings_page(request: Request, _=Depends(require_admin)):
-    """Main settings page."""
+async def settings_page(request: Request, _=Depends(require_auth)):
+    """Main settings page. Demo users can view in read-only mode."""
+    import secrets
+    if "csrf_token" not in request.session:
+        request.session["csrf_token"] = secrets.token_urlsafe(32)
+        
+    role = request.session.get("role")
+    if role not in ("admin", "demo"):
+        raise HTTPException(status_code=403, detail="Přístup pouze pro administrátory")
     user = request.session.get("discord_user")
     guild_id = request.session.get("guild_id")
 
@@ -222,7 +223,7 @@ async def settings_page(request: Request, _=Depends(require_admin)):
     roles_list = []
     guild_id = request.session.get("guild_id")
     if guild_id:
-        from .utils import get_cached_roles
+        from ..utils import get_cached_roles
         roles = await get_cached_roles(int(guild_id))
         roles_list = [(r["id"], r["name"]) for r in roles]
 
@@ -250,9 +251,13 @@ async def update_general_settings(
     show_deleted: Optional[str] = Form(None), 
     default_date_range: str = Form("last_30_days"),
     default_role_id: str = Form("all"),
+    csrf_token: str = Form(...),
     _=Depends(require_auth)
 ):
     """Update general settings in session."""
+    import secrets
+    if not secrets.compare_digest(request.session.get("csrf_token", ""), csrf_token):
+        raise HTTPException(403, "Neplatný CSRF token")
     
     request.session["show_deleted_data"] = (show_deleted == "on")
     request.session["default_date_range"] = default_date_range
@@ -312,6 +317,10 @@ async def update_dashboard_layout(
                 request.session["overview_order"] = order_list
             elif page == "predictions":
                 request.session["predictions_order"] = order_list
+            elif page == "health":
+                request.session["health_order"] = order_list
+            elif page == "activity":
+                request.session["activity_order"] = order_list
             else:
                 request.session["analytics_order"] = order_list
                 request.session["dashboard_order"] = order_list 
@@ -322,7 +331,8 @@ async def update_dashboard_layout(
     redirect_url = "/analytics"
     if page == "overview": redirect_url = "/"
     elif page == "predictions": redirect_url = "/predictions"
-    
+    elif page == "health": redirect_url = "/community-health"
+    elif page == "activity": redirect_url = "/activity"
     return RedirectResponse(url=redirect_url, status_code=303)
 
 
@@ -339,6 +349,12 @@ async def reset_dashboard_layout(
     elif page == "predictions":
         if "predictions_order" in request.session:
             del request.session["predictions_order"]
+    elif page == "health":
+        if "health_order" in request.session:
+            del request.session["health_order"]
+    elif page == "activity":
+        if "activity_order" in request.session:
+            del request.session["activity_order"]
     else:
         if "analytics_order" in request.session:
             del request.session["analytics_order"]
@@ -352,6 +368,8 @@ async def reset_dashboard_layout(
     redirect_url = "/analytics"
     if page == "overview": redirect_url = "/"
     elif page == "predictions": redirect_url = "/predictions"
+    elif page == "health": redirect_url = "/community-health"
+    elif page == "activity": redirect_url = "/activity"
     
     return RedirectResponse(url=redirect_url, status_code=303)
 
@@ -369,9 +387,13 @@ async def update_security_score_settings(
     ideal_mod_actions_min: float = Form(1),
     ideal_mod_actions_max: float = Form(5),
     ideal_verification_level: int = Form(2),
+    csrf_token: str = Form(...),
     _=Depends(require_admin)
 ):
     """Update security score weights and ideals in Redis."""
+    import secrets
+    if not secrets.compare_digest(request.session.get("csrf_token", ""), csrf_token):
+        raise HTTPException(403, "Neplatný CSRF token")
     try:
         r = await get_redis_client()
         
@@ -408,9 +430,13 @@ async def update_weights(
     chat_time: int = Form(...), voice_time: int = Form(...),
     session_base: int = Form(180), char_weight: int = Form(1),
     reply_weight: int = Form(60), msg_weight: int = Form(0),
-    _=Depends(require_auth)
+    csrf_token: str = Form(...),
+    _=Depends(require_admin)
 ):
     """Update action weights in Redis."""
+    import secrets
+    if not secrets.compare_digest(request.session.get("csrf_token", ""), csrf_token):
+        raise HTTPException(403, "Neplatný CSRF token")
     try:
         r = await get_redis_client()
         
@@ -446,9 +472,13 @@ async def update_xp_formula(
     xp_max: int = Form(25),
     xp_voice_min: int = Form(5),
     xp_voice_max: int = Form(10),
+    csrf_token: str = Form(...),
     _=Depends(require_admin)
 ):
     """Update XP formula coefficients in Redis."""
+    import secrets
+    if not secrets.compare_digest(request.session.get("csrf_token", ""), csrf_token):
+        raise HTTPException(403, "Neplatný CSRF token")
     try:
         r = await get_redis_client()
         await r.hset("config:xp_formula", mapping={

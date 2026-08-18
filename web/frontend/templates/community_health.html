@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% from "components/layout_editor.html" import layout_controls, layout_drawer, layout_scripts %}
+
+{% block content %}
+<style>
+.health-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; margin-bottom: 32px; }
+@media(max-width:1000px){ .health-grid > div { grid-column: span 6 !important; } }
+@media(max-width:700px){ .health-grid > div { grid-column: 1 / -1 !important; } }
+</style>
+
+
+
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+    <div>
+        <h1 class="title title-gradient">Zdraví komunity</h1>
+        <p style="color: var(--text-secondary); margin-top: 8px;">Kontextové metriky podle priorit správců: konflikty, nezodpovězená pomoc, odchody, zátěž týmu a komunitní akce.
+            <a href="/docs/health" style="color: var(--accent); text-decoration: none; margin-left: 8px; font-size: 13px; font-weight: 600; transition: color 0.2s;">
+                <i class="fas fa-question-circle"></i> Jak to funguje?
+            </a>
+        </p>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center;">
+        {{ layout_controls('health-grid', 'health') }}
+        <select id="healthDays" onchange="loadHealth()" style="background: var(--bg-card); border: 1px solid var(--glass-border); color: var(--text-primary); padding: 8px 12px; border-radius: 8px; font-size: 13px;">
+            <option value="7">7 dní</option><option value="30" selected>30 dní</option><option value="90">90 dní</option>
+        </select>
+        <a class="btn" href="/api/docs" target="_blank" style="padding: 8px 16px; font-size: 13px;">API dokumentace</a>
+    </div>
+</div>
+
+{{ layout_drawer() }}
+
+<div class="health-notice" style="margin-bottom:16px">
+    Aplikace zde nepočítá „vhodnost člověka“ ani neurčuje příčinu odchodu. Zobrazuje měřitelné události a časové souvislosti; závěr vždy provádí správce.
+</div>
+
+
+{% macro render_widget(id) %}
+  {% set span = widget_spans.get(id, 4) if id in ['h_conflict', 'h_help_open', 'h_help_overdue', 'h_depart_signal', 'h_workload_avg', 'h_events'] else widget_spans.get(id, 6) %}
+  {% if id in ['h_events_table', 'h_api', 'h_config'] %}
+     {% set span = widget_spans.get(id, 12) %}
+  {% endif %}
+  
+  {% if id == 'h_conflict' %}
+    <div class="card stat-card widget-wrapper" data-id="h_conflict" style="grid-column: span {{ span }}"><div class="stat-label">Opakované dvojice člen–moderátor</div><div id="conflictCount" class="stat-value">–</div></div>
+  {% elif id == 'h_help_open' %}
+    <div class="card stat-card widget-wrapper" data-id="h_help_open" style="grid-column: span {{ span }}"><div class="stat-label">Nevyřešené žádosti o pomoc</div><div id="helpOpenCount" class="stat-value">–</div></div>
+  {% elif id == 'h_help_overdue' %}
+    <div class="card stat-card widget-wrapper" data-id="h_help_overdue" style="grid-column: span {{ span }}"><div class="stat-label">Po termínu odpovědi</div><div id="helpOverdueCount" class="stat-value">–</div></div>
+  {% elif id == 'h_depart_signal' %}
+    <div class="card stat-card widget-wrapper" data-id="h_depart_signal" style="grid-column: span {{ span }}"><div class="stat-label">Odchody s předchozím signálem</div><div id="departureSignalCount" class="stat-value">–</div></div>
+  {% elif id == 'h_workload_avg' %}
+    <div class="card stat-card widget-wrapper" data-id="h_workload_avg" style="grid-column: span {{ span }}"><div class="stat-label">Průměr zásahů na moderátora</div><div id="workloadAverage" class="stat-value">–</div></div>
+  {% elif id == 'h_events' %}
+    <div class="card stat-card widget-wrapper" data-id="h_events" style="grid-column: span {{ span }}"><div class="stat-label">Sledované komunitní akce</div><div id="eventCount" class="stat-value">–</div></div>
+  {% elif id == 'h_conflicts_table' %}
+    <section class="card widget-wrapper" data-id="h_conflicts_table" style="grid-column: span {{ span }}">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;"><h3>Opakované konflikty</h3><span class="badge bg-secondary" style="font-size: 11px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.1);">časová souvislost</span></div>
+        <div style="color: var(--text-secondary); font-size: 13px;" style="margin-bottom:10px">Dvojice, u kterých se ve zvoleném období opakovaly moderační zásahy.</div>
+        <table ><thead><tr><th>Člen</th><th>Moderátor</th><th>Zásahy</th><th>Závažnost</th></tr></thead><tbody id="conflictsBody"><tr><td colspan="4" style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px;">Načítám…</td></tr></tbody></table>
+    </section>
+  {% elif id == 'h_help_table' %}
+    <section class="card widget-wrapper" data-id="h_help_table" style="grid-column: span {{ span }}">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;"><h3>Žádosti o pomoc</h3><span class="badge bg-secondary" style="font-size: 11px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.1);">jen nastavené kanály</span></div>
+        <div style="color: var(--text-secondary); font-size: 13px;" style="margin-bottom:10px">Dotazy bez přímé odpovědi. Reakce je zobrazena jako potvrzení, ne jako vyřešení.</div>
+        <table ><thead><tr><th>Uživatel</th><th>Kanál</th><th>Stav</th><th>Čekání</th></tr></thead><tbody id="helpBody"><tr><td colspan="4" style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px;">Načítám…</td></tr></tbody></table>
+    </section>
+  {% elif id == 'h_depart_table' %}
+    <section class="card widget-wrapper" data-id="h_depart_table" style="grid-column: span {{ span }}">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;"><h3>Odchody po událostech</h3><span class="badge bg-secondary" style="font-size: 11px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.1);">bez tvrzení příčiny</span></div>
+        <table ><thead><tr><th>Uživatel</th><th>Odchod</th><th>Moderace 30 d.</th><th>Žádosti o pomoc</th></tr></thead><tbody id="departuresBody"><tr><td colspan="4" style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px;">Načítám…</td></tr></tbody></table>
+    </section>
+  {% elif id == 'h_workload_table' %}
+    <section class="card widget-wrapper" data-id="h_workload_table" style="grid-column: span {{ span }}">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;"><h3>Zátěž moderátorů</h3><span class="badge bg-secondary" style="font-size: 11px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.1);">popis, ne hodnocení</span></div>
+        <table ><thead><tr><th>Moderátor</th><th>Zásahy</th><th>Kontext</th></tr></thead><tbody id="workloadBody"><tr><td colspan="3" style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px;">Načítám…</td></tr></tbody></table>
+    </section>
+  {% elif id == 'h_events_table' %}
+    <section class="card widget-wrapper" data-id="h_events_table" style="grid-column: span {{ span }}">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;"><h3>Zájem o akce vs. skutečná účast</h3><span class="badge bg-secondary" style="font-size: 11px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.1);">Discord Scheduled Events</span></div>
+        <table ><thead><tr><th>Akce</th><th>Termín</th><th>Zájem</th><th>Účast</th><th>Konverze</th></tr></thead><tbody id="eventsBody"><tr><td colspan="5" style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px;">Načítám…</td></tr></tbody></table>
+    </section>
+  {% elif id == 'h_evidence' %}
+    <section class="card widget-wrapper" data-id="h_evidence" style="grid-column: span {{ span }}">
+        <h3 style="margin-bottom:12px">Podklady pro lidské rozhodnutí</h3>
+        <p style="color: var(--text-secondary); font-size: 13px;">Zadejte ID člena. Systém zobrazí pouze pozorovatelná data a případné ruční stanovisko týmu.</p>
+        <div style="display:flex;gap:8px;margin:12px 0"><input id="evidenceUserId" placeholder="Discord user ID" style="background: var(--bg-secondary); border: 1px solid var(--glass-border); color: var(--text-primary); padding: 8px 12px; border-radius: 8px;"><button class="btn" onclick="loadEvidence()">Načíst podklady</button></div>
+        <div id="evidenceOutput" style="color: var(--text-secondary); font-size: 13px;">Nebyl vybrán uživatel.</div>
+        {% if is_admin %}
+        <div id="reviewForm" style="display:none;margin-top:14px">
+            <select id="reviewJudgement" style="background: var(--bg-secondary); border: 1px solid var(--glass-border); color: var(--text-primary); padding: 8px; border-radius: 8px; width: 100%;"><option value="observe">Dále sledovat</option><option value="discuss">Prodiskutovat v týmu</option><option value="not_now">Nyní nedoporučeno</option><option value="recommended_by_team">Doporučeno týmem</option></select>
+            <textarea id="reviewNote" rows="3" style="background: var(--bg-secondary); border: 1px solid var(--glass-border); color: var(--text-primary); padding: 8px; border-radius: 8px; width: 100%; margin-top: 8px;" placeholder="Lidské zdůvodnění a kontext…"></textarea>
+            <button class="btn" style="margin-top:8px" onclick="saveReview()">Uložit ruční hodnocení</button>
+        </div>
+        {% endif %}
+    </section>
+  {% elif id == 'h_config' and is_admin %}
+    <section class="card widget-wrapper" data-id="h_config" style="grid-column: span {{ span }}">
+        <h3 style="margin-bottom:12px">Konfigurace podle typu komunity</h3>
+        <form method="post" action="/settings/community-health" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-secondary);">Typ komunity<select style="background: var(--bg-secondary); border: 1px solid var(--glass-border); color: var(--text-primary); padding: 8px; border-radius: 6px;" name="community_type"><option value="general" {% if config.community_type == 'general' %}selected{% endif %}>Obecná / společenská</option><option value="support" {% if config.community_type == 'support' %}selected{% endif %}>Podpůrná / poradenská</option><option value="gaming" {% if config.community_type == 'gaming' %}selected{% endif %}>Herní</option><option value="education" {% if config.community_type == 'education' %}selected{% endif %}>Vzdělávací</option><option value="professional" {% if config.community_type == 'professional' %}selected{% endif %}>Profesní</option><option value="events" {% if config.community_type == 'events' %}selected{% endif %}>Organizující akce</option></select></label>
+            <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-secondary);">Rozpoznání dotazu<select style="background: var(--bg-secondary); border: 1px solid var(--glass-border); color: var(--text-primary); padding: 8px; border-radius: 6px;" name="question_mode"><option value="heuristic" {% if config.question_mode == 'heuristic' %}selected{% endif %}>Otazník / tázací výraz</option><option value="all" {% if config.question_mode == 'all' %}selected{% endif %}>Každá zpráva v kanálu</option></select></label>
+            <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-secondary);">Limit bez odpovědi (hodiny)<input style="background: var(--bg-secondary); border: 1px solid var(--glass-border); color: var(--text-primary); padding: 8px; border-radius: 6px;" type="number" min="1" max="720" name="help_timeout_hours" value="{{ config.help_timeout_hours }}"></label>
+            <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-secondary);">Okno konfliktů (dny)<input style="background: var(--bg-secondary); border: 1px solid var(--glass-border); color: var(--text-primary); padding: 8px; border-radius: 6px;" type="number" min="1" max="365" name="conflict_window_days" value="{{ config.conflict_window_days }}"></label>
+            <label style="grid-column:1/-1; display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-secondary);">ID podpůrných kanálů oddělená čárkou<input style="background: var(--bg-secondary); border: 1px solid var(--glass-border); color: var(--text-primary); padding: 8px; border-radius: 6px;" name="support_channel_ids" value="{{ config.support_channel_ids|join(',') }}" placeholder="123456789, 987654321"></label>
+            <label style="display: flex; align-items: center; gap: 8px; color: var(--text-primary); font-size: 13px;"><input type="checkbox" name="help_requests_enabled" {% if config.help_requests_enabled %}checked{% endif %}> Sledovat žádosti o pomoc</label>
+            <label style="display: flex; align-items: center; gap: 8px; color: var(--text-primary); font-size: 13px;"><input type="checkbox" name="moderation_context_enabled" {% if config.moderation_context_enabled %}checked{% endif %}> Kontext moderačních zásahů</label>
+            <label style="display: flex; align-items: center; gap: 8px; color: var(--text-primary); font-size: 13px;"><input type="checkbox" name="departure_context_enabled" {% if config.departure_context_enabled %}checked{% endif %}> Kontext před odchodem</label>
+            <label style="display: flex; align-items: center; gap: 8px; color: var(--text-primary); font-size: 13px;"><input type="checkbox" name="event_conversion_enabled" {% if config.event_conversion_enabled %}checked{% endif %}> Účast na komunitních akcích</label>
+            <button class="btn" type="submit" style="grid-column:1/-1">Uložit nastavení</button>
+        </form>
+    </section>
+  {% elif id == 'h_api' and is_admin %}
+    <section class="card widget-wrapper" data-id="h_api" style="grid-column: span {{ span }}">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;"><h3>Integrační API</h3><a href="/api/docs" target="_blank">OpenAPI / Swagger</a></div>
+        <p style="color: var(--text-secondary); font-size: 13px;">Vytvořte omezený klíč. Posílá se v hlavičce <code>X-API-Key</code>. Klíč se po vytvoření zobrazí pouze jednou.</p>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 12px;">
+            <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-secondary);">Název klíče<input style="background: var(--bg-secondary); border: 1px solid var(--glass-border); color: var(--text-primary); padding: 8px; border-radius: 6px;" id="apiKeyLabel" value="Dashboard integration"></label>
+            <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-secondary);">Rozsahy<select style="background: var(--bg-secondary); border: 1px solid var(--glass-border); color: var(--text-primary); padding: 8px; border-radius: 6px;" id="apiKeyScopes" multiple size="4"><option value="overview" selected>overview</option><option value="channels">channels</option><option value="moderation">moderation</option><option value="help">help</option><option value="departures">departures</option><option value="events">events</option><option value="role_evidence">role_evidence</option></select></label>
+            <button class="btn" onclick="createApiKey()" type="button">Vytvořit API klíč</button>
+        </div>
+        <div id="apiKeyOutput" style="display:none;margin-top:12px" class="health-code"></div>
+        <div id="apiKeysList" style="margin-top: 14px; color: var(--text-secondary); font-size: 13px;">Načítám klíče…</div>
+    </section>
+  {% endif %}
+{% endmacro %}
+
+{% set all_widgets = ['h_conflict', 'h_help_open', 'h_help_overdue', 'h_depart_signal', 'h_workload_avg', 'h_events', 'h_conflicts_table', 'h_help_table', 'h_depart_table', 'h_workload_table', 'h_events_table', 'h_evidence'] %}
+{% if is_admin %}
+  {% set all_widgets = all_widgets + ['h_config', 'h_api'] %}
+{% endif %}
+
+{% set current_order = widget_order if widget_order else all_widgets %}
+
+<div class="health-grid" id="health-grid">
+  {% for w_id in current_order %}
+     {{ render_widget(w_id) }}
+  {% endfor %}
+</div>
+
+<div id="hidden-bucket" style="display:none;">
+  {% for w_id in all_widgets %}
+    {% if w_id not in current_order %}
+      {{ render_widget(w_id) }}
+    {% endif %}
+  {% endfor %}
+</div>
+
+<script>
+const fmtDate = ts => ts ? new Date(ts * 1000).toLocaleString('cs-CZ') : '—';
+const fmtDuration = seconds => {if(seconds===null||seconds===undefined)return '—'; if(seconds<60)return `${seconds} s`; if(seconds<3600)return `${Math.round(seconds/60)} min`; return `${(seconds/3600).toFixed(1)} h`;};
+const esc = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+function emptyRow(cols,text='Zatím nejsou dostupná data.'){return `<tr><td colspan="${cols}" style="color: var(--text-secondary); font-size: 13px;">${esc(text)}</td></tr>`}
+
+async function loadHealth(){
+ const days=document.getElementById('healthDays').value;
+ try{
+  const r=await fetch(`/api/community-health/overview?days=${days}`); if(!r.ok)throw new Error(await r.text()); const d=await r.json();
+  document.getElementById('conflictCount').textContent=d.conflicts.repeated_pairs;
+  document.getElementById('helpOpenCount').textContent=d.help_requests.open;
+  document.getElementById('helpOverdueCount').textContent=d.help_requests.overdue;
+  document.getElementById('departureSignalCount').textContent=d.departures.with_preceding_signal;
+  document.getElementById('workloadAverage').textContent=d.moderator_workload.team_average;
+  document.getElementById('eventCount').textContent=d.events.items.length;
+  const conflicts=d.conflicts.pairs.filter(x=>x.is_repeated);
+  document.getElementById('conflictsBody').innerHTML=conflicts.length?conflicts.map(x=>`<tr><td>${esc(x.target.name)}</td><td>${esc(x.moderator.name)}</td><td>${x.event_count}<br><span style="color: var(--text-secondary); font-size: 13px;">${esc(Object.entries(x.actions).map(([k,v])=>`${k}: ${v}`).join(', '))}</span></td><td><span class="health-badge ${x.severity==='high'?'health-danger':x.severity==='medium'?'health-warning':''}">${esc(x.severity)}</span></td></tr>`).join(''):emptyRow(4);
+  document.getElementById('helpBody').innerHTML=d.help_requests.items.length?d.help_requests.items.map(x=>`<tr><td>${esc(x.author.name)}</td><td>${esc(x.channel_name)}</td><td><span class="health-badge ${x.overdue?'health-danger':x.status==='answered'?'health-good':'health-warning'}">${x.overdue?'po termínu':x.status}</span>${x.acknowledged_by_reaction?'<br><span style="color: var(--text-secondary); font-size: 13px;">potvrzeno reakcí</span>':''}</td><td>${x.status==='answered'?fmtDuration(x.response_seconds):fmtDuration(Math.floor(Date.now()/1000-x.created_at))}</td></tr>`).join(''):emptyRow(4,'Data se začnou sbírat po zapnutí modulu a nastavení podpůrných kanálů.');
+  document.getElementById('departuresBody').innerHTML=d.departures.items.length?d.departures.items.map(x=>`<tr><td>${esc(x.user.name)}</td><td>${fmtDate(x.left_at)}</td><td>${x.recent_moderation_events}</td><td>${x.recent_help_requests}</td></tr>`).join(''):emptyRow(4);
+  document.getElementById('workloadBody').innerHTML=d.moderator_workload.items.length?d.moderator_workload.items.map(x=>`<tr><td>${esc(x.moderator.name)}</td><td>${x.actions}</td><td>${x.above_team_distribution?'<span class="health-warning">nad běžným rozložením týmu</span>':'v rámci rozložení'}<br><span style="color: var(--text-secondary); font-size: 13px;">Vyšší počet není automaticky problém.</span></td></tr>`).join(''):emptyRow(3);
+  document.getElementById('eventsBody').innerHTML=d.events.items.length?d.events.items.map(x=>`<tr><td>${esc(x.name)}</td><td>${fmtDate(x.scheduled_start)}</td><td>${x.interested}</td><td>${x.attended}</td><td>${x.conversion_percent===null?'—':x.conversion_percent+' %'}</td></tr>`).join(''):emptyRow(5,'Data se sbírají z Discord Scheduled Events a odpovídajícího hlasového kanálu.');
+ }catch(e){console.error(e); document.querySelectorAll('.health-loading').forEach(el=>el.textContent='Data se nepodařilo načíst.');}
+}
+let currentEvidenceUser=null;
+async function loadEvidence(){const uid=document.getElementById('evidenceUserId').value.trim();if(!uid)return;currentEvidenceUser=uid;const r=await fetch(`/api/community-health/role-evidence/${encodeURIComponent(uid)}`);const d=await r.json();const o=d.observable;document.getElementById('evidenceOutput').innerHTML=`<strong>${esc(d.user.name)}</strong><br>Zprávy: ${o.messages}, odpovědi: ${o.replies}, aktivní kanály: ${o.active_channels}, získané reakce: ${o.received_reactions}, moderační události: ${o.moderation_incidents}.<br><br><span style="color: var(--text-secondary); font-size: 13px;">${esc(d.notice)}</span>${d.human_review?`\n<div class="health-notice" style="margin-top:10px"><strong>Ruční stanovisko:</strong> ${esc(d.human_review.judgement)}<br>${esc(d.human_review.note||'')}</div>`:''}`;const f=document.getElementById('reviewForm');if(f)f.style.display='block';}
+async function saveReview(){if(!currentEvidenceUser)return;const r=await fetch('/api/community-health/role-review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:currentEvidenceUser,judgement:document.getElementById('reviewJudgement').value,note:document.getElementById('reviewNote').value})});if(!r.ok){const d=await r.json().catch(()=>({})); showModal('Uložení selhalo', d.message || 'Tato akce není v demo režimu povolena.');return;}await loadEvidence();}
+async function createApiKey(){const scopes=[...document.getElementById('apiKeyScopes').selectedOptions].map(o=>o.value);const r=await fetch('/api/community-health/api-keys',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({label:document.getElementById('apiKeyLabel').value,scopes})});const out=document.getElementById('apiKeyOutput');out.style.display='block';if(!r.ok){const d=await r.json().catch(()=>({})); showModal('Vytvoření selhalo', d.message || 'Akce zamítnuta.'); out.style.display='none'; return;}const d=await r.json();out.textContent=d.api_key;await loadApiKeys();}
+async function loadApiKeys(){const box=document.getElementById('apiKeysList');if(!box)return;const r=await fetch('/api/community-health/api-keys');if(!r.ok){box.textContent='Seznam klíčů nelze načíst.';return;}const rows=await r.json();box.innerHTML=rows.length?rows.map(x=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--glass-border)"><span><strong>${esc(x.label)}</strong> <code>${esc(x.id)}…</code><br>${esc(x.scopes.join(', '))} · ${x.enabled?'aktivní':'revokovaný'}</span>${x.enabled?`<button class="btn" onclick="revokeApiKey('${esc(x.id)}')">Revokovat</button>`:''}</div>`).join(''):'Zatím nebyl vytvořen žádný API klíč.';}
+async function revokeApiKey(id){showModal('Opravdu revokovat?', 'Chcete opravdu zneplatnit tento klíč?', true, async () => { const r = await fetch(`/api/community-health/api-keys/${encodeURIComponent(id)}`,{method:'DELETE'}); if(!r.ok){const d=await r.json().catch(()=>({})); showModal('Chyba', d.message || 'Nelze revokovat.'); return; } await loadApiKeys(); });}
+loadHealth();loadApiKeys();
+</script>
+{{ layout_scripts() }}
+{% endblock %}

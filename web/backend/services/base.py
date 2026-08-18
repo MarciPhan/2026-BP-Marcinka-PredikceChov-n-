@@ -31,3 +31,7 @@ class BaseAnalyticsService(ABC):
     @abstractmethod
     async def get_action_weights(self) -> dict:
         pass
+
+    @abstractmethod
+    async def get_data_quality_score(self, guild_id: int) -> Dict[str, Any]:
+        pass

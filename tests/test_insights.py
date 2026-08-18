@@ -1,10 +1,5 @@
 import unittest
 from unittest.mock import MagicMock, patch
-import sys
-import os
-
-
-sys.path.append(os.path.join(os.getcwd()))
 
 from web.backend.utils import generate_security_insights
 

@@ -1,6 +1,10 @@
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
+import os
+import secrets
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 router = APIRouter(tags=["pages"])
 templates = Jinja2Templates(directory="web/frontend/templates")
@@ -12,6 +16,12 @@ def require_auth(request: Request):
 
 # ... missing imports (get_sidebar_context etc will be added later or imported from utils)
 from ..utils import *
+import os
+from ..demo_data import get_demo_stats, get_demo_user_activity
+from collections import defaultdict
+from datetime import datetime, timedelta
+
+DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID", "")
 
 @router.get("/select-server", response_class=HTMLResponse)
 async def select_server_page(request: Request):
@@ -23,7 +33,7 @@ async def select_server_page(request: Request):
     
     user_guilds = await get_user_guilds(user["id"])
     
-    # Restrict guest users
+    # Restrict guest users (but not demo)
     if request.session.get("role") == "guest":
         return RedirectResponse(url="/leaderboard")
     
@@ -65,9 +75,11 @@ async def set_active_server(request: Request, guild_id: str):
 
     
     user_guilds = await get_user_guilds(user["id"])
-    if not any(g["id"] == guild_id for g in user_guilds):
-        raise HTTPException(status_code=403, detail="Access denied to this server")
-        
+    if not any(str(g["id"]) == str(guild_id) for g in user_guilds):
+        if user.get("id") == "demo" and guild_id == "demo-guild":
+            pass # Allow demo user to select demo-guild
+        else:
+            raise HTTPException(status_code=403, detail="Access denied to this server")
     
     bot_guilds = await get_bot_guilds()
     if guild_id not in bot_guilds:
@@ -85,11 +97,15 @@ async def set_active_server(request: Request, guild_id: str):
     
     guild_name = "Unknown Server"
     guild_icon = None
-    for g in user_guilds:
-        if g["id"] == guild_id:
-            guild_name = g["name"]
-            guild_icon = g.get("icon")
-            break
+    if guild_id == "demo-guild":
+        guild_name = "Demo Server"
+        guild_icon = None
+    else:
+        for g in user_guilds:
+            if str(g["id"]) == str(guild_id):
+                guild_name = g["name"]
+                guild_icon = g.get("icon")
+                break
 
     request.session["guild_id"] = guild_id
     request.session["guild_name"] = guild_name
@@ -113,6 +129,7 @@ async def dashboard(request: Request, start_date: str = None, end_date: str = No
     except Exception as e:
         import traceback
         err_msg = traceback.format_exc()
+        print(err_msg)
         try:
             log_dir = os.path.join(ROOT_DIR, "logs")
             if not os.path.exists(log_dir):
@@ -304,7 +321,7 @@ async def analytics_page(request: Request, start_date: str = None, end_date: str
     has_any_data = summary["discord"]["msgs"] > 0
 
     
-    from .utils import get_cached_roles
+    from ..utils import get_cached_roles
     roles = await get_cached_roles(guild_id)
     roles_list = [(r["id"], r["name"]) for r in roles]
 
@@ -352,7 +369,7 @@ async def profile_page(request: Request, _=Depends(require_auth)):
     user_id = user.get("id")
     
     
-    from .utils import get_user_guilds, get_bot_guilds
+    from ..utils import get_user_guilds, get_bot_guilds
     managed_guilds = await get_user_guilds(user_id)
     bot_guild_ids = set(await get_bot_guilds())
     
@@ -370,7 +387,7 @@ async def profile_page(request: Request, _=Depends(require_auth)):
             "icon": g.get("icon"),
             "active": is_active,
             "dashboard_url": f"/activity?guild_id={g['id']}" if is_active else None,
-            "invite_url": f"https://discord.com/api/oauth2/authorize?client_id={DISCORD_CLIENT_ID}&permissions=8&scope=bot" if not is_active else None
+            "invite_url": f"https://discord.com/api/oauth2/authorize?client_id={DISCORD_CLIENT_ID}&permissions=277025508352&scope=bot" if not is_active else None
         })
     
     # ADD DEMO GUILD FOR TESTING
@@ -414,7 +431,7 @@ async def profile_page(request: Request, _=Depends(require_auth)):
 @router.get("/activity", response_class=HTMLResponse)
 async def activity_page(request: Request, guild_id: str = None, start_date: str = None, end_date: str = None, role_id: str = None, _=Depends(require_auth)):
     """Moderator Activity Page with manual Redis aggregation."""
-    from .utils import get_user_guilds
+    from ..utils import get_user_guilds
     
     user_role = request.session.get("role", "guest")
     user_id = request.session.get("discord_user", {}).get("id")
@@ -445,7 +462,9 @@ async def activity_page(request: Request, guild_id: str = None, start_date: str 
             "start_date": start_date or stats["start_date"],
             "end_date": end_date or stats["end_date"],
             "roles": stats["roles"],
-            "selected_role": role_id or "all"
+            "selected_role": role_id or "all",
+            "widget_order": request.session.get("activity_order", []),
+            "widget_spans": request.session.get("dashboard_spans", {})
         }
         ctx.update(sidebar_ctx)
         return templates.TemplateResponse("activity.html", ctx)
@@ -492,7 +511,7 @@ async def activity_page(request: Request, guild_id: str = None, start_date: str 
     
     
     
-    from .utils import get_activity_stats, get_redis_dashboard_stats, get_deep_stats_redis
+    from ..utils import get_activity_stats, get_redis_dashboard_stats, get_deep_stats_redis
     
     
     activity_stats = await get_activity_stats(int(target_guild_id), start_date=start_date, end_date=end_date)
@@ -527,7 +546,7 @@ async def activity_page(request: Request, guild_id: str = None, start_date: str 
     sidebar_ctx = await get_sidebar_context(request)
     
     
-    from .utils import get_cached_roles
+    from ..utils import get_cached_roles
     roles = await get_cached_roles(int(target_guild_id))
     roles_list = [(r["id"], r["name"]) for r in roles]
 
@@ -552,7 +571,9 @@ async def activity_page(request: Request, guild_id: str = None, start_date: str 
         "selected_role": role_id or "all",
         "start_date": start_date or d_start.strftime("%Y-%m-%d"),
         "end_date": end_date or d_end.strftime("%Y-%m-%d"),
-        "warning": warning_msg
+        "warning": warning_msg,
+        "widget_order": request.session.get("activity_order", []),
+        "widget_spans": request.session.get("dashboard_spans", {})
     }
     ctx.update(sidebar_ctx)
     return templates.TemplateResponse("activity.html", ctx)
@@ -669,7 +690,7 @@ async def leaderboard_page(request: Request, _=Depends(require_auth)):
 
 
 @router.get("/activity/user/{uid}", response_class=HTMLResponse)
-async def user_activity_page(request: Request, uid: int, start_date: str = None, end_date: str = None, _=Depends(require_auth)):
+async def user_activity_page(request: Request, uid: str, start_date: str = None, end_date: str = None, _=Depends(require_auth)):
     """Detailed activity page for a specific user."""
     
     
@@ -826,3 +847,272 @@ async def predictions_page(request: Request, _=Depends(require_auth)):
     }
     context.update(sidebar_ctx)
     return templates.TemplateResponse("predictions.html", context)
+
+async def _dashboard_logic(request: Request, start_date: str = None, end_date: str = None, role_id: str = None):
+    # Hlavní logika dashboardu
+    
+    user = request.session.get("discord_user")
+    
+    
+    if not user:
+        
+        
+        
+        
+        try:
+             r = await get_redis_client()
+             bot_guilds = await r.smembers("bot:guilds")
+             
+             
+             total_msgs = 0
+             total_users = 0
+             max_days = 0
+             
+             for gid in bot_guilds:
+                 if not str(gid).isdigit():
+                     continue
+                 tm = await r.get(f"stats:total_msgs:{gid}") or "0"
+                 tu = await r.get(f"presence:total:{gid}") or "0"
+                 hourly = await r.keys(f"stats:hourly:{gid}:*")
+                 
+                 total_msgs += int(tm)
+                 total_users += int(tu)
+                 max_days = max(max_days, len(hourly))
+             
+             pass
+             
+             # MARKETING STATS (Impressive defaults for the demo)
+             # We use the real counts as offsets if they exist, but ensure a high minimum
+             display_msgs = max(total_msgs, 1250000)
+             display_users = max(total_users, 15340)
+             
+             public_stats = {
+                 "messages": f"{display_msgs:,}".replace(",", " ") + "+",
+                 "users": f"{display_users:,}".replace(",", " ") + "+",
+                 "days": max(max_days, 365)
+             }
+        except Exception as e:
+            print(f"Error fetching dashboard guilds: {e}")
+            public_stats = {"messages": "---", "users": "---", "days": "0"}
+             
+        return templates.TemplateResponse("landing.html", {"request": request, "stats": public_stats})
+
+    # Restrict guest users (demo role has full read access)
+    role = request.session.get("role")
+    if role == "guest" and request.session.get("guild_id") != "demo-guild":
+        return RedirectResponse(url="/leaderboard")
+    
+    guild_id = request.session.get("guild_id")
+    if not guild_id:
+        return RedirectResponse(url="/select-server")
+
+    if guild_id == "demo-guild":
+        # SERVE MOCK DATA
+        stats = get_demo_stats(start_date, end_date)
+        context = {
+            "request": request,
+            **stats, # unpacking all the pre-calculated stats
+            "user": user,
+            "is_demo": True,
+            "is_discourse": False
+        }
+        sidebar_ctx = await get_sidebar_context(request)
+        context.update(sidebar_ctx)
+        return templates.TemplateResponse("index.html", context)
+    
+    
+    start_date = start_date or request.session.get("start_date", "2025-12-21")
+    end_date = end_date or request.session.get("end_date", "2026-01-20")
+    role_id = role_id or request.session.get("role_id", "all")
+    
+    
+    request.session["start_date"] = start_date
+    request.session["end_date"] = end_date
+    request.session["role_id"] = role_id
+
+    guild_id = int(guild_id)
+    
+    # Check if this is a Discourse guild for context
+    is_discourse = False
+    if guild_id < 0: # Our negative ID convention for Discourse
+        is_discourse = True
+    
+    
+    from ..utils import get_dashboard_permissions
+    perms = await get_dashboard_permissions(guild_id, user["id"])
+    
+    
+    if not perms:
+        try:
+             
+             r = await get_redis_client()
+             xp_key = f"levels:xp:{guild_id}"
+             top_users = await r.zrevrange(xp_key, 0, 49, withscores=True) 
+             
+             leaderboard_data = []
+             for i, (uid_str, xp_score) in enumerate(top_users, 1):
+                 uid = str(uid_str)
+                 xp = int(float(xp_score))
+                 
+                 u_info = await r.hgetall(f"user:info:{uid}") or {}
+                 username = u_info.get("username") or u_info.get("name") or f"Uživatel {uid[:5]}..."
+                 avatar = u_info.get("avatar")
+                 
+                 # Výpočet levelu na základě XP
+                 
+                 xp_conf = await r.hgetall("config:xp_formula")
+                 a = int(xp_conf.get("a", 50))
+                 b = int(xp_conf.get("b", 200)) 
+                 c_const = int(xp_conf.get("c", 100))
+                 
+                 import math
+                 def calc_level(cxp):
+                     if cxp < c_const: return 0
+                     c_val = c_const - cxp
+                     d = (b**2) - (4*a*c_val)
+                     if d < 0: return 0
+                     return int((-b + math.sqrt(d)) / (2*a))
+                 
+                 def xp_for_lvl(lvl):
+                     return a * (lvl ** 2) + b * lvl + c_const
+                     
+                 level = calc_level(xp)
+                 next_xp = xp_for_lvl(level + 1)
+                 prev_xp = xp_for_lvl(level) if level > 0 else 0
+                 
+                 needed = next_xp - prev_xp
+                 current = xp - prev_xp
+                 progress = int((current / needed) * 100) if needed > 0 else 0
+                 
+                 leaderboard_data.append({
+                     "rank": i,
+                     "username": username,
+                     "user_id": uid,
+                     "avatar": avatar,
+                     "level": level,
+                     "xp": xp,
+                     "progress": min(100, max(0, progress))
+                 })
+                 
+             return templates.TemplateResponse("leaderboard.html", {
+                 "request": request, 
+                 "leaderboard": leaderboard_data, 
+                 "user": user,
+                 "is_restricted": True
+             })
+             
+        except Exception as e:
+            print(f"Restricted view error: {e}")
+            return templates.TemplateResponse("leaderboard.html", {"request": request, "leaderboard": [], "user": user, "error": str(e)})
+
+    
+    
+    
+    from ..utils import get_cached_roles
+    roles = await get_cached_roles(guild_id)
+    roles_list = [(r["id"], r["name"]) for r in roles]
+
+
+    
+
+
+
+    
+    member_stats = await load_member_stats(guild_id, start_date=start_date, end_date=end_date)
+    
+    
+    activity_stats = await get_activity_stats(guild_id, start_date=start_date, end_date=end_date)
+    
+    
+    deep_stats = await get_deep_stats_redis(guild_id=guild_id, start_date=start_date, end_date=end_date)
+    
+    
+    redis_stats = await get_redis_dashboard_stats(guild_id, start_date=start_date, end_date=end_date, role_id=role_id)
+    deep_stats.update(redis_stats)
+    
+    
+    realtime_active = await get_realtime_online_count(guild_id)
+
+
+
+    
+    summary = await get_summary_card_data(guild_id=guild_id)
+    has_any_data = summary["discord"]["msgs"] > 0
+
+    
+    total_leaves = sum(member_stats["leaves"]) if member_stats.get("leaves") else 0
+    current_total = member_stats["total"][-1] if member_stats.get("total") else 0
+    current_dau = activity_stats["dau_data"][-1] if activity_stats.get("dau_data") else 0
+    current_mau = activity_stats["mau_data"][-1] if activity_stats.get("mau_data") else 0
+    current_wau = deep_stats.get("wau_data", [])[-1] if deep_stats.get("wau_data") else 0
+    
+    
+    summary_stats = await get_summary_card_data(
+        discord_dau=current_dau,
+        discord_mau=current_mau,
+        discord_wau=current_wau,
+        discord_users=current_total, 
+        guild_id=guild_id
+    )
+    
+    
+    real_total_members = summary_stats["discord"]["users"]
+    churn_rate = round((total_leaves / max(1, real_total_members)) * 100, 2)
+    
+    
+    context = {
+        "request": request,
+        "stats": summary_stats,
+        "member_stats": member_stats,
+        "activity_stats": activity_stats,
+        "deep_stats": deep_stats,
+        "redis_stats": redis_stats,
+        "realtime_active": realtime_active,
+        "churn_rate": churn_rate,
+        "active_staff_count": 0, 
+        "roles": roles_list,
+        "user_role": role_id,
+        "start_date": start_date,
+        "end_date": end_date,
+        "guild_id": guild_id,
+        "is_discourse": is_discourse,
+        "user": user,
+        
+        
+        "total_members": summary_stats["discord"]["users"],
+        "avg_dau": activity_stats.get("avg_dau", 0),
+        "avg_msg_len": deep_stats.get("avg_msg_len", "-"),
+        "peak_day": deep_stats.get("peak_day", "-"),
+        "reply_ratio": deep_stats.get("reply_ratio", 0),
+        
+        
+        "dau_labels": activity_stats.get("dau_labels", []),
+        "dau_data": activity_stats.get("dau_data", []),
+        "labels": member_stats.get("labels", []),
+        "joins_data": member_stats.get("joins", []),
+        "leaves_data": member_stats.get("leaves", []),
+        "total_data": member_stats.get("total", []),
+        
+        
+        "hourly_labels": redis_stats.get("hourly_labels", []),
+        "hourly_activity": redis_stats.get("hourly_activity", []),
+        "retention_labels": deep_stats.get("retention_labels", []),
+        "dau_mau_ratio": deep_stats.get("dau_mau_ratio", []),
+        "dau_wau_ratio": deep_stats.get("dau_wau_ratio", []),
+        "msglen_labels": redis_stats.get("msglen_labels", []),
+        "msglen_data": redis_stats.get("msglen_data", []),
+        "weekly_labels": deep_stats.get("weekly_labels", []),
+        "weekly_data": deep_stats.get("weekly_data", []),
+        "widget_order": request.session.get("overview_order", [])
+    }
+
+    
+    sidebar_ctx = await get_sidebar_context(request)
+    context.update(sidebar_ctx)
+    
+    return templates.TemplateResponse("index.html", context)
+
+
+
+
+

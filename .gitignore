@@ -8,6 +8,7 @@ config/dashboard_secrets.py
 data/*.json
 bot_data/
 venv/
+.venv/
 .DS_Store
 
 # Python source files

@@ -69,33 +69,28 @@ class HealthCog(commands.Cog):
         embed.description = status_text
         
         if research:
-            # 2. Advanced Markov & Survival Logic
-            # Simulujeme sběr dat pro Markovův model (v reálu by to byl scan všech userů)
-            # Pro demo vytvoříme reálný odhad z heatmapy a DAU
+            from web.backend.utils import get_health_research_data
             
-            states = ["New", "Active", "Passive", "Inactive", "Churned"]
-            # Mock matrix založená na reálném toxicity_index a activity_rate
-            # Pokud je AER vysoká, pravděpodobnost Inactive -> Active je vyšší
-            p_stay_active = 0.6 + (activity_rate * 0.5)
-            p_churn = 0.05 + (toxicity_index * 2)
+            # Zavoláme reálnou ML pipeline z backendu
+            research_data = await get_health_research_data(guild.id)
             
-            # Stavový vektor (odhad rozložení)
-            # New, Active, Passive, Inactive, Churned
-            user_dist = np.array([0.05, activity_rate, 0.2, 0.4, 0.35])
-            user_dist = user_dist / np.sum(user_dist)
-            
-            # Survival - Life Expectancy
-            # Průměrná doba setrvání člena (odhadnuto z churn rate)
-            life_exp = round(1 / max(0.01, p_churn / 30), 1) # ve dnech
-            
-            res_text = (
-                f"**Markovova analýza (Predikce 7 dní):**\n"
-                f"- Pravděpodobnost setrvání (Retention): **{p_stay_active:.1%}**\n"
-                f"- Riziko odchodu (Churn Risk): **{p_churn:.1%}**\n\n"
-                f"**Analýza přežití (Survival):**\n"
-                f"- Očekávaná délka členství: **{life_exp} dní**\n"
-                f"- Poločas rozpadu komunity: **{round(life_exp * 0.69, 1)} dní**"
-            )
+            if research_data.get("success"):
+                p_stay_active = research_data.get("retention_pct", 0) / 100.0
+                p_churn = research_data.get("churn_risk_pct", 0) / 100.0
+                life_exp = research_data.get("life_expectancy_days", 0)
+                half_life = research_data.get("half_life_days", 0)
+                
+                res_text = (
+                    f"**Markovova analýza (Predikce 7 dní):**\n"
+                    f"- Pravděpodobnost setrvání (Retention): **{p_stay_active:.1%}**\n"
+                    f"- Riziko odchodu (Churn Risk): **{p_churn:.1%}**\n\n"
+                    f"**Analýza přežití (Survival):**\n"
+                    f"- Očekávaná délka členství: **{life_exp} dní**\n"
+                    f"- Poločas rozpadu komunity: **{half_life} dní**"
+                )
+            else:
+                res_text = "Nepodařilo se vypočítat výzkumná data (nedostatek historie nebo chyba zpracování)."
+                
             embed.add_field(name="🧪 Výzkumná data (Markov/Survival)", value=res_text, inline=False)
             
         await interaction.followup.send(embed=embed)

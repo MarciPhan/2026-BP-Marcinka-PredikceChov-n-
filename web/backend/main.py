@@ -88,13 +88,16 @@ try:
 except ImportError:
     get_demo_stats = lambda *args: {}
 
-from .otp_utils import (
-    validate_email, get_user_role, generate_otp, store_otp, verify_otp, 
-    check_rate_limit, send_otp_email, mask_email
-)
+# OTP email auth removed – přihlášení pouze přes Discord OAuth2 nebo Demo
 
-app = FastAPI(title="CommunityMetrics", docs_url=None, redoc_url=None, openapi_url=None)
-# Vypneme automatickou dokumentaci pro čistotu
+app = FastAPI(
+    title="CommunityMetrics API",
+    version="1.0.0",
+    docs_url="/api/docs",
+    redoc_url=None,
+    openapi_url="/api/openapi.json",
+    description="Dokumentované rozhraní pro komunitní analytiku. Endpointy /api/v1 vyžadují hlavičku X-API-Key.",
+)
 
 
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, max_age=SESSION_EXPIRY_HOURS * 3600, same_site="lax", https_only=True)
@@ -110,11 +113,13 @@ from .routers.auth import router as auth_router
 from .routers.settings import router as settings_router
 from .routers.pages import router as pages_router
 from .routers.api import router as api_router
+from .routers.community_health import router as community_health_router
 
 app.include_router(auth_router)
 app.include_router(settings_router)
 app.include_router(pages_router)
 app.include_router(api_router)
+app.include_router(community_health_router)
 
 
 
@@ -145,276 +150,10 @@ async def favicon():
 
 
 
-async def _dashboard_logic(request: Request, start_date: str = None, end_date: str = None, role_id: str = None):
-    # Hlavní logika dashboardu
-    
-    user = request.session.get("discord_user")
-    
-    
-    if not user:
-        
-        
-        
-        
-        try:
-             r = await get_redis_client()
-             bot_guilds = await r.smembers("bot:guilds")
-             
-             
-             total_msgs = 0
-             total_users = 0
-             max_days = 0
-             
-             for gid in bot_guilds:
-                 if not str(gid).isdigit():
-                     continue
-                 tm = await r.get(f"stats:total_msgs:{gid}") or "0"
-                 tu = await r.get(f"presence:total:{gid}") or "0"
-                 hourly = await r.keys(f"stats:hourly:{gid}:*")
-                 
-                 total_msgs += int(tm)
-                 total_users += int(tu)
-                 max_days = max(max_days, len(hourly))
-             
-             pass
-             
-             # MARKETING STATS (Impressive defaults for the demo)
-             # We use the real counts as offsets if they exist, but ensure a high minimum
-             display_msgs = max(total_msgs, 1250000)
-             display_users = max(total_users, 15340)
-             
-             public_stats = {
-                 "messages": f"{display_msgs:,}".replace(",", " ") + "+",
-                 "users": f"{display_users:,}".replace(",", " ") + "+",
-                 "days": max(max_days, 365)
-             }
-        except Exception as e:
-            print(f"Error fetching dashboard guilds: {e}")
-            public_stats = {"messages": "---", "users": "---", "days": "0"}
-             
-        return templates.TemplateResponse("landing.html", {"request": request, "stats": public_stats})
-
-    # Restrict guest users
-    if request.session.get("role") == "guest" and request.session.get("guild_id") != "demo-guild":
-        return RedirectResponse(url="/leaderboard")
-    
-    guild_id = request.session.get("guild_id")
-    if not guild_id:
-        return RedirectResponse(url="/select-server")
-
-    if guild_id == "demo-guild":
-        # SERVE MOCK DATA
-        stats = get_demo_stats(start_date, end_date)
-        context = {
-            "request": request,
-            **stats, # unpacking all the pre-calculated stats
-            "user": user,
-            "is_demo": True,
-            "is_discourse": False
-        }
-        sidebar_ctx = await get_sidebar_context(request)
-        context.update(sidebar_ctx)
-        return templates.TemplateResponse("index.html", context)
-    
-    
-    start_date = start_date or request.session.get("start_date", "2025-12-21")
-    end_date = end_date or request.session.get("end_date", "2026-01-20")
-    role_id = role_id or request.session.get("role_id", "all")
-    
-    
-    request.session["start_date"] = start_date
-    request.session["end_date"] = end_date
-    request.session["role_id"] = role_id
-
-    guild_id = int(guild_id)
-    
-    # Check if this is a Discourse guild for context
-    is_discourse = False
-    if guild_id < 0: # Our negative ID convention for Discourse
-        is_discourse = True
-    
-    
-    from .utils import get_dashboard_permissions
-    perms = await get_dashboard_permissions(guild_id, user["id"])
-    
-    
-    if not perms:
-        try:
-             
-             r = await get_redis_client()
-             xp_key = f"levels:xp:{guild_id}"
-             top_users = await r.zrevrange(xp_key, 0, 49, withscores=True) 
-             
-             leaderboard_data = []
-             for i, (uid_str, xp_score) in enumerate(top_users, 1):
-                 uid = str(uid_str)
-                 xp = int(float(xp_score))
-                 
-                 u_info = await r.hgetall(f"user:info:{uid}") or {}
-                 username = u_info.get("username") or u_info.get("name") or f"Uživatel {uid[:5]}..."
-                 avatar = u_info.get("avatar")
-                 
-                 # Výpočet levelu na základě XP
-                 
-                 xp_conf = await r.hgetall("config:xp_formula")
-                 a = int(xp_conf.get("a", 50))
-                 b = int(xp_conf.get("b", 200)) 
-                 c_const = int(xp_conf.get("c", 100))
-                 
-                 import math
-                 def calc_level(cxp):
-                     if cxp < c_const: return 0
-                     c_val = c_const - cxp
-                     d = (b**2) - (4*a*c_val)
-                     if d < 0: return 0
-                     return int((-b + math.sqrt(d)) / (2*a))
-                 
-                 def xp_for_lvl(lvl):
-                     return a * (lvl ** 2) + b * lvl + c_const
-                     
-                 level = calc_level(xp)
-                 next_xp = xp_for_lvl(level + 1)
-                 prev_xp = xp_for_lvl(level) if level > 0 else 0
-                 
-                 needed = next_xp - prev_xp
-                 current = xp - prev_xp
-                 progress = int((current / needed) * 100) if needed > 0 else 0
-                 
-                 leaderboard_data.append({
-                     "rank": i,
-                     "username": username,
-                     "user_id": uid,
-                     "avatar": avatar,
-                     "level": level,
-                     "xp": xp,
-                     "progress": min(100, max(0, progress))
-                 })
-                 
-             return templates.TemplateResponse("leaderboard.html", {
-                 "request": request, 
-                 "leaderboard": leaderboard_data, 
-                 "user": user,
-                 "is_restricted": True
-             })
-             
-        except Exception as e:
-            print(f"Restricted view error: {e}")
-            return templates.TemplateResponse("leaderboard.html", {"request": request, "leaderboard": [], "user": user, "error": str(e)})
-
-    
-    
-    
-    from .utils import get_cached_roles
-    roles = await get_cached_roles(guild_id)
-    roles_list = [(r["id"], r["name"]) for r in roles]
-
-
-    
-
-
-
-    
-    member_stats = await load_member_stats(guild_id, start_date=start_date, end_date=end_date)
-    
-    
-    activity_stats = await get_activity_stats(guild_id, start_date=start_date, end_date=end_date)
-    
-    
-    deep_stats = await get_deep_stats_redis(guild_id=guild_id, start_date=start_date, end_date=end_date)
-    
-    
-    redis_stats = await get_redis_dashboard_stats(guild_id, start_date=start_date, end_date=end_date, role_id=role_id)
-    deep_stats.update(redis_stats)
-    
-    
-    realtime_active = await get_realtime_online_count(guild_id)
-
-
-
-    
-    summary = await get_summary_card_data(guild_id=guild_id)
-    has_any_data = summary["discord"]["msgs"] > 0
-
-    
-    total_leaves = sum(member_stats["leaves"]) if member_stats.get("leaves") else 0
-    current_total = member_stats["total"][-1] if member_stats.get("total") else 0
-    current_dau = activity_stats["dau_data"][-1] if activity_stats.get("dau_data") else 0
-    current_mau = activity_stats["mau_data"][-1] if activity_stats.get("mau_data") else 0
-    current_wau = deep_stats.get("wau_data", [])[-1] if deep_stats.get("wau_data") else 0
-    
-    
-    summary_stats = await get_summary_card_data(
-        discord_dau=current_dau,
-        discord_mau=current_mau,
-        discord_wau=current_wau,
-        discord_users=current_total, 
-        guild_id=guild_id
-    )
-    
-    
-    real_total_members = summary_stats["discord"]["users"]
-    churn_rate = round((total_leaves / max(1, real_total_members)) * 100, 2)
-    
-    
-    context = {
-        "request": request,
-        "stats": summary_stats,
-        "member_stats": member_stats,
-        "activity_stats": activity_stats,
-        "deep_stats": deep_stats,
-        "redis_stats": redis_stats,
-        "realtime_active": realtime_active,
-        "churn_rate": churn_rate,
-        "active_staff_count": 0, 
-        "roles": roles_list,
-        "user_role": role_id,
-        "start_date": start_date,
-        "end_date": end_date,
-        "guild_id": guild_id,
-        "is_discourse": is_discourse,
-        "user": user,
-        
-        
-        "total_members": summary_stats["discord"]["users"],
-        "avg_dau": activity_stats.get("avg_dau", 0),
-        "avg_msg_len": deep_stats.get("avg_msg_len", "-"),
-        "peak_day": deep_stats.get("peak_day", "-"),
-        "reply_ratio": deep_stats.get("reply_ratio", 0),
-        
-        
-        "dau_labels": activity_stats.get("dau_labels", []),
-        "dau_data": activity_stats.get("dau_data", []),
-        "labels": member_stats.get("labels", []),
-        "joins_data": member_stats.get("joins", []),
-        "leaves_data": member_stats.get("leaves", []),
-        "total_data": member_stats.get("total", []),
-        
-        
-        "hourly_labels": redis_stats.get("hourly_labels", []),
-        "hourly_activity": redis_stats.get("hourly_activity", []),
-        "retention_labels": deep_stats.get("retention_labels", []),
-        "dau_mau_ratio": deep_stats.get("dau_mau_ratio", []),
-        "dau_wau_ratio": deep_stats.get("dau_wau_ratio", []),
-        "msglen_labels": redis_stats.get("msglen_labels", []),
-        "msglen_data": redis_stats.get("msglen_data", []),
-        "weekly_labels": deep_stats.get("weekly_labels", []),
-        "weekly_data": deep_stats.get("weekly_data", []),
-        "widget_order": request.session.get("overview_order", [])
-    }
-
-    
-    sidebar_ctx = await get_sidebar_context(request)
-    context.update(sidebar_ctx)
-    
-    return templates.TemplateResponse("index.html", context)
-
-
-
-
 async def require_auth(request: Request):
     # Kontrola, jestli je uživatel přihlášen
     
-    allowed_paths = ["/login", "/auth/callback", "/logout", "/login-email", "/api/auth/request-otp", "/verify-otp", "/api/auth/verify-otp", "/resend-otp"]
+    allowed_paths = ["/login", "/login/demo", "/auth/callback", "/logout"]
     if request.url.path.startswith("/static") or request.url.path in allowed_paths:
         return
     
@@ -461,9 +200,71 @@ async def docs_proxy(request: Request, path: str = ""):
     return RedirectResponse(url=target_url)
 
 
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from web.backend.utils import get_sidebar_context
+
 @app.exception_handler(401)
-async def redirect_to_login_handler(request: Request, exc: HTTPException):
+async def redirect_to_login_handler(request: Request, exc: StarletteHTTPException):
     return RedirectResponse(url="/", status_code=302)
+
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+        
+    is_demo = request.session.get("role") == "demo"
+    if exc.status_code == 403 and is_demo:
+        referer = request.headers.get("referer")
+        if referer:
+            import urllib.parse
+            url_parts = list(urllib.parse.urlparse(referer))
+            query = dict(urllib.parse.parse_qsl(url_parts[4]))
+            query["error"] = "demo_restricted"
+            url_parts[4] = urllib.parse.urlencode(query)
+            return RedirectResponse(url=urllib.parse.urlunparse(url_parts), status_code=303)
+        return RedirectResponse(url="/?error=demo_restricted", status_code=303)
+
+    titles = {
+        400: "Špatný požadavek",
+        403: "Přístup odepřen",
+        404: "Stránka nenalezena",
+        405: "Nepovolená metoda",
+        500: "Interní chyba serveru"
+    }
+    title = titles.get(exc.status_code, "Chyba")
+    
+    context = {
+        "request": request,
+        "status_code": exc.status_code,
+        "error_title": title,
+        "error_message": exc.detail
+    }
+    try:
+        sidebar_ctx = await get_sidebar_context(request)
+        context.update(sidebar_ctx)
+    except Exception:
+        pass
+        
+    return templates.TemplateResponse("error.html", context, status_code=exc.status_code)
+
+@app.exception_handler(Exception)
+async def custom_general_exception_handler(request: Request, exc: Exception):
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(status_code=500, content={"detail": "Interní chyba serveru"})
+        
+    context = {
+        "request": request,
+        "status_code": 500,
+        "error_title": "Něco se pokazilo",
+        "error_message": "Omlouváme se, na serveru došlo k neočekávané chybě. Tým byl upozorněn."
+    }
+    try:
+        sidebar_ctx = await get_sidebar_context(request)
+        context.update(sidebar_ctx)
+    except Exception:
+        pass
+        
+    return templates.TemplateResponse("error.html", context, status_code=500)
 
 
 

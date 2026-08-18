@@ -1,13 +1,48 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+    /* Premium Settings Design */
+    .title-gradient {
+        background: linear-gradient(135deg, #fff, #9ca3af);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+    }
+    
+    .card {
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease;
+        border: 1px solid var(--glass-border);
+        background: linear-gradient(145deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.9) 100%);
+        backdrop-filter: blur(12px);
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px -10px rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    input, select {
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    input:focus, select:focus {
+        border-color: rgba(59, 130, 246, 0.8) !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+        outline: none;
+    }
+</style>
+
 <div class="page-header">
-    <h1 class="title">Nastavení</h1>
+    <h1 class="title title-gradient">Nastavení systému</h1>
 </div>
 
 <div class="card" style="margin-bottom: 24px;">
     <h2 style="margin-bottom: 16px;">Obecné Nastavení</h2>
     <form method="POST" action="/settings/general">
+        <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token') }}">
         <div style="display: flex; align-items: center; justify-content: space-between;">
             <div>
                 <label for="show_deleted" style="font-weight: 600; display: block;">Zobrazit smazaná data</label>
@@ -153,53 +188,14 @@
 
 
 
-<div id="customModal"
-    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
-    <div
-        style="background: var(--bg-secondary); padding: 24px; border-radius: 12px; border: 1px solid var(--glass-border); max-width: 400px; width: 90%; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
-        <h3 id="modalTitle" style="margin-bottom: 12px;">Upozornění</h3>
-        <p id="modalMessage" style="color: var(--text-secondary); margin-bottom: 24px;">Zpráva...</p>
-        <div style="display: flex; justify-content: center; gap: 12px;">
-            <button id="modalConfirmBtn"
-                style="display: none; padding: 8px 16px; background: var(--primary-gradient); border: none; border-radius: 6px; color: white; cursor: pointer;">Potvrdit</button>
-            <button onclick="closeModal()"
-                style="padding: 8px 16px; background: var(--bg-tertiary); border: 1px solid var(--glass-border); color: var(--text-primary); border-radius: 6px; cursor: pointer;">Zavřít</button>
-        </div>
-    </div>
+
 </div>
 
 
 
 
 <script>
-    // Modal Logic
-    const modal = document.getElementById('customModal');
-    const mTitle = document.getElementById('modalTitle');
-    const mMsg = document.getElementById('modalMessage');
-    const mConfirm = document.getElementById('modalConfirmBtn');
-    let onConfirmAction = null;
-
-    function showModal(title, message, isConfirm = false, onConfirm = null) {
-        mTitle.innerText = title;
-        mMsg.innerHTML = message; // Allow HTML
-        modal.style.display = 'flex';
-
-        if (isConfirm && onConfirm) {
-            mConfirm.style.display = 'block';
-            onConfirmAction = onConfirm;
-        } else {
-            mConfirm.style.display = 'none';
-        }
-    }
-
-    function closeModal() {
-        modal.style.display = 'none';
-    }
-
-    mConfirm.onclick = () => {
-        if (onConfirmAction) onConfirmAction();
-        closeModal();
-    };
+    
 
 
     async function triggerBackfill() {
@@ -212,10 +208,10 @@
             btn.innerText = "Spouštím...";
 
             try {
-                // Must send SOME data to satisfy multipart/form-data requirement of FastAPI
                 const formData = new FormData();
                 formData.append('action', 'trigger');
                 formData.append('guild_id', '{{ sidebar_guild_id }}');
+                formData.append('csrf_token', '{{ request.session.get("csrf_token") }}');
 
                 const resp = await fetch('/api/trigger-backfill', { method: 'POST', body: formData });
 
@@ -230,6 +226,10 @@
                     status.style.display = 'block';
                     btn.innerText = "Probíhá stahování...";
                     startBackfillPolling();
+                } else if (resp.status === 403) {
+                    showModal("Přístup odepřen", data.message || "Tato akce není v demu povolena.");
+                    btn.disabled = false;
+                    btn.innerText = "Spustit Backfill";
                 } else {
                     showModal("Chyba", data.message || "Neznámá chyba");
                     btn.disabled = false;
@@ -301,12 +301,19 @@
             btn.innerText = "Mažu...";
 
             try {
-                const resp = await fetch('/api/delete-server-data', { method: 'POST' });
+                const formData = new FormData();
+                formData.append('csrf_token', '{{ request.session.get("csrf_token") }}');
+                
+                const resp = await fetch('/api/delete-server-data', { method: 'POST', body: formData });
                 const data = await resp.json();
 
                 if (resp.status === 200 && data.status === 'ok') {
                     showModal("Hotovo", data.message);
                     btn.innerText = "✅ Smazáno";
+                } else if (resp.status === 403) {
+                    showModal("Přístup odepřen", data.message || "Tato akce není v demu povolena.");
+                    btn.disabled = false;
+                    btn.innerText = "Smazat data";
                 } else {
                     showModal("Chyba", data.message || "Neznámá chyba");
                     btn.disabled = false;
@@ -327,7 +334,10 @@
             btn.innerText = "Odcházím...";
 
             try {
-                const resp = await fetch('/api/leave-server', { method: 'POST' });
+                const formData = new FormData();
+                formData.append('csrf_token', '{{ request.session.get("csrf_token") }}');
+                
+                const resp = await fetch('/api/leave-server', { method: 'POST', body: formData });
                 const data = await resp.json();
 
                 if (resp.status === 200 && data.status === 'ok') {
@@ -335,6 +345,10 @@
                     setTimeout(() => {
                         window.location.href = '/select-server';
                     }, 2000);
+                } else if (resp.status === 403) {
+                    showModal("Přístup odepřen", data.message || "Tato akce není v demu povolena.");
+                    btn.disabled = false;
+                    btn.innerText = "Odebrat bota";
                 } else {
                     showModal("Chyba", data.message || "Neznámá chyba");
                     btn.disabled = false;
@@ -357,6 +371,7 @@
     </p>
 
     <form method="POST" action="/settings/weights">
+        <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token') }}">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
 
 
@@ -426,6 +441,7 @@
     </p>
 
     <form method="POST" action="/settings/xp-formula">
+        <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token') }}">
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px;">
             <div>
                 <label style="display: block; font-weight: 600; margin-bottom: 8px;">Koeficient A</label>
@@ -499,6 +515,7 @@
     </p>
 
     <form method="POST" action="/settings/security-score">
+        <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token') }}">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
 
 

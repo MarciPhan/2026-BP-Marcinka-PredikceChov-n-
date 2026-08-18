@@ -1,0 +1,213 @@
+{% macro layout_controls(grid_id, page_name) %}
+<button id="editLayoutBtn" onclick="window.toggleEditMode('{{ grid_id }}', '{{ page_name }}')" class="btn"
+    style="padding: 6px 12px; white-space: nowrap; display: flex; align-items: center; gap: 8px; background: var(--bg-card);">
+    Upravit rozložení
+</button>
+<button id="saveLayoutBtn" onclick="window.saveLayout('{{ grid_id }}', '{{ page_name }}')" class="btn"
+    style="padding: 6px 12px; white-space: nowrap; display: none; align-items: center; gap: 8px; background: var(--success-gradient); color: white;">
+    Uložit
+</button>
+<button id="resetLayoutBtn" onclick="window.resetLayout('{{ page_name }}')" class="btn"
+    style="padding: 6px 12px; white-space: nowrap; display: none; align-items: center; gap: 8px; background: var(--danger-gradient); color: white;">
+    Reset
+</button>
+{% endmacro %}
+
+{% macro layout_drawer() %}
+<div id="hidden-drawer" class="hidden-drawer"
+    style="display: none; margin-bottom: 30px; background: var(--bg-secondary); padding: 20px; border-radius: 16px; border: 2px dashed var(--glass-border);">
+    <h3 style="margin-bottom: 15px; color: var(--text-secondary);">Skryté moduly (přetáhněte zpět pro zobrazení)</h3>
+    <div id="hidden-widgets-grid" class="grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; min-height: 100px;">
+    </div>
+</div>
+{% endmacro %}
+
+{% macro layout_scripts() %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+<script>
+    let sortableMain = null;
+    let sortableHidden = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const hiddenGrid = document.getElementById('hidden-widgets-grid');
+        const bucket = document.getElementById('hidden-bucket');
+        if (bucket && hiddenGrid) {
+            while (bucket.children.length > 0) {
+                hiddenGrid.appendChild(bucket.children[0]);
+            }
+        }
+    });
+
+    window.toggleEditMode = function(gridId, pageName) {
+        const grid = document.getElementById(gridId);
+        const hiddenGrid = document.getElementById('hidden-widgets-grid');
+        const drawer = document.getElementById('hidden-drawer');
+        const editBtn = document.getElementById('editLayoutBtn');
+        const saveBtn = document.getElementById('saveLayoutBtn');
+        const resetBtn = document.getElementById('resetLayoutBtn');
+
+        if (sortableMain) {
+            sortableMain.destroy();
+            if (sortableHidden) sortableHidden.destroy();
+            sortableMain = null;
+            sortableHidden = null;
+
+            editBtn.innerHTML = 'Upravit rozložení';
+            editBtn.classList.remove('btn-active');
+            editBtn.style.background = '';
+            saveBtn.style.display = 'none';
+            resetBtn.style.display = 'none';
+            drawer.style.display = 'none';
+            grid.classList.remove('draggable-mode');
+            hiddenGrid.classList.remove('draggable-mode');
+
+            document.querySelectorAll('.resize-controls').forEach(el => el.style.display = 'none');
+            window.location.reload();
+        } else {
+            drawer.style.display = 'block';
+            grid.classList.add('draggable-mode');
+            hiddenGrid.classList.add('draggable-mode');
+
+            document.querySelectorAll('.resize-controls').forEach(el => el.style.display = 'flex');
+
+            sortableMain = new Sortable(grid, {
+                group: 'dashboard',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                handle: '.card'
+            });
+
+            sortableHidden = new Sortable(hiddenGrid, {
+                group: 'dashboard',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                handle: '.card'
+            });
+
+            editBtn.innerHTML = 'Zrušit';
+            editBtn.style.background = 'var(--bg-tertiary)';
+            saveBtn.style.display = 'flex';
+            resetBtn.style.display = 'flex';
+        }
+    }
+
+    window.resetLayout = async function(pageName) {
+        if (!confirm('Opravdu chcete resetovat rozložení na výchozí hodnoty?')) return;
+        const formData = new FormData();
+        formData.append('page', pageName);
+        try {
+            const resp = await fetch('/settings/dashboard/reset', {
+                method: 'POST',
+                body: formData
+            });
+            if (resp.ok) {
+                window.location.reload();
+            } else {
+                alert('Chyba při resetování rozložení');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Chyba spojení');
+        }
+    }
+
+    window.saveLayout = async function(gridId, pageName) {
+        if (!sortableMain) return;
+        
+        const grid = document.getElementById(gridId);
+        const visibleOrder = [];
+        const spans = {};
+
+        Array.from(grid.children).forEach(w => {
+            let id = w.dataset.id;
+            if (!id && w.querySelector('[data-id]')) {
+                id = w.querySelector('[data-id]').dataset.id;
+            }
+            if (id) {
+                visibleOrder.push(id);
+                spans[id] = parseInt(w.dataset.span || 1);
+            }
+        });
+
+        const formData = new FormData();
+        formData.append('widget_order', JSON.stringify(visibleOrder));
+        formData.append('widget_spans', JSON.stringify(spans));
+        formData.append('page', pageName);
+
+        try {
+            const resp = await fetch('/settings/dashboard', {
+                method: 'POST',
+                body: formData
+            });
+            if (resp.ok) {
+                window.location.reload();
+            } else {
+                alert('Chyba při ukládání rozložení');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Chyba spojení');
+        }
+    }
+
+    // Attach resize logic globally once
+    if (!window._layoutResizeAttached) {
+        window._layoutResizeAttached = true;
+        
+        document.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.resize-controls')) {
+                e.stopPropagation();
+            }
+        }, { capture: true });
+
+        document.addEventListener('touchstart', (e) => {
+            if (e.target.closest('.resize-controls')) {
+                e.stopPropagation();
+            }
+        }, { capture: true });
+
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.resize-btn');
+            if (!btn) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            // We must find the element that has data-span and grid-column control
+            // This is usually the widget wrapper (.widget-wrapper) or the card itself.
+            let wrapper = btn.closest('.widget-wrapper');
+            if (!wrapper) wrapper = btn.closest('.card');
+            
+            // For community health, cards might use .health-card
+            if (!wrapper && btn.closest('.health-card')) wrapper = btn.closest('.health-card');
+
+            const isIncrease = btn.classList.contains('action-increase');
+            const delta = isIncrease ? 1 : -1;
+
+            if (wrapper) {
+                let currentSpan = parseInt(wrapper.dataset.span || wrapper.style.gridColumn.replace('span ', '') || 1);
+                // Health cards use col-span up to 12. Normal ones use up to 4.
+                // Let's assume standard span system up to 4 (or 12 if health-card, but wait...)
+                let maxSpan = 4;
+                if (wrapper.classList.contains('health-card')) maxSpan = 12;
+                
+                let newSpan = Math.max(1, Math.min(maxSpan, currentSpan + delta));
+
+                wrapper.classList.remove('span-1', 'span-2', 'span-3', 'span-4');
+                if (!wrapper.classList.contains('health-card')) {
+                    wrapper.classList.add(`span-${newSpan}`);
+                }
+                wrapper.dataset.span = newSpan;
+                wrapper.style.gridColumn = `span ${newSpan}`;
+
+                wrapper.style.transform = 'scale(1.02)';
+                wrapper.style.boxShadow = '0 0 20px var(--accent)';
+                setTimeout(() => {
+                    wrapper.style.transform = '';
+                    wrapper.style.boxShadow = '';
+                }, 200);
+            }
+        });
+    }
+</script>
+{% endmacro %}

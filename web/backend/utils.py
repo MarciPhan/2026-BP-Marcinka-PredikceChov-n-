@@ -1,7 +1,7 @@
-
 # Facade for backward compatibility during refactoring
 
 from .core.container import AppContainer
+from shared.redis_client import get_redis_client
 
 async def get_activity_stats(*args, **kwargs):
     return await AppContainer.repo.get_activity_stats(*args, **kwargs)
@@ -806,10 +806,8 @@ async def update_env_token(token: str):
         
     # Update in-memory
     os.environ["BOT_TOKEN"] = token
-    # Also update in Redis so the bot can pick it up
-    r = await get_redis_client()
-    await r.set("bot:token", token)
-    await r.close()
+    
+    # Odebráno ukládání do Redis z důvodu bezpečnosti (Token musí být pouze v .env)
     
     return True
 
@@ -817,15 +815,7 @@ async def is_bot_token_set() -> bool:
     """Checks if a valid token is set in env or redis"""
     token = os.getenv("BOT_TOKEN")
     if token and len(token) > 30 and "sem_vloz" not in token:
-        return True
-    
-    r = await get_redis_client()
-    token = await r.get("bot:token")
-    await r.close()
-    
-    if token and len(token) > 30:
-        return True
-        
+       return True
     return False
 
 
@@ -939,3 +929,23 @@ async def require_admin(request: Request):
     if request.session.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Prístup pouze pro administrátory")
     return True
+
+
+from fastapi import Request, HTTPException
+from typing import Optional, Union
+
+def get_guild_id(request: Request, guild_id: Optional[str] = None) -> Union[int, str]:
+    gid = request.session.get("guild_id")
+    if not gid and guild_id:
+        gid = guild_id
+    
+    if not gid:
+        raise HTTPException(status_code=400, detail="No guild selected")
+        
+    if gid == "demo-guild":
+        return gid
+        
+    try:
+        return int(gid)
+    except (ValueError, TypeError):
+        return gid

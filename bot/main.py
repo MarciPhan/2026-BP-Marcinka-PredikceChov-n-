@@ -272,8 +272,6 @@ async def on_guild_join(guild: discord.Guild):
         import subprocess
         import sys
         try:
-            import os
-            
             script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts", "backfill_stats.py"))
             cmd = [sys.executable, script_path, "--guild_id", str(guild.id), "--token", token]
             subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -406,28 +404,13 @@ async def main():
     while True:
         token = os.getenv("BOT_TOKEN") or BOT_TOKEN
         
-        # Check Redis if not in env
-        if not token or len(token) < 30:
-            try:
-                r = await get_redis_client()
-                token = await r.get("bot:token")
-                await r.close()
-            except:
-                pass
-
         if token and len(token) >= 30:
             await send_console_log("Token nalezen, startuji bota…")
             try:
                 # bot.run internally does loop work, bot.start is for when we manage loop
                 await bot.start(token)
-            except discord.LoginFailure:
-                await send_console_log("[ERROR] Neplatný bot token v Redis/ENV!")
-                # reset token in redis if it was invalid
-                try:
-                    r = await get_redis_client()
-                    await r.delete("bot:token")
-                    await r.close()
-                except: pass
+            except discord.errors.LoginFailure:
+                await send_console_log("[ERROR] Neplatný bot token v .env!")
                 token = None
             except Exception as e:
                 await send_console_log(f"[ERROR] Chyba při běhu bota: {e}")

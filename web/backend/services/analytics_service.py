@@ -70,7 +70,7 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             if days_diff < 1: days_diff = 1
             
             
-            tm_str = await self.repo.get_client().get(f"stats:total_members:{guild_id}")
+            tm_str = await r.get(f"stats:total_members:{guild_id}")
             total_members = int(tm_str) if tm_str else 100
             
             dau_sum = 0
@@ -176,12 +176,12 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                     ideals[k] = float(v) if '.' in str(v) else int(v)
             
             
-            total_members_str = await self.repo.get_client().get(f"presence:total:{guild_id}")
+            total_members_str = await r.get(f"presence:total:{guild_id}")
             if not total_members_str:
-                total_members_str = await self.repo.get_client().get(f"stats:total_members:{guild_id}")
+                total_members_str = await r.get(f"stats:total_members:{guild_id}")
             total_members = int(total_members_str) if total_members_str else 100
             
-            mod_count_str = await self.repo.get_client().get(f"stats:mod_count:{guild_id}")
+            mod_count_str = await r.get(f"stats:mod_count:{guild_id}")
             mod_count = int(mod_count_str) if mod_count_str else max(1, total_members // 100)
             
             users_per_mod = total_members / max(1, mod_count)
@@ -196,10 +196,10 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                 mod_ratio_score = max(0, 100 - over_ratio * 100)
             
             
-            verification_level = int(await self.repo.get_client().get(f"guild:verification_level:{guild_id}") or 2)
+            verification_level = int(await r.get(f"guild:verification_level:{guild_id}") or 2)
             verification_score = min(60, (verification_level / max(1, ideals["verification_level"])) * 60)
-            explicit_score = (int(await self.repo.get_client().get(f"guild:explicit_filter:{guild_id}") or 1) / 2) * 20
-            mfa_score = 20 if int(await self.repo.get_client().get(f"guild:mfa_level:{guild_id}") or 0) else 0
+            explicit_score = (int(await r.get(f"guild:explicit_filter:{guild_id}") or 1) / 2) * 20
+            mfa_score = 20 if int(await r.get(f"guild:mfa_level:{guild_id}") or 0) else 0
             
             security_settings_score = min(100, verification_score + explicit_score + mfa_score)
             
@@ -259,7 +259,7 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             
             
             
-            mod_actions = int(await self.repo.get_client().get(f"stats:mod_actions_30d:{guild_id}") or (total_members // 50))
+            mod_actions = int(await r.get(f"stats:mod_actions_30d:{guild_id}") or (total_members // 50))
             
             actions_per_100_users = (mod_actions / max(1, total_members)) * 100
             ideal_actions_min = ideals["mod_actions_min"]
@@ -316,13 +316,13 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             mau = await r.pfcount(*mau_keys)
             stickiness = (avg_dau / max(1, mau)) * 100 if mau > 0 else 0
 
-            explicit_filter = int(await self.repo.get_client().get(f"guild:explicit_filter:{guild_id}") or 1)
-            mfa_level = int(await self.repo.get_client().get(f"guild:mfa_level:{guild_id}") or 0)
+            explicit_filter = int(await r.get(f"guild:explicit_filter:{guild_id}") or 1)
+            mfa_level = int(await r.get(f"guild:mfa_level:{guild_id}") or 0)
             
             
             avg_msg_length = 0
             try:
-                msg_len_data = await self.repo.get_client().get(f"stats:avg_msg_length:{guild_id}")
+                msg_len_data = await r.get(f"stats:avg_msg_length:{guild_id}")
                 avg_msg_length = float(msg_len_data) if msg_len_data else 0
             except:
                 pass
@@ -475,6 +475,85 @@ class DefaultAnalyticsService(BaseAnalyticsService):
         return insights
 
 
+    async def get_data_quality_score(self, guild_id: int) -> Dict[str, Any]:
+        """
+        Evaluate Data Quality Score (DQS) based on history length, number of events,
+        and availability of different event types.
+        """
+        r = await self.repo.get_client()
+        try:
+            now = datetime.now()
+            
+            reasons = []
+            score = 100
+            
+            # 1. History length
+            first_seen = now.timestamp()
+            total_msgs = 0
+            
+            async for key in r.scan_iter(f"events:msg:{guild_id}:*"):
+                msgs = await r.zrange(key, 0, 0, withscores=True)
+                if msgs:
+                    ts = float(msgs[0][1])
+                    if ts < first_seen:
+                        first_seen = ts
+                total_msgs += await r.zcard(key)
+                
+            history_days = (now.timestamp() - first_seen) / 86400.0
+            
+            if history_days < 7:
+                score -= 40
+                reasons.append(f"Historie obsahuje pouze {max(1, int(history_days))} dny (doporučeno min. 7 dní).")
+            elif history_days < 30:
+                score -= 10
+                reasons.append("Historie je kratší než 30 dní, dlouhodobé trendy mohou být nepřesné.")
+                
+            # 2. Number of events
+            if total_msgs < 100:
+                score -= 30
+                reasons.append("Nedostatečný počet zpráv (méně než 100).")
+                
+            # 3. Required event types (moderation)
+            mod_actions = int(await r.get(f"stats:mod_actions_30d:{guild_id}") or 0)
+            if mod_actions == 0:
+                score -= 15
+                reasons.append("Chybí moderační události (index zátěže bude 0).")
+                
+            # 4. Voice events
+            has_voice = False
+            async for key in r.scan_iter(f"events:voice:{guild_id}:*"):
+                if await r.zcard(key) > 0:
+                    has_voice = True
+                    break
+            if not has_voice:
+                score -= 10
+                reasons.append("Chybí události z hlasových kanálů.")
+                
+            # 5. Connectors status (simulate Discourse)
+            has_discourse = await r.hgetall(f"discourse:conf:{guild_id}")
+            if not has_discourse:
+                score -= 5
+                reasons.append("Není připojeno fórum Discourse (zobrazují se pouze data z Discordu).")
+
+            score = max(0, score)
+            
+            return {
+                "score": score,
+                "is_sufficient": score >= 50,
+                "history_days": int(history_days),
+                "total_events": total_msgs,
+                "reasons": reasons
+            }
+        except Exception as e:
+            print(f"DQS error: {e}")
+            return {
+                "score": 0,
+                "is_sufficient": False,
+                "history_days": 0,
+                "total_events": 0,
+                "reasons": ["Chyba při výpočtu kvality dat."]
+            }
+
     async def get_action_weights(self) -> dict:
         """Fetch action weights from Redis or use defaults."""
         
@@ -516,7 +595,7 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             ts_now = now.timestamp()
             
             # 1. Total Members & DAU & Toxicity
-            total_members_str = await self.repo.get_client().get(f"presence:total:{guild_id}")
+            total_members_str = await r.get(f"presence:total:{guild_id}")
             total_members = int(total_members_str) if total_members_str else 0
             dau = await r.pfcount(f"hll:dau:{guild_id}:{today_str}")
             activity_rate = (dau / max(1, total_members))
@@ -524,7 +603,7 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             total_actions = 0
             async for key in r.scan_iter(f"events:action:{guild_id}:*"):
                 total_actions += await r.zcard(key)
-            total_msgs_str = await self.repo.get_client().get(f"stats:total_msgs:{guild_id}")
+            total_msgs_str = await r.get(f"stats:total_msgs:{guild_id}")
             total_msgs = int(total_msgs_str) if total_msgs_str else 1
             toxicity_index = (total_actions / total_msgs)
             rec_mods = int(np.ceil((dau * (1 + toxicity_index * 10)) / 150 + 2))

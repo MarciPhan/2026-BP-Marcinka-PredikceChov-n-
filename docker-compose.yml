@@ -65,6 +65,22 @@ services:
     networks:
       - botnet
 
+  discourse-sync:
+    build: .
+    container_name: discourse-sync
+    restart: always
+    depends_on:
+      - redis
+    command: [ "python", "-m", "scripts.discourse_sync" ]
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - TZ=Europe/Prague
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+    networks:
+      - botnet
+
 
 networks:
   botnet:
