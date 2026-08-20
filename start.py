@@ -109,10 +109,18 @@ def main():
 
     time.sleep(3)
     if bot_proc.poll() is None and web_proc.poll() is None:
-        print_color("CommunityMetrics is up!", "1;32")
-        print(f"  Dashboard: http://localhost:{dashboard_port}")
-        print("  Logs are in bot.log and web.log")
-        print("\nPress Ctrl+C to stop services...")
+        print("\n" + "="*60)
+        print_color("   🚀 CommunityMetrics spuštěno úspěšně (Python)!          ", "1;32")
+        print("="*60)
+        print_color(f"   🌐 Web Dashboard : http://localhost:{dashboard_port}", "1;36")
+        print_color("   🤖 Discord Bot    : Běží (bot/main.py)", "1;36")
+        print_color(f"   🗄️ Redis Cache    : {'localhost:6379' if redis_running else 'FakeRedis (in-memory)'}", "1;36")
+        print("-" * 60)
+        print_color("   📋 Soubory s logy:", "1;33")
+        print("      Web Dashboard : web.log")
+        print("      Discord Bot    : bot.log")
+        print("="*60)
+        print("\nStiskněte Ctrl+C pro ukončení služeb...\n")
         try:
             bot_proc.wait()
             web_proc.wait()

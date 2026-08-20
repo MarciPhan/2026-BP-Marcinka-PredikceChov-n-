@@ -201,7 +201,7 @@ async def docs_proxy(request: Request, path: str = ""):
 
 
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from web.backend.utils import get_sidebar_context
+from .utils import get_sidebar_context
 
 @app.exception_handler(401)
 async def redirect_to_login_handler(request: Request, exc: StarletteHTTPException):

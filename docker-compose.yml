@@ -57,6 +57,7 @@ services:
       - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
       - BOT_TOKEN=${BOT_TOKEN}
       - TZ=Europe/Prague
+      - PYTHONPATH=/app
     ports:
       - "${DASHBOARD_PORT:-8093}:${DASHBOARD_PORT:-8093}"
     volumes:
