@@ -55,8 +55,21 @@ if %ERRORLEVEL% equ 0 (
     goto end
 )
 
-echo Error: Neither Docker nor Python is installed/running on this system.
-echo Please install Docker or Python to run this application.
+echo ============================================================
+echo  🪟 Systemu chybi Python. Skript jej nyni automaticky nainstaluje.
+echo ============================================================
+echo  Stahuji oficialni Python 3.11 pro Windows...
+curl -L -o "%TEMP%\python-installer.exe" "https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe"
+
+echo  Spoustim tichou instalaci (muze to trvat nekolik minut, pockejte prosim)...
+"%TEMP%\python-installer.exe" /quiet InstallAllUsers=0 PrependPath=1 Include_test=0
+
+echo  Instalace Pythonu uspesne dokoncena!
+echo ------------------------------------------------------------
+echo  Nyni se okno zavre a spusti znovu, aby se nacetl novy Python...
+timeout /t 3 >nul
+start "" cmd /c "%~dpnx0"
+exit /b
 
 :end
 pause

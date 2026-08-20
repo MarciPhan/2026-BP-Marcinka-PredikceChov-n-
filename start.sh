@@ -35,18 +35,19 @@ elif command -v python3 >/dev/null 2>&1; then
     echo "Docker not running or not found. Python 3 detected. Starting via start.py..."
     
     # macOS check for python3 stub without Command Line Tools
-    if [[ "$OSTYPE" == "darwin"* ]] && ! xcode-select -p >/dev/null 2>&1; then
+    if [[ "$OSTYPE" == "darwin"* ]] && ! python3 -c "import sys" >/dev/null 2>&1; then
         echo ""
         echo "============================================================"
-        echo " 🍎 macOS vyžaduje jednorázovou instalaci nástrojů (Python 3)"
+        echo " 🍎 Systému chybí Python. Skript jej nyní automaticky nainstaluje."
         echo "============================================================"
-        echo " Za okamžik se zobrazí vyskakovací okno s výzvou k instalaci."
-        echo " 1. Klikněte na 'Instalovat' (Install) a potvrďte."
-        echo " 2. Počkejte, až instalace zcela doběhne."
-        echo " 3. Teprve POTÉ se vraťte sem a stiskněte ENTER."
+        echo " Stahuji oficiální Python 3.11 pro macOS..."
+        curl -L -o /tmp/python-installer.pkg "https://www.python.org/ftp/python/3.11.9/python-3.11.9-macos11.pkg"
+        
+        echo " Spouštím instalaci (Může to po vás chtít vaše heslo k Macu):"
+        sudo installer -pkg /tmp/python-installer.pkg -target /
+        
+        echo " Instalace Pythonu úspěšně dokončena!"
         echo "------------------------------------------------------------"
-        xcode-select --install 2>/dev/null
-        read -p "Stiskněte ENTER, až bude instalace zcela hotová..."
     fi
     
     python3 start.py
