@@ -25,14 +25,14 @@ if %ERRORLEVEL% equ 0 (
         )
         echo.
         echo ============================================================
-        echo    🚀 CommunityMetrics spusteno uspesne (Docker)!          
+        echo    [SUCCESS] CommunityMetrics spusteno uspesne (Docker)!          
         echo ============================================================
-        echo    🌐 Web Dashboard : http://localhost:%DASHBOARD_PORT%
-        echo    🤖 Discord Bot    : Bezi (Primary ^& Dashboard Lite)
-        echo    🔄 Discourse Sync : Bezi v pozadi
-        echo    🗄️ Redis Cache    : localhost:6379
+        echo    [WEB] Web Dashboard : http://localhost:%DASHBOARD_PORT%
+        echo    [BOT] Discord Bot    : Bezi (Primary ^& Dashboard Lite)
+        echo    [SYNC] Discourse Sync : Bezi v pozadi
+        echo    [DB] Redis Cache    : localhost:6379
         echo ------------------------------------------------------------
-        echo    📋 Uzitecne prikazy:
+        echo    [INFO] Uzitecne prikazy:
         echo       Sledovani logu:  docker compose logs -f
         echo       Zastaveni:       docker compose down
         echo ============================================================
@@ -56,7 +56,7 @@ if %ERRORLEVEL% equ 0 (
 )
 
 echo ============================================================
-echo  🪟 Systemu chybi Python. Skript jej nyni automaticky nainstaluje.
+echo  [Windows] Systemu chybi Python. Skript jej nyni automaticky nainstaluje.
 echo ============================================================
 echo  Stahuji oficialni Python 3.11 pro Windows...
 curl -L -o "%TEMP%\python-installer.exe" "https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe"

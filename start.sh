@@ -20,37 +20,46 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     fi
     echo ""
     echo "============================================================"
-    echo "   🚀 CommunityMetrics spuštěno úspěšně (Docker)!          "
+    echo "   [SUCCESS] CommunityMetrics spuštěno úspěšně (Docker)!   "
     echo "============================================================"
-    echo "   🌐 Web Dashboard : http://localhost:${DASHBOARD_PORT}"
-    echo "   🤖 Discord Bot    : Běží (Primary & Dashboard Lite)"
-    echo "   🔄 Discourse Sync : Běží v pozadí"
-    echo "   🗄️ Redis Cache    : localhost:6379"
+    echo "   [WEB] Web Dashboard : http://localhost:${DASHBOARD_PORT}"
+    echo "   [BOT] Discord Bot    : Běží (Primary & Dashboard Lite)"
+    echo "   [SYNC] Discourse Sync : Běží v pozadí"
+    echo "   [DB] Redis Cache    : localhost:6379"
     echo "------------------------------------------------------------"
-    echo "   📋 Užitečné příkazy:"
+    echo "   [INFO] Užitečné příkazy:"
     echo "      Sledování logů:  docker compose logs -f"
     echo "      Zastavení:       docker compose down"
     echo "============================================================"
 elif command -v python3 >/dev/null 2>&1; then
     echo "Docker not running or not found. Python 3 detected. Starting via start.py..."
     
-    # macOS check for python3 stub without Command Line Tools
-    if [[ "$OSTYPE" == "darwin"* ]] && ! python3 -c "import sys" >/dev/null 2>&1; then
-        echo ""
-        echo "============================================================"
-        echo " 🍎 Systému chybí Python. Skript jej nyní automaticky nainstaluje."
-        echo "============================================================"
-        echo " Stahuji oficiální Python 3.11 pro macOS..."
-        curl -L -o /tmp/python-installer.pkg "https://www.python.org/ftp/python/3.11.9/python-3.11.9-macos11.pkg"
-        
-        echo " Spouštím instalaci (Může to po vás chtít vaše heslo k Macu):"
-        sudo installer -pkg /tmp/python-installer.pkg -target /
-        
-        echo " Instalace Pythonu úspěšně dokončena!"
-        echo "------------------------------------------------------------"
+    PYTHON_CMD="python3"
+    
+    # macOS check for python3 stub without triggering xcode-select popup
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        if [ "$(command -v python3)" = "/usr/bin/python3" ] && ! xcode-select -p >/dev/null 2>&1; then
+            echo ""
+            echo "============================================================"
+            echo " [macOS] Systému chybí Python. Skript jej nyní automaticky nainstaluje."
+            echo "============================================================"
+            echo " Stahuji oficiální Python 3.11 pro macOS..."
+            curl -L -o /tmp/python-installer.pkg "https://www.python.org/ftp/python/3.11.9/python-3.11.9-macos11.pkg"
+            
+            echo " Spouštím instalaci (Může to po vás chtít vaše heslo k Macu):"
+            sudo installer -pkg /tmp/python-installer.pkg -target /
+            
+            echo " Instalace Pythonu úspěšně dokončena!"
+            echo "------------------------------------------------------------"
+            
+            # Use the newly installed python explicitly
+            if [ -x "/usr/local/bin/python3" ]; then
+                PYTHON_CMD="/usr/local/bin/python3"
+            fi
+        fi
     fi
     
-    python3 start.py
+    $PYTHON_CMD start.py
 elif command -v python >/dev/null 2>&1; then
     echo "Docker not running. Python detected. Starting via start.py..."
     python start.py
