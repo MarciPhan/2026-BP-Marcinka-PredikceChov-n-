@@ -29,7 +29,10 @@ if os.path.exists(env_path):
 import discord
 
 from discord.ext import commands, tasks 
-from config.dashboard_secrets import BOT_TOKEN
+try:
+    from config.dashboard_secrets import BOT_TOKEN
+except ImportError:
+    BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 from config import config
 import redis.asyncio as redis 
 from shared.redis_client import get_redis_client
