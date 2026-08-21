@@ -88,10 +88,13 @@ class ActivityMonitor(commands.Cog):
         roles = ""
         if isinstance(user, discord.Member):
             roles = ",".join(str(r.id) for r in user.roles)
+            
+        mapping = {"name": name, "avatar": avatar, "roles": roles}
+        if isinstance(user, discord.Member) and user.joined_at:
+            mapping["joined_at"] = str(user.joined_at.timestamp())
         
         async with self.r.pipeline() as pipe:
-            pipe.hset(key, mapping={"name": name, "avatar": avatar, "roles": roles})
-            pipe.expire(key, 604800) 
+            pipe.hset(key, mapping=mapping)
             await pipe.execute()
 
     
@@ -603,6 +606,9 @@ class ActivityMonitor(commands.Cog):
                                 
                                 if mapping:
                                     await self.r.zadd(key, mapping)
+                                    from shared.config import settings
+                                    cutoff = time.time() - (settings.event_retention_days * 86400)
+                                    await self.r.zremrangebyscore(key, "-inf", cutoff)
                             
                             
                             user_messages.clear()
@@ -628,6 +634,9 @@ class ActivityMonitor(commands.Cog):
             
             if mapping:
                 await self.r.zadd(key, mapping)
+                from shared.config import settings
+                cutoff = time.time() - (settings.event_retention_days * 86400)
+                await self.r.zremrangebyscore(key, "-inf", cutoff)
 
         
         audit_ops = 0
@@ -672,6 +681,9 @@ class ActivityMonitor(commands.Cog):
             
             if mapping:
                 await self.r.zadd(key, mapping)
+                from shared.config import settings
+                cutoff = time.time() - (settings.event_retention_days * 86400)
+                await self.r.zremrangebyscore(key, "-inf", cutoff)
 
         
         verifs = 0
@@ -713,6 +725,9 @@ class ActivityMonitor(commands.Cog):
                 
                 if mapping:
                     await self.r.zadd(key, mapping)
+                    from shared.config import settings
+                    cutoff = time.time() - (settings.event_retention_days * 86400)
+                    await self.r.zremrangebyscore(key, "-inf", cutoff)
 
         try:
             await itx.followup.send(f"✅ **Hotovo!**\n"

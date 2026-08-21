@@ -284,10 +284,9 @@ async def get_predictions_data(request: Request, _=Depends(require_auth)):
     research_data = await get_health_research_data(guild_id)
     
     if research_data.get("success"):
-        p_stay_active = research_data.get("retention_pct", 0) / 100.0
-        p_churn = research_data.get("churn_risk_pct", 0) / 100.0
-        # Predikce na základě Markovova modelu (odchozí uživatelé dle modelu, noví z heuristiky)
-        predicted_growth_30d = round(avg_monthly_joins - (current_members * p_churn))
+        p_stay_active = research_data.get("retention_pct", 0) / 100.0 if research_data.get("retention_pct") is not None else 0
+        p_inactive = research_data.get("inactivity_risk_pct", 0) / 100.0 if research_data.get("inactivity_risk_pct") is not None else 0
+        predicted_growth_30d = round(avg_monthly_growth)
         predicted_members_30d = current_members + predicted_growth_30d
     else:
         predicted_growth_30d = round(avg_monthly_growth)
@@ -470,14 +469,14 @@ async def get_predictions_data(request: Request, _=Depends(require_auth)):
     dau_mau_ratio = round((avg_dau / mau * 100), 1) if mau > 0 else 0
     
     
-    mau_growth_rate = 1.02  
+    mau_growth_rate = 1.0 + (avg_monthly_growth / max(1, current_members)) if avg_monthly_growth > 0 else 1.0
     mau_forecast = [mau]
     for i in range(1, 4):  
         mau_forecast.append(round(mau_forecast[-1] * mau_growth_rate))
     
     
     if research_data.get("success"):
-        churn_score = research_data.get("churn_risk_pct", 0)
+        churn_score = research_data.get("inactivity_risk_pct") or 0
     else:
         recent_leaves_3m = leaves_history[-3:] if len(leaves_history) >= 3 else leaves_history
         total_recent_leaves = sum(recent_leaves_3m) if recent_leaves_3m else 0

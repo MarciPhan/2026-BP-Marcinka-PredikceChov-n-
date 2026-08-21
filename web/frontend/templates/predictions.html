@@ -100,7 +100,18 @@
 
 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
     <div>
-        <h1 class="title title-gradient">Rozšíření a modely</h1>
+        <h1 class="title title-gradient">Experimenty a prototypy</h1>
+        <p class="subtitle" style="color: var(--text-secondary); max-width: 600px;">
+            Prediktivní a analytické prototypy na této obrazovce mají experimentální charakter. 
+        </p>
+    </div>
+    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-left: 4px solid #ef4444; border-radius: 6px; padding: 16px; margin-bottom: 24px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <i class="fas fa-exclamation-triangle" style="color: #ef4444; font-size: 20px;"></i>
+            <div>
+                <strong style="color: #ef4444;">Upozornění k metodice:</strong> Prototypové výstupy (Markov, Kaplan-Meier) jsou dostupné jako experimentální rozšíření pro výzkumné účely. Není doporučeno na jejich základě činit okamžitá produkční rozhodnutí.
+            </div>
+        </div>
         <p style="color: var(--text-secondary); margin-top: 8px;">Prototypové analytické modely na základě historických dat serveru. 
             <a href="/docs/predictions" style="color: var(--accent); text-decoration: none; margin-left: 8px; font-size: 13px; font-weight: 600; transition: color 0.2s;">
                 <i class="fas fa-question-circle"></i> Jak to funguje?
@@ -177,15 +188,15 @@
         <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
             <div style="font-size: 24px; font-weight: 700; color: #8b5cf6;" id="res-retention">--%</div>
             <div style="font-size: 11px; color: var(--text-secondary);">
-                Markov: Retence uživatelů
-                <span class="info-icon dash-tooltip" style="margin-left: 4px;">? <span class="dash-tooltip-text">Pravděpodobnost namodelovaná pomocí Markovových řetězců (stavy New, Active, atd.), že náhodný uživatel trvale setrvá v komunitě.</span></span>
+                Markov: Setrvání v aktivitě
+                <span class="info-icon dash-tooltip" style="margin-left: 4px;">? <span class="dash-tooltip-text">Pravděpodobnost namodelovaná pomocí Markovových řetězců (stavy New, Active, atd.), že si uživatel zachová aktivní stav (nikoli trvalé členství).</span></span>
             </div>
         </div>
         <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
             <div style="font-size: 24px; font-weight: 700; color: #ec4899;" id="res-life">-- d</div>
             <div style="font-size: 11px; color: var(--text-secondary);">
-                Survival: Očekávaná aktivita
-                <span class="info-icon dash-tooltip" style="margin-left: 4px;">? <span class="dash-tooltip-text">Kaplan-Meierův statistický odhad počítající zbývající délku aktivního zapojení uživatele na serveru (ve dnech).</span></span>
+                Survival: Setrvání v pozorované aktivitě
+                <span class="info-icon dash-tooltip" style="margin-left: 4px;">? <span class="dash-tooltip-text">Kaplan-Meierův statistický odhad počítající očekávanou délku aktivního zapojení uživatele na serveru (ve dnech).</span></span>
             </div>
         </div>
     </div>
@@ -198,10 +209,10 @@
             </div>
         </div>
         <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 20px; font-weight: 700; color: #10b981;" id="res-mods">--</div>
+            <div style="font-size: 20px; font-weight: 700; color: #10b981;" id="res-median">--</div>
             <div style="font-size: 11px; color: var(--text-secondary);">
-                Doporučený počet moderátorů
-                <span class="info-icon dash-tooltip" style="margin-left: 4px;">? <span class="dash-tooltip-text">Algoritmický výpočet doporučeného počtu aktivních lidských moderátorů nutných pro udržení zdravé komunity (na základě DAU a indexu moderační zátěže).</span></span>
+                Medián setrvání v aktivitě
+                <span class="info-icon dash-tooltip" style="margin-left: 4px;">? <span class="dash-tooltip-text">Střední hodnota (medián) přežití v aktivním stavu, odvozená z Kaplan-Meierovy křivky (ve dnech).</span></span>
             </div>
         </div>
     </div>
@@ -574,10 +585,10 @@
                 const resResp = await fetch('/api/health-research');
                 const resData = await resResp.json();
                 if (resData.success) {
-                    safeSetText('res-retention', resData.retention_pct + '%');
-                    safeSetText('res-life', resData.life_expectancy_days + ' d');
-                    safeSetText('res-tox', resData.mii);
-                    safeSetText('res-mods', resData.rec_mods);
+                    safeSetText('res-retention', resData.retention_pct !== null ? resData.retention_pct + '%' : 'N/A');
+                    safeSetText('res-life', resData.activity_survival_expectancy_days !== null ? resData.activity_survival_expectancy_days + ' d' : 'N/A');
+                    safeSetText('res-tox', resData.mii !== null ? resData.mii : 'N/A');
+                    safeSetText('res-median', resData.median_activity_survival_days !== null ? resData.median_activity_survival_days + ' d' : 'N/A');
                     
                     const toxEl = document.getElementById('res-tox');
                     if(toxEl){

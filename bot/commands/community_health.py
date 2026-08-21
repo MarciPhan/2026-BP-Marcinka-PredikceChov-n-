@@ -11,6 +11,7 @@ from discord import app_commands
 import redis.asyncio as redis
 
 from shared.community_health import is_probable_question, normalise_config
+from shared.config import settings
 
 REDIS_URL = __import__("os").getenv("REDIS_URL", "redis://localhost:6379/0")
 
@@ -61,7 +62,7 @@ class CommunityHealthTracker(commands.Cog):
         key = f"health:message:{gid}:{mid}"
         async with self.r.pipeline() as pipe:
             pipe.hset(key, mapping=mapping)
-            pipe.expire(key, 60 * 60 * 24 * 400)
+            pipe.expire(key, settings.event_retention_days * 86400)
             pipe.hset(f"channel:info:{message.channel.id}", mapping={"name": getattr(message.channel, "name", str(message.channel.id)), "guild_id": str(gid)})
             pipe.zadd(f"health:messages:{gid}", {str(mid): message.created_at.timestamp()})
             pipe.zadd(f"health:user_messages:{gid}:{message.author.id}", {str(mid): message.created_at.timestamp()})
@@ -123,7 +124,7 @@ class CommunityHealthTracker(commands.Cog):
         }
         async with self.r.pipeline() as pipe:
             pipe.hset(key, mapping=mapping)
-            pipe.expire(key, 60 * 60 * 24 * 400)
+            pipe.expire(key, settings.event_retention_days * 86400)
             pipe.zadd(f"health:help:all:{gid}", {str(message.id): message.created_at.timestamp()})
             pipe.zadd(f"health:help:open:{gid}", {str(message.id): message.created_at.timestamp()})
             pipe.zadd(f"health:help:user:{gid}:{message.author.id}", {str(message.id): message.created_at.timestamp()})
@@ -183,7 +184,7 @@ class CommunityHealthTracker(commands.Cog):
         }
         async with self.r.pipeline() as pipe:
             pipe.hset(event_key, mapping=mapping)
-            pipe.expire(event_key, 60 * 60 * 24 * 730)
+            pipe.expire(event_key, settings.event_retention_days * 86400)
             pipe.zadd(f"health:mod_events:{gid}", {str(entry.id): ts})
             pipe.zadd(f"health:mod_events:moderator:{gid}:{entry.user.id}", {str(entry.id): ts})
             if target_id:
@@ -222,7 +223,7 @@ class CommunityHealthTracker(commands.Cog):
         }
         async with self.r.pipeline() as pipe:
             pipe.hset(key, mapping=mapping)
-            pipe.expire(key, 60 * 60 * 24 * 730)
+            pipe.expire(key, settings.event_retention_days * 86400)
             pipe.zadd(f"health:departures:{gid}", {departure_id: now})
             await pipe.execute()
 

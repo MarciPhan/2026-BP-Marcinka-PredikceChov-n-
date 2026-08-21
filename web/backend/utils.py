@@ -215,14 +215,14 @@ def generate_security_insights(metrics: Dict[str, Any]):
         elif mod_ratio < 80:
             add("info", "team", "Vytížení týmu", "Poměr je hraniční – mějte záložní členy.")
         elif mod_ratio >= 95 and users_per_mod < 30:
-            add("success", "team", "Silný tým", "Skvělý poměr moderátorů – rychlá reakce zaručena.")
+            add("success", "team", "Silný tým", "Skvělý poměr moderátorů – dostatečná moderační kapacita.")
     
     if mod_actions is None:
         add("info", "team", "Moderační data", "K určení moderační aktivity chybí dostatek dat.")
     elif mod_actions == 0:
         add("warning", "team", "Žádná moderace", "Za měsíc 0 akcí. Ověřte logging bota.")
     elif mod_actions < 3:
-        add("info", "team", "Klidná komunita", "Minimální zásahy – komunita je ukázněná.")
+        add("info", "team", "Klidná komunita", "Minimální zásahy – velmi nízká četnost moderačních zásahů.")
     elif mod_actions > 100 and mod_actions <= 300:
         add("info", "team", "Aktivní moderace", f"{mod_actions} akcí/měsíc. Tým je bdělý.")
     elif mod_actions > 300 and mod_actions <= 500:
@@ -262,7 +262,7 @@ def generate_security_insights(metrics: Dict[str, Any]):
     
     if participation_rate is not None:
         if participation_rate < 1:
-            add("critical", "activity", "Mrtvý server", "Pod 1% aktivních. Potřeba reaktivace.")
+            add("critical", "activity", "Kriticky nízká aktivita", "Pod 1% aktivních. Zvažte reaktivaci.")
         elif participation_rate < 5:
             add("warning", "activity", "Velmi nízká aktivita", f"Pouze {participation_rate:.1f}% denně aktivních.")
         elif participation_rate < 10:
@@ -300,7 +300,7 @@ def generate_security_insights(metrics: Dict[str, Any]):
         elif churn_rate > 5:
             add("info", "retention", "Normální fluktuace", f"{churn_rate:.1f}% – běžné rozmezí.")
         elif churn_rate <= 2:
-            add("success", "retention", "Excelentní retence", "Minimální odchody – členové zůstávají!")
+            add("success", "retention", "Vysoká míra retence", "Minimální odchody – stabilní členská základna.")
     
     if stickiness is not None:
         if stickiness < 5:
@@ -310,7 +310,7 @@ def generate_security_insights(metrics: Dict[str, Any]):
         elif stickiness < 30:
             add("info", "retention", "Dobrá stabilita", f"Stickiness {stickiness:.0f}% – stabilní komunita.")
         elif stickiness >= 40:
-            add("success", "retention", "Vysoká věrnost", f"Stickiness {stickiness:.0f}% – komunita se vrací každý den!")
+            add("success", "retention", "Vysoký návrat uživatelů", f"Stickiness {stickiness:.0f}% – stabilní pravidelné zapojení.")
             
     if growth_rate is not None:
         if growth_rate < -10:
@@ -328,7 +328,7 @@ def generate_security_insights(metrics: Dict[str, Any]):
         if avg_msg_length > 0 and avg_msg_length < 20:
             add("info", "community", "Krátké zprávy", f"Průměr {avg_msg_length:.0f} znaků – chat styl.")
         elif avg_msg_length >= 100:
-            add("success", "community", "Obsahové diskuze", f"Průměr {avg_msg_length:.0f} znaků – kvalita!")
+            add("success", "community", "Obsahové diskuze", f"Průměr {avg_msg_length:.0f} znaků – nadprůměrná délka sdělení.")
             
     if weekend_ratio is not None:
         if weekend_ratio > 1.5:

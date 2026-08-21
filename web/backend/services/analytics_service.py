@@ -411,8 +411,12 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             else:
                 engagement_score = None
             
-            mod_actions_str = await r.get(f"stats:mod_actions_30d:{guild_id}")
-            mod_actions = int(mod_actions_str) if mod_actions_str is not None else None
+            mod_actions_count = 0
+            mod_keys_found = False
+            async for key in r.scan_iter(f"events:action:{guild_id}:*"):
+                mod_keys_found = True
+                mod_actions_count += await r.zcard(key)
+            mod_actions = mod_actions_count if mod_keys_found else None
             
             if mod_actions is not None and total_members is not None and total_members > 0:
                 actions_per_100_users = (mod_actions / total_members) * 100
@@ -497,23 +501,23 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                 pass
 
             metrics = {
-                "overall_score": overall_score or 0,
-                "mod_ratio": mod_ratio_score or 0,
-                "users_per_mod": users_per_mod or 0,
-                "mod_actions": mod_actions or 0,
-                "verification_level": verification_level or 0,
-                "mfa_level": mfa_level or 0,
-                "explicit_filter": explicit_filter or 0,
-                "participation_rate": participation_rate or 0,
-                "reply_ratio": measured_reply_ratio or 0,
+                "overall_score": overall_score,
+                "mod_ratio": mod_ratio_score,
+                "users_per_mod": users_per_mod,
+                "mod_actions": mod_actions,
+                "verification_level": verification_level,
+                "mfa_level": mfa_level,
+                "explicit_filter": explicit_filter,
+                "participation_rate": participation_rate,
+                "reply_ratio": measured_reply_ratio,
                 "voice_hours_per_dau": hours_per_dau,
                 "churn_rate": churn_rate,
                 "stickiness": stickiness,
                 
-                "total_members": total_members or 0,
+                "total_members": total_members,
                 "avg_dau": avg_dau,
                 "growth_rate": growth_rate,
-                "engagement_score": engagement_score or 0,
+                "engagement_score": engagement_score,
                 "avg_msg_length": avg_msg_length,
                 "weekend_ratio": weekend_ratio
             }
@@ -673,8 +677,12 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                 reasons.append("Nedostatečný počet zpráv (méně než 100).")
                 
             # 3. Required event types (moderation)
-            mod_actions_str = await r.get(f"stats:mod_actions_30d:{guild_id}")
-            if mod_actions_str is None:
+            mod_keys_found = False
+            async for key in r.scan_iter(f"events:action:{guild_id}:*"):
+                mod_keys_found = True
+                break
+            
+            if not mod_keys_found:
                 score -= 15
                 reasons.append("Moderační data nejsou dostupná.")
                 
@@ -838,7 +846,8 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             transitions = []
             current_distribution = [0, 0, 0, 0] # New, Active, Passive, Inactive
             
-            global_new_state_basis = "first_observed_activity"
+            basis_member_join = 0
+            basis_first_observed = 0
             
             for uid, active_days in user_activity.items():
                 prev_state = None
@@ -846,11 +855,10 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                 join_ts_str = await r.hget(f"user:info:{uid}", "joined_at")
                 if join_ts_str:
                     first_observed_ts = float(join_ts_str)
-                    new_state_basis = "member_join"
-                    global_new_state_basis = "member_join"
+                    basis_member_join += 1
                 else:
                     first_observed_ts = user_first_observed_activity.get(uid, ts_30d_ago)
-                    new_state_basis = "first_observed_activity"
+                    basis_first_observed += 1
 
                 first_observed_date = datetime.fromtimestamp(first_observed_ts)
                 first_observed_day_idx = 29 - (now - first_observed_date).days
@@ -879,22 +887,32 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             predicted_distribution_available = False
             predicted_distribution_reason = "insufficient_transitions"
             
+            if basis_member_join > 0 and basis_first_observed > 0:
+                global_new_state_basis = "mixed"
+            elif basis_member_join > 0:
+                global_new_state_basis = "member_join"
+            else:
+                global_new_state_basis = "first_observed_activity"
+
             if len(transitions) >= 5:
                 matrix = CommunityModels.calculate_markov_matrix(transitions, num_states=4)
                 total_users = sum(current_distribution)
                 if total_users > 0:
                     current_vec = np.array(current_distribution) / total_users
                     future_vec = CommunityModels.predict_future_states(current_vec, matrix, steps=7)
-                    p_stay_active = future_vec[UserState.ACTIVE.value] + future_vec[UserState.PASSIVE.value]
-                    p_inactive = future_vec[UserState.INACTIVE.value]
-                    future_dist = {
-                        "new": future_vec[UserState.NEW.value],
-                        "active": future_vec[UserState.ACTIVE.value],
-                        "passive": future_vec[UserState.PASSIVE.value],
-                        "inactive": future_vec[UserState.INACTIVE.value]
-                    }
-                    predicted_distribution_available = True
-                    predicted_distribution_reason = None
+                    if np.isclose(future_vec.sum(), 1.0):
+                        p_stay_active = future_vec[UserState.ACTIVE.value] + future_vec[UserState.PASSIVE.value]
+                        p_inactive = future_vec[UserState.INACTIVE.value]
+                        future_dist = {
+                            "new": future_vec[UserState.NEW.value],
+                            "active": future_vec[UserState.ACTIVE.value],
+                            "passive": future_vec[UserState.PASSIVE.value],
+                            "inactive": future_vec[UserState.INACTIVE.value]
+                        }
+                        predicted_distribution_available = True
+                        predicted_distribution_reason = None
+                    else:
+                        predicted_distribution_reason = "insufficient_transitions"
                 
             from shared.config import settings
             ACTIVITY_INACTIVITY_THRESHOLD_DAYS = settings.activity_inactivity_threshold_days
