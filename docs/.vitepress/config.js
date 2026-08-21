@@ -5,7 +5,7 @@ export default withMermaid(defineConfig({
   lang: 'cs-CZ',
   title: 'CommunityMetrics Docs',
   description: 'Dokumentace pro analytický systém CommunityMetrics',
-  base: '/',
+  base: '/2026-BP-Marcinka-PredikceChov-n-/',
   appearance: 'force-dark',
   ignoreDeadLinks: [
     /^http:\/\/localhost/
