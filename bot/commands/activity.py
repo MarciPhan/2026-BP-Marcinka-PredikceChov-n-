@@ -145,6 +145,11 @@ class ActivityMonitor(commands.Cog):
         })
         
         await self.r.zadd(key, {event_data: ts})
+        
+        from shared.config import settings
+        cutoff = time.time() - (settings.event_retention_days * 86400)
+        await self.r.zremrangebyscore(key, "-inf", cutoff)
+        
         await self._update_user_info(message.author)
 
 
@@ -180,6 +185,9 @@ class ActivityMonitor(commands.Cog):
                         key = f"events:voice:{gid}:{uid}"
                         event_data = json.dumps({"duration": int(duration), "ts": int(start)})
                         await self.r.zadd(key, {event_data: start})
+                        from shared.config import settings
+                        cutoff = time.time() - (settings.event_retention_days * 86400)
+                        await self.r.zremrangebyscore(key, "-inf", cutoff)
                 await self.r.delete(k_voice)
 
     @commands.Cog.listener()
@@ -212,6 +220,9 @@ class ActivityMonitor(commands.Cog):
             key = f"events:action:{gid}:{uid}"
             event_data = json.dumps({"type": action_type, "id": entry.id})
             await self.r.zadd(key, {event_data: ts})
+            from shared.config import settings
+            cutoff = time.time() - (settings.event_retention_days * 86400)
+            await self.r.zremrangebyscore(key, "-inf", cutoff)
             await self._update_user_info(entry.user)
 
     

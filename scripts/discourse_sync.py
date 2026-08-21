@@ -77,6 +77,9 @@ class DiscourseSync:
                     }
                     
                     await r.zadd(f"events:msg:{guild_id}:discourse", {json.dumps(event_data): ts})
+                    from shared.config import settings
+                    cutoff = time.time() - (settings.event_retention_days * 86400)
+                    await r.zremrangebyscore(f"events:msg:{guild_id}:discourse", "-inf", cutoff)
                     new_msgs += 1
                     
                 if new_msgs > 0:

@@ -19,14 +19,14 @@ async def test_ssrf_protection_discourse_api():
     """
     request = MagicMock()
     request.session = {"discord_user": {"id": "123", "username": "test"}, "csrf_token": "valid_token"}
+    request.headers = {"X-CSRF-Token": "valid_token"}
     
     # 1. Test localhost IPv4
     response_lh = await api_add_discourse(
         request=request, 
         url="http://127.0.0.1", 
         api_key="test", 
-        api_user="test",
-        csrf_token="valid_token"
+        api_user="test"
     )
     assert isinstance(response_lh, JSONResponse)
     assert response_lh.status_code == 403
@@ -39,8 +39,7 @@ async def test_ssrf_protection_discourse_api():
         request=request, 
         url="http://169.254.169.254", 
         api_key="test", 
-        api_user="test",
-        csrf_token="valid_token"
+        api_user="test"
     )
     assert response_meta.status_code == 403
     data_meta = json.loads(response_meta.body.decode())
@@ -51,8 +50,7 @@ async def test_ssrf_protection_discourse_api():
         request=request,
         url="file:///etc/passwd",
         api_key="test",
-        api_user="test",
-        csrf_token="valid_token"
+        api_user="test"
     )
     assert response_file.status_code == 400
 

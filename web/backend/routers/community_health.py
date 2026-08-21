@@ -15,6 +15,7 @@ from shared.redis_client import get_redis_client
 from ..services.community_health_service import CommunityHealthService
 from ..utils import get_sidebar_context
 from ..demo_data import get_demo_health_overview, get_demo_health_evidence
+from ..security import require_csrf
 
 router = APIRouter(tags=["community-health"])
 templates = Jinja2Templates(directory="web/frontend/templates")
@@ -119,6 +120,7 @@ async def health_role_evidence(request: Request, user_id: str, days: int = 90, _
 
 @router.post("/api/community-health/role-review")
 async def save_role_review(request: Request, payload: RoleReviewInput, _=Depends(require_admin_session)):
+    await require_csrf(request)
     gid = selected_guild(request)
     reviewer = request.session.get("discord_user", {}).get("id", "")
     r = await get_redis_client()
@@ -143,12 +145,9 @@ async def save_health_settings(
     help_timeout_hours: int = Form(24),
     conflict_window_days: int = Form(30),
     support_channel_ids: str = Form(""),
-    csrf_token: str = Form(""),
     _=Depends(require_admin_session),
 ):
-    session_csrf = request.session.get("csrf_token", "")
-    if session_csrf and not secrets.compare_digest(session_csrf, csrf_token):
-        raise HTTPException(403, "Invalid CSRF token")
+    await require_csrf(request)
     gid = selected_guild(request)
     cfg = normalise_config({
         "community_type": community_type,
@@ -172,6 +171,7 @@ async def save_health_settings(
 
 @router.post("/api/community-health/api-keys")
 async def create_api_key(request: Request, payload: ApiKeyInput, _=Depends(require_admin_session)):
+    await require_csrf(request)
     gid = selected_guild(request)
     raw_key = generate_api_key()
     digest = api_key_digest(raw_key)
@@ -202,6 +202,7 @@ async def list_api_keys(request: Request, _=Depends(require_admin_session)):
 
 @router.delete("/api/community-health/api-keys/{key_id}")
 async def revoke_api_key(request: Request, key_id: str, _=Depends(require_admin_session)):
+    await require_csrf(request)
     gid = selected_guild(request)
     r = await get_redis_client()
     matches = [digest for digest in await r.smembers(f"api:keys:guild:{gid}") if digest.startswith(key_id)]

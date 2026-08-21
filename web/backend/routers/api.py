@@ -12,14 +12,12 @@ def require_auth(request: Request):
 
 from ..utils import *
 from ..demo_data import get_demo_stats
+from ..security import require_csrf
 @router.post("/api/admin/config/bot-token")
-async def set_bot_token(request: Request, token: str = Form(...), csrf_token: str = Form(...)):
+async def set_bot_token(request: Request, token: str = Form(...)):
     # Nastavení Discord bot tokenu administrátorem
-    await require_admin(request)
-    
-    session_csrf = request.session.get("csrf_token")
-    if not session_csrf or not secrets.compare_digest(session_csrf, csrf_token):
-        return JSONResponse({"error": "Neplatný CSRF token"}, status_code=403)
+    await require_auth(request)
+    await require_csrf(request)
     
     if not token or len(token) < 30:
         return JSONResponse({"error": "Neplatný token"}, status_code=400)
@@ -33,13 +31,9 @@ async def api_add_discourse(
     request: Request,
     url: str = Form(...),
     api_key: str = Form(...),
-    api_user: str = Form(...),
-    csrf_token: str = Form(...)
+    api_user: str = Form(...)
 ):
-    import secrets
-    session_csrf = request.session.get("csrf_token")
-    if not session_csrf or not secrets.compare_digest(session_csrf, csrf_token):
-        return JSONResponse({"error": "Neplatný CSRF token"}, status_code=403)
+    await require_csrf(request)
         
     # API pro přidání Discourse
     user = request.session.get("discord_user")
@@ -136,16 +130,13 @@ except ImportError:
     DiscourseSync = None
 
 @router.post("/api/discourse/sync")
-async def api_trigger_sync(request: Request, guild_id: str = Form(...), csrf_token: str = Form(...)):
+async def api_trigger_sync(request: Request, guild_id: str = Form(...)):
     # Ruční spuštění synchronizace s Discoursem
     user = request.session.get("discord_user")
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
         
-    import secrets
-    session_csrf = request.session.get("csrf_token")
-    if not session_csrf or not secrets.compare_digest(session_csrf, csrf_token):
-        return JSONResponse({"error": "Neplatný CSRF token"}, status_code=403)
+    await require_csrf(request)
     
     r = await get_redis_client()
     is_owner = await r.sismember(f"user:discourse:{user['id']}", guild_id)
@@ -167,6 +158,7 @@ async def api_trigger_sync(request: Request, guild_id: str = Form(...), csrf_tok
 async def remove_team_member(request: Request, target_id: str):
     """Remove a team member."""
     await require_auth(request)
+    await require_csrf(request)
     guild_id = request.session.get("guild_id")
     
     user_id = request.session.get("discord_user", {}).get("id")
@@ -561,12 +553,9 @@ async def get_predictions_data(request: Request, _=Depends(require_auth)):
 
 
 @router.post("/api/trigger-backfill")
-async def trigger_backfill(request: Request, guild_id: Optional[str] = Form(None), csrf_token: str = Form(None), _=Depends(require_admin)):
+async def trigger_backfill(request: Request, guild_id: Optional[str] = Form(None), _=Depends(require_admin)):
     """Trigger manual backfill from dashboard (Admin only)."""
-    import secrets
-    session_csrf = request.session.get("csrf_token")
-    if not session_csrf or not csrf_token or not secrets.compare_digest(session_csrf, csrf_token):
-        return JSONResponse({"status": "error", "message": "Neplatný CSRF token"}, status_code=403)
+    await require_csrf(request)
 
     target_gid = guild_id or request.session.get("guild_id")
     print(f"DEBUG: trigger_backfill - Form guild_id: {guild_id}, Session guild_id: {request.session.get('guild_id')}, Resolved: {target_gid}")
@@ -661,11 +650,11 @@ async def backfill_status(request: Request, _=Depends(require_admin)):
 
 
 @router.post("/api/delete-server-data")
-async def delete_server_data(request: Request, csrf_token: str = Form(None), _=Depends(require_admin)):
+async def delete_server_data(request: Request, _=Depends(require_admin)):
     """Delete all Redis data for the current server (Admin only)."""
-    import secrets
-    session_csrf = request.session.get("csrf_token")
-    if not session_csrf or not csrf_token or not secrets.compare_digest(session_csrf, csrf_token):
+    try:
+        await require_csrf(request)
+    except HTTPException:
         return JSONResponse({"status": "error", "message": "Neplatný CSRF token"}, status_code=403)
 
     guild_id = request.session.get("guild_id")
@@ -706,11 +695,11 @@ async def delete_server_data(request: Request, csrf_token: str = Form(None), _=D
 
 
 @router.post("/api/leave-server")
-async def leave_server(request: Request, csrf_token: str = Form(None), _=Depends(require_admin)):
+async def leave_server(request: Request, _=Depends(require_admin)):
     """Remove bot from current server (Admin only)."""
-    import secrets
-    session_csrf = request.session.get("csrf_token")
-    if not session_csrf or not csrf_token or not secrets.compare_digest(session_csrf, csrf_token):
+    try:
+        await require_csrf(request)
+    except HTTPException:
         return JSONResponse({"status": "error", "message": "Neplatný CSRF token"}, status_code=403)
 
     guild_id = request.session.get("guild_id")

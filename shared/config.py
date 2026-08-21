@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Literal
 
 class Settings(BaseSettings):
@@ -6,9 +6,10 @@ class Settings(BaseSettings):
     web_port: int = 8093
     environment: Literal["development", "test", "production"] = "development"
     use_fakeredis: bool = False
+    
+    activity_inactivity_threshold_days: int = 14
+    event_retention_days: int = 90
 
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()

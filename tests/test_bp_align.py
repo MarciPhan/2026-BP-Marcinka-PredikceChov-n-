@@ -22,7 +22,9 @@ async def test_discourse_idempotency():
     await fake_r.hset(f"discourse:conf:{guild_id}", mapping={"url": "http://fake", "api_key": "fake", "api_user": "fake"})
     
     # Simulate processing a topic twice
-    topic_data = {"id": 123, "title": "Test Topic", "created_at": "2024-01-01T12:00:00.000Z"}
+    import datetime
+    now_ts = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z")
+    topic_data = {"id": 123, "title": "Test Topic", "created_at": now_ts}
     
     # Pass 1
     with patch("httpx.AsyncClient.get") as mock_get:
@@ -59,17 +61,18 @@ async def test_ssrf_protection():
     
     request = MagicMock(spec=Request)
     request.session = {"authenticated": True, "discord_user": {"id": "123"}, "csrf_token": "valid"}
+    request.headers = {"X-CSRF-Token": "valid"}
     
     # Localhost attack
-    resp = await api_add_discourse(request, url="http://127.0.0.1", api_key="a", api_user="b", csrf_token="valid")
+    resp = await api_add_discourse(request, url="http://127.0.0.1", api_key="a", api_user="b")
     assert resp.status_code == 403
     
     # AWS metadata attack
-    resp = await api_add_discourse(request, url="http://169.254.169.254", api_key="a", api_user="b", csrf_token="valid")
+    resp = await api_add_discourse(request, url="http://169.254.169.254", api_key="a", api_user="b")
     assert resp.status_code == 403
     
     # Private IP attack
-    resp = await api_add_discourse(request, url="http://10.0.0.5", api_key="a", api_user="b", csrf_token="valid")
+    resp = await api_add_discourse(request, url="http://10.0.0.5", api_key="a", api_user="b")
     assert resp.status_code == 403
 
 # 3. Správnost Engagement Score podle nového vzorce

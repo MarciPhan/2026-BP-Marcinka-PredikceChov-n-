@@ -26,14 +26,12 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: docs-site/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: docs-site
         run: npm ci
 
       - name: Build VitePress
-        working-directory: docs-site
         run: npm run docs:build
 
       - name: Setup Pages
@@ -42,7 +40,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs-site/.vitepress/dist
+          path: docs/.vitepress/dist
 
   deploy:
     environment:

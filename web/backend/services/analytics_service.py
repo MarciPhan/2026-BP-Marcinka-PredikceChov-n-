@@ -522,8 +522,10 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                     "detail": f"{mod_actions} akcí/měsíc"
                 }
 
+            from web.backend.utils import generate_security_insights
             return {
                 "overall_score": overall_score,
+                "available": overall_score is not None,
                 "rating": rating,
                 "rating_color": rating_color,
                 "weights": weights,
@@ -535,7 +537,9 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             import traceback
             traceback.print_exc()
             return {
-                "overall_score": 0,
+                "overall_score": None,
+                "available": False,
+                "reason": "calculation_error",
                 "rating": "Neznámý",
                 "rating_color": "#6B7280",
                 "components": {},

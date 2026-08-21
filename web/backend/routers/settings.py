@@ -9,6 +9,7 @@ from ..utils import (
     get_dashboard_team, get_dashboard_permissions, get_sidebar_context,
     get_action_weights, add_dashboard_user
 )
+from ..security import require_csrf
 from ..core.container import AppContainer
 
 class TeamUser(pydantic.BaseModel):
@@ -56,6 +57,7 @@ async def get_team_api(request: Request):
 async def add_team_member(request: Request, member: TeamUser):
     """Add or update a team member."""
     await require_auth(request)
+    await require_csrf(request)
     guild_id = request.session.get("guild_id")
     
     user_id = request.session.get("discord_user", {}).get("id")
@@ -251,13 +253,10 @@ async def update_general_settings(
     show_deleted: Optional[str] = Form(None), 
     default_date_range: str = Form("last_30_days"),
     default_role_id: str = Form("all"),
-    csrf_token: str = Form(...),
     _=Depends(require_auth)
 ):
     """Update general settings in session."""
-    import secrets
-    if not secrets.compare_digest(request.session.get("csrf_token", ""), csrf_token):
-        raise HTTPException(403, "Neplatný CSRF token")
+    await require_csrf(request)
     
     request.session["show_deleted_data"] = (show_deleted == "on")
     request.session["default_date_range"] = default_date_range
@@ -283,6 +282,7 @@ async def update_dashboard_layout(
     _=Depends(require_auth)
 ):
     """Update dashboard layout preferences in session."""
+    await require_csrf(request)
     if page == "analytics":
         layout = {
             "show_comparisons": show_comparisons == "on",
@@ -343,6 +343,7 @@ async def reset_dashboard_layout(
     _=Depends(require_auth)
 ):
     """Reset dashboard layout preferences to defaults."""
+    await require_csrf(request)
     if page == "overview":
         if "overview_order" in request.session:
             del request.session["overview_order"]
@@ -387,13 +388,10 @@ async def update_security_score_settings(
     ideal_mod_actions_min: float = Form(1),
     ideal_mod_actions_max: float = Form(5),
     ideal_verification_level: int = Form(2),
-    csrf_token: str = Form(...),
     _=Depends(require_admin)
 ):
     """Update security score weights and ideals in Redis."""
-    import secrets
-    if not secrets.compare_digest(request.session.get("csrf_token", ""), csrf_token):
-        raise HTTPException(403, "Neplatný CSRF token")
+    await require_csrf(request)
     try:
         r = await get_redis_client()
         
@@ -430,13 +428,10 @@ async def update_weights(
     chat_time: int = Form(...), voice_time: int = Form(...),
     session_base: int = Form(180), char_weight: int = Form(1),
     reply_weight: int = Form(60), msg_weight: int = Form(0),
-    csrf_token: str = Form(...),
     _=Depends(require_admin)
 ):
     """Update action weights in Redis."""
-    import secrets
-    if not secrets.compare_digest(request.session.get("csrf_token", ""), csrf_token):
-        raise HTTPException(403, "Neplatný CSRF token")
+    await require_csrf(request)
     try:
         r = await get_redis_client()
         
@@ -472,13 +467,10 @@ async def update_xp_formula(
     xp_max: int = Form(25),
     xp_voice_min: int = Form(5),
     xp_voice_max: int = Form(10),
-    csrf_token: str = Form(...),
     _=Depends(require_admin)
 ):
     """Update XP formula coefficients in Redis."""
-    import secrets
-    if not secrets.compare_digest(request.session.get("csrf_token", ""), csrf_token):
-        raise HTTPException(403, "Neplatný CSRF token")
+    await require_csrf(request)
     try:
         r = await get_redis_client()
         await r.hset("config:xp_formula", mapping={
