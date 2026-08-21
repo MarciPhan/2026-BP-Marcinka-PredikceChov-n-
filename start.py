@@ -68,6 +68,16 @@ def main():
     print("Installing dependencies...")
     subprocess.run([python_bin, "-m", "pip", "install", "-q", "-r", "requirements.txt"])
 
+    npm_bin = "npm" if platform.system() != "Windows" else "npm.cmd"
+    has_npm = True
+    try:
+        subprocess.run([npm_bin, "-v"], capture_output=True, check=True)
+        print("Node.js detected. Installing docs dependencies...")
+        subprocess.run([npm_bin, "install", "--no-audit", "--no-fund", "--silent"], check=False)
+    except Exception:
+        has_npm = False
+        print_color("Warning: Node.js (npm) not found. VitePress documentation will not start.", "1;33")
+
     # 2. Config check
     if not os.path.exists(".env"):
         if os.path.exists(".env.example"):
@@ -106,6 +116,9 @@ def main():
 
     bot_proc = run_service("Discord Bot", [python_bin, "bot/main.py"], env, "bot.log")
     web_proc = run_service("Web Dashboard", [python_bin, "-m", "uvicorn", "web.backend.main:app", "--host", "0.0.0.0", "--port", str(dashboard_port)], env, "web.log")
+    docs_proc = None
+    if has_npm:
+        docs_proc = run_service("Documentation", [npm_bin, "run", "docs:dev"], env, "docs.log")
 
     time.sleep(3)
     if bot_proc.poll() is None and web_proc.poll() is None:
@@ -113,23 +126,30 @@ def main():
         print_color("   [SUCCESS] CommunityMetrics spuštěno úspěšně (Python)!   ", "1;32")
         print("="*60)
         print_color(f"   [WEB] Web Dashboard : http://localhost:{dashboard_port}", "1;36")
+        if has_npm:
+            print_color("   [DOCS] Dokumentace  : http://localhost:5173", "1;36")
         print_color("   [BOT] Discord Bot    : Běží (bot/main.py)", "1;36")
         print_color(f"   [DB] Redis Cache    : {'localhost:6379' if redis_running else 'FakeRedis (in-memory)'}", "1;36")
         print("-" * 60)
         print_color("   [INFO] Soubory s logy:", "1;33")
         print("      Web Dashboard : web.log")
         print("      Discord Bot    : bot.log")
+        if has_npm:
+            print("      Dokumentace    : docs.log")
         print("="*60)
         print("\nStiskněte Ctrl+C pro ukončení služeb...\n")
         try:
             bot_proc.wait()
             web_proc.wait()
+            if docs_proc: docs_proc.wait()
         except KeyboardInterrupt:
             print("\nStopping services...")
             bot_proc.terminate()
             web_proc.terminate()
+            if docs_proc: docs_proc.terminate()
             bot_proc.wait()
             web_proc.wait()
+            if docs_proc: docs_proc.wait()
             print("Stopped.")
     else:
         print_color("Startup failed. Check bot.log and web.log.", "1;31")

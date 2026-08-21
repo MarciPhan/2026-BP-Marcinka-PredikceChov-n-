@@ -23,9 +23,6 @@ features:
   - title: Real-time analytika
     details: Sledování aktivity v momentě, kdy se děje. Sub-sekundové zpracování každé zprávy.
     link: /analytics
-  - title: Survival analýza
-    details: Kaplan-Meier křivky ukazující střední délku setrvání uživatelů na serveru.
-    link: /math-foundations
   - title: Skóre bezpečnosti
     details: Algoritmus pro hodnocení zabezpečení serveru (MFA, verifikace, filtry obsahu).
     link: /security
@@ -93,12 +90,6 @@ Zde najdete vše potřebné pro instalaci, úpravu kódu a integraci bota do va�
 - **Nasazení a správa:** Postupujte podle [průvodce instalací](/setup) nebo [nasazením do cloudu](/cloud-deployment).
 - **Vývoj bota:** Prostudujte si [vývojářskou příručku](/dev-guide) a [příklady API požadavků](/api-examples).
 - **Integrace:** Propojte CommunityMetrics s dalšími nástroji pomocí [webhooků](/integrations) a [API Reference](/api).
-
-### Pro analytiky a akademický výzkum
-Pokud vás zajímá teoretické pozadí a matematické modely použité pro predikci chování uživatelů.
-- **Matematické modely:** Detailní popis [Markovových řetězců](/math-foundations) a statistických metod.
-- **Srovnání algoritmů:** Analýza [výběru ML algoritmů](/ml-comparison) a jejich přesnosti v čase.
-- **Struktura dat:** Kompletní přehled [Redis datového schématu](/data-schema) pro vlastní analýzy.
 
 ### Pro členy komunity
 Informace o tom, jak bot ovlivňuje vaši zkušenost na serveru.

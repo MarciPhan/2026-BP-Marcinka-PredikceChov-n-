@@ -23,11 +23,24 @@ if %ERRORLEVEL% equ 0 (
         if %ERRORLEVEL% neq 0 (
             docker-compose up --build -d
         )
+
+        set DOCS_URL=
+        where npm >nul 2>nul
+        if %ERRORLEVEL% equ 0 (
+            echo Node.js detected. Starting documentation (VitePress)...
+            rem Zabijeme predchozi proces na portu 5173
+            for /f "tokens=5" %%a in ('netstat -ano ^| findstr :5173 ^| findstr LISTENING') do taskkill /F /PID %%a >nul 2>&1
+            call npm install --no-audit --no-fund --silent
+            start /B npm run docs:dev > docs.log 2>&1
+            set DOCS_URL=   [DOCS] Dokumentace  : http://localhost:5173
+        )
+
         echo.
         echo ============================================================
         echo    [SUCCESS] CommunityMetrics spusteno uspesne (Docker)!          
         echo ============================================================
         echo    [WEB] Web Dashboard : http://localhost:%DASHBOARD_PORT%
+        if defined DOCS_URL echo %DOCS_URL%
         echo    [BOT] Discord Bot    : Bezi (Primary ^& Dashboard Lite)
         echo    [SYNC] Discourse Sync : Bezi v pozadi
         echo    [DB] Redis Cache    : localhost:6379
@@ -39,6 +52,25 @@ if %ERRORLEVEL% equ 0 (
         echo.
         goto end
     )
+)
+
+where npm >nul 2>nul
+if %ERRORLEVEL% neq 0 (
+    echo ============================================================
+    echo  [Windows] Systemu chybi Node.js ^(pro dokumentaci^). Skript jej nyni nainstaluje.
+    echo ============================================================
+    echo  Stahuji oficialni Node.js 20 LTS pro Windows...
+    curl -L -o "%TEMP%\node-installer.msi" "https://nodejs.org/dist/v20.11.1/node-v20.11.1-x64.msi"
+    
+    echo  Spoustim tichou instalaci (muze to trvat nekolik minut, pockejte prosim)...
+    msiexec /i "%TEMP%\node-installer.msi" /quiet /norestart
+    
+    echo  Instalace Node.js uspesne dokoncena!
+    echo ------------------------------------------------------------
+    echo  Nyni se okno zavre a spusti znovu, aby se nacetly nove promenne...
+    timeout /t 3 >nul
+    start "" cmd /c "%~dpnx0"
+    exit /b
 )
 
 where python >nul 2>nul

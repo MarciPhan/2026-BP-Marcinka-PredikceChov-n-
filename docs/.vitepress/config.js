@@ -5,7 +5,7 @@ export default withMermaid(defineConfig({
   lang: 'cs-CZ',
   title: 'CommunityMetrics Docs',
   description: 'Dokumentace pro analytický systém CommunityMetrics',
-  base: '/2026-BP-Marcinka-PredikceChov-n-/',
+  base: '/',
   appearance: 'force-dark',
   ignoreDeadLinks: [
     /^http:\/\/localhost/
@@ -89,12 +89,7 @@ export default withMermaid(defineConfig({
           { text: 'API příklady', link: '/api-examples' },
           { text: 'Redis datové schéma', link: '/data-schema' },
           { text: 'Integrace a Webhooky', link: '/integrations' },
-          { text: 'Data Science', link: '/data-science' },
-          { text: 'Experimentální funkce', link: '/labs' },
-          { text: 'Přehled predikce', link: '/ai' },
-          { text: 'ML pipeline', link: '/predictions' },
-          { text: 'Matematické základy', link: '/math-foundations' },
-          { text: 'Srovnání ML algoritmů', link: '/ml-comparison' }
+          { text: 'ML pipeline', link: '/predictions' }
         ]
       },
       {
@@ -157,5 +152,10 @@ export default withMermaid(defineConfig({
     langMenuLabel: 'Jazyk',
     returnToTopLabel: 'Zpět nahoru',
     sidebarMenuLabel: 'Menu'
+  },
+  vite: {
+    optimizeDeps: {
+      include: ['mermaid', 'fastdom']
+    }
   }
 }))

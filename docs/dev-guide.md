@@ -116,9 +116,8 @@ communitymetrics/
     keys.py              # Redis klíčová schéma (centrální definice)
     models.py            # Matematické modely — Markov, Kaplan-Meier
     redis_client.py      # Singleton Redis klient
- docs-site/               # Tato dokumentace (VitePress)
+ docs/                    # Tato dokumentace (VitePress)
  config/                  # Konfigurace a tajemství
- scripts/                 # Pomocné skripty
  docker-compose.yml       # Produkční nasazení
  Dockerfile               # Container image
  start.sh                 # Lokální spouštěč

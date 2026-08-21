@@ -20,9 +20,9 @@ services:
       - TZ=Europe/Prague
       - PYTHONPATH=/app
     volumes:
-      - .:/app
-      - ./bot_std.log:/app/bot_std.log
-      - ./data:/app/data
+      - .:/app:z
+      - ./bot_std.log:/app/bot_std.log:z
+      - ./data:/app/data:z
     networks:
       - botnet
 
@@ -39,7 +39,7 @@ services:
       - TZ=Europe/Prague
       - PYTHONPATH=/app
     volumes:
-      - .:/app
+      - .:/app:z
     networks:
       - botnet
 
@@ -61,8 +61,8 @@ services:
     ports:
       - "${DASHBOARD_PORT:-8093}:${DASHBOARD_PORT:-8093}"
     volumes:
-      - .:/app
-      - ./dashboard_std.log:/app/dashboard_std.log
+      - .:/app:z
+      - ./dashboard_std.log:/app/dashboard_std.log:z
     networks:
       - botnet
 
@@ -78,7 +78,7 @@ services:
       - TZ=Europe/Prague
       - PYTHONPATH=/app
     volumes:
-      - .:/app
+      - .:/app:z
     networks:
       - botnet
 

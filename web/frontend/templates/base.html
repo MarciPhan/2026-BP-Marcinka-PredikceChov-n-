@@ -63,7 +63,7 @@
             {% endif %}
         </nav>
 
-        {% if request.session.authenticated %}
+        {% if request.session.get('authenticated') %}
         <div class="user-widget">
             <div class="user-info">
                 {% set user = request.session.discord_user %}

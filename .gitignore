@@ -39,3 +39,10 @@ walkthrough.md
 # Thesis
 *.typ
 *.pdf
+
+# Node
+node_modules/
+
+# VitePress
+docs/.vitepress/dist/
+docs/.vitepress/cache/

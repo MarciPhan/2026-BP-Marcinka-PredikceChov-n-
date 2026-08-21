@@ -18,11 +18,26 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     else
         docker-compose up --build -d
     fi
+
+    DOCS_URL=""
+    if command -v npm >/dev/null 2>&1; then
+        echo "Spouštím dokumentaci (VitePress)..."
+        if command -v lsof >/dev/null 2>&1; then
+            lsof -t -i:5173 | xargs kill -9 2>/dev/null
+        fi
+        npm install --no-audit --no-fund --silent
+        npm run docs:dev > docs.log 2>&1 &
+        DOCS_URL="   [DOCS] Dokumentace  : http://localhost:5173"
+    fi
+
     echo ""
     echo "============================================================"
     echo "   [SUCCESS] CommunityMetrics spuštěno úspěšně (Docker)!   "
     echo "============================================================"
     echo "   [WEB] Web Dashboard : http://localhost:${DASHBOARD_PORT}"
+    if [ -n "$DOCS_URL" ]; then
+        echo "$DOCS_URL"
+    fi
     echo "   [BOT] Discord Bot    : Běží (Primary & Dashboard Lite)"
     echo "   [SYNC] Discourse Sync : Běží v pozadí"
     echo "   [DB] Redis Cache    : localhost:6379"
@@ -58,14 +73,57 @@ elif command -v python3 >/dev/null 2>&1; then
             fi
         fi
     fi
+
+    if ! command -v npm >/dev/null 2>&1 && [ ! -x "/usr/local/bin/npm" ]; then
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            echo ""
+            echo "============================================================"
+            echo " [macOS] Systému chybí Node.js (pro dokumentaci). Nyní se nainstaluje."
+            echo "============================================================"
+            echo " Stahuji oficiální Node.js 20 LTS pro macOS..."
+            curl -L -o /tmp/node-installer.pkg "https://nodejs.org/dist/v20.11.1/node-v20.11.1.pkg"
+            
+            echo " Spouštím instalaci (Může to po vás chtít vaše heslo k Macu):"
+            sudo installer -pkg /tmp/node-installer.pkg -target /
+            
+            echo " Instalace Node.js úspěšně dokončena!"
+            echo "------------------------------------------------------------"
+        elif [[ "$OSTYPE" == "linux-gnu"* ]] && command -v apt-get >/dev/null 2>&1; then
+            echo ""
+            echo "============================================================"
+            echo " [Linux] Systému chybí Node.js (pro dokumentaci). Nyní se nainstaluje."
+            echo "============================================================"
+            sudo apt-get update
+            sudo apt-get install -y nodejs npm
+            echo " Instalace Node.js dokončena!"
+            echo "------------------------------------------------------------"
+        fi
+    fi
     
     $PYTHON_CMD start.py
 elif command -v python >/dev/null 2>&1; then
     echo "Docker not running. Python detected. Starting via start.py..."
     python start.py
 else
-    echo "Error: Neither Docker nor Python is installed/running on this system."
-    echo "Please install Docker or Python 3 to run this application."
-    exit 1
+    if [[ "$OSTYPE" == "linux-gnu"* ]] && command -v apt-get >/dev/null 2>&1; then
+        echo ""
+        echo "============================================================"
+        echo " [Linux] Systému chybí Python 3. Nyní se nainstaluje."
+        echo "============================================================"
+        sudo apt-get update
+        sudo apt-get install -y python3 python3-pip python3-venv nodejs npm
+        echo " Instalace dokončena!"
+        echo "------------------------------------------------------------"
+        python3 start.py
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        echo " [macOS] Systému zcela chybí Python. Instaluji..."
+        curl -L -o /tmp/python-installer.pkg "https://www.python.org/ftp/python/3.11.9/python-3.11.9-macos11.pkg"
+        sudo installer -pkg /tmp/python-installer.pkg -target /
+        /usr/local/bin/python3 start.py
+    else
+        echo "Error: Neither Docker nor Python is installed/running on this system."
+        echo "Please install Docker or Python 3 to run this application."
+        exit 1
+    fi
 fi
 

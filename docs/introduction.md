@@ -29,7 +29,6 @@ Pro dosažení nejlepších výsledků doporučujeme nechat bota běžet alespo�
 | **Moderátoři** | [Průvodce pro moderátory](/moderators) | Interpretace metrik, krizové scénáře, best practices. |
 | **Vývojáři** | [Vývojářský průvodce](/dev-guide) | API, Redis schéma, architektura, lokální vývoj. |
 | **Členové komunity** | [Uživatelská příručka](/user-guide) | XP systém, příkazy, ochrana osobních údajů. |
-| **Akademická sféra** | [Matematické základy](/math-foundations) | Formální popis prediktivních modelů a algoritmů. |
 
 ## Technický stack
 

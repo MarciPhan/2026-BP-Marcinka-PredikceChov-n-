@@ -185,7 +185,7 @@
 </div>
 {% elif id == 'response_stats' %}
 <div class="card" data-id="response_stats">
-    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px;">
         <div style="text-align:center;">
             <div class="stat-label">Průměrná délka</div>
             <div class="stat-value" style="font-size: 1.5rem;">{{ avg_msg_len }}</div>
@@ -220,7 +220,7 @@
 
     {% set default_span = 1 %}
     {% if widget_id in ['security_score', 'chart_growth', 'chart_hourly', 'chart_stickiness', 'chart_msglen',
-    'chart_weekly', 'chart_heatmap'] %}{% set default_span = 2 %}{% endif %}
+    'chart_weekly', 'chart_heatmap', 'response_stats'] %}{% set default_span = 2 %}{% endif %}
     {% set span_val = saved_spans.get(widget_id, default_span) %}
 
     <div class="widget-wrapper span-{{ span_val }}" data-id="{{ widget_id }}" data-span="{{ span_val }}"
@@ -282,7 +282,7 @@
 
         {% set default_span = 1 %}
         {% if widget_id in ['security_score', 'chart_growth', 'chart_hourly', 'chart_stickiness', 'chart_msglen',
-        'chart_weekly', 'chart_heatmap'] %}{% set default_span = 2 %}{% endif %}
+        'chart_weekly', 'chart_heatmap', 'response_stats'] %}{% set default_span = 2 %}{% endif %}
         {% set span_val = saved_spans.get(widget_id, default_span) %}
 
         <div class="widget-wrapper span-{{ span_val }}" data-id="{{ widget_id }}" data-span="{{ span_val }}"

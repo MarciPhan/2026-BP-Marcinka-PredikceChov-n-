@@ -107,11 +107,11 @@ Jako moderátoři máte přístup k analytickým datům. Respektujte soukromí u
 
 ## 9. Glosář pojmů a Architektura
 Pro hlubší pochopení technických termínů (HLL, SARIMA, DQS) nebo fungování systému na pozadí navštivte:
-- [Glosář pojmů](/docs/glossary)
-- [Technická architektura](/docs/architecture)
-- [API Reference](/docs/api)
-- [Nasazení a údržba](/docs/deployment)
-- [Troubleshooting](/docs/troubleshooting)
+- [Glosář pojmů](/glossary)
+- [Technická architektura](/architecture)
+- [API Reference](/api)
+- [Nasazení a údržba](/deployment)
+- [Troubleshooting](/troubleshooting)
 
 ---
 *Dokumentace verze 2.3 (Stripe-style Edition, Březen 2026)*
