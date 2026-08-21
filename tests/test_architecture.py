@@ -31,10 +31,10 @@ class MockRepository(BaseRepository):
 
     async def get_activity_stats(self, guild_id: int, start_date: str = None, end_date: str = None, days: int = 30) -> Dict[str, Any]:
         return {
-            "dau_data": [10, 15, 20],
-            "mau_data": [50, 55, 60],
-            "dau_labels": ["2026-07-01", "2026-07-02", "2026-07-03"],
-            "avg_dau": 15
+            "dau_data": [10, 10, 10, 10, 10, 15, 20],
+            "mau_data": [50, 50, 50, 50, 50, 55, 60],
+            "dau_labels": ["d1", "d2", "d3", "d4", "d5", "d6", "d7"],
+            "avg_dau": 12
         }
 
     async def get_deep_stats_redis(self, *args, **kwargs) -> Dict[str, Any]:
@@ -95,8 +95,8 @@ async def test_swappable_architecture():
     print(f"Predikce: {trend.get('prediction')}")
     
     assert trend.get('growth_30d') == 100.0  # (20 - 10) / 10 = 100%
-    assert trend.get('avg_dau') == 15        # (10 + 15 + 20) / 3 = 15
-    assert trend.get('prediction') == 30     # 15 * 2.0 = 30
+    assert trend.get('avg_dau') == 12        # (85 / 7) = 12
+    assert trend.get('prediction') == 24     # 12 * 2.0 = 24
     
     print("\n✅ Všechny matematické výpočty fungují správně nad Mock databází!")
     print("="*50)

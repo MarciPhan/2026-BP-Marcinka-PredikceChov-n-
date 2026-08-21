@@ -35,18 +35,12 @@ class HealthCog(commands.Cog):
         # Activity Rate
         activity_rate = (dau / total_members) if total_members > 0 else 0
         
-        # Toxicity Index (posledních 7 dní)
-        # Sčítáme akce z redis
-        total_actions = 0
-        async for key in r.scan_iter(f"events:action:{guild.id}:*"):
-            # V reálném nasazení bychom filtrovali časem přímo v redis (zrangebyscore)
-            # Tady pro jednoduchost vezmeme celkový počet zpráv vs akcí
-            actions = await r.zcard(key)
-            total_actions += actions
-            
-        total_msgs_str = await r.get(f"stats:total_msgs:{guild.id}")
-        total_msgs = int(total_msgs_str) if total_msgs_str else 1
-        mii = (total_actions / total_msgs)
+        from web.backend.utils import get_health_research_data
+        research_data = await get_health_research_data(guild.id)
+        
+        # MII (Centralizovaný výpočet)
+        mii_val = research_data.get("mii")
+        mii = mii_val if mii_val is not None else 0.0
         
         # Doporučený počet moderátorů
         # N = (DAU * (1 + MII * 10)) / 150 + 2
@@ -59,7 +53,8 @@ class HealthCog(commands.Cog):
         )
         
         embed.add_field(name="👥 Aktivita (AER)", value=f"**{activity_rate:.1%}** (DAU: {dau})", inline=True)
-        embed.add_field(name="⚠️ Moderační zátěž (MII)", value=f"**{mii:.2%}**", inline=True)
+        mii_str = f"**{mii:.2%}**" if mii_val is not None else "**N/A**"
+        embed.add_field(name="⚠️ Moderační zátěž (MII)", value=mii_str, inline=True)
         embed.add_field(name="🛡️ Doporučený tým", value=f"**{rec_mods} moderátorů**", inline=True)
         
         status_text = "✅ Komunita je zdravá a stabilní."
@@ -69,24 +64,22 @@ class HealthCog(commands.Cog):
         embed.description = status_text
         
         if research:
-            from web.backend.utils import get_health_research_data
-            
-            # Zavoláme reálnou ML pipeline z backendu
-            research_data = await get_health_research_data(guild.id)
-            
             if research_data.get("success"):
-                p_stay_active = research_data.get("retention_pct", 0) / 100.0
-                p_churn = research_data.get("churn_risk_pct", 0) / 100.0
-                life_exp = research_data.get("life_expectancy_days", 0)
-                median_survival = research_data.get("median_survival_days", 0)
+                p_stay_active = (research_data.get("retention_pct") or 0) / 100.0
+                p_inactive = (research_data.get("inactivity_risk_pct") or 0) / 100.0
+                life_exp = research_data.get("activity_survival_expectancy_days")
+                median_survival = research_data.get("median_activity_survival_days")
+                
+                life_exp_str = f"**{life_exp} dní**" if life_exp is not None else "**N/A**"
+                median_survival_str = f"**{median_survival} dní**" if median_survival is not None else "**N/A**"
                 
                 res_text = (
                     f"**Markovova analýza (Predikce 7 dní):**\n"
-                    f"- Pravděpodobnost setrvání (Retention): **{p_stay_active:.1%}**\n"
-                    f"- Riziko odchodu (Churn Risk): **{p_churn:.1%}**\n\n"
-                    f"**Analýza přežití (Survival):**\n"
-                    f"- Očekávaná délka aktivity: **{life_exp} dní**\n"
-                    f"- Medián přežití aktivity: **{median_survival} dní**"
+                    f"- Setrvání v aktivitě: **{p_stay_active:.1%}**\n"
+                    f"- Odhad neaktivity: **{p_inactive:.1%}**\n\n"
+                    f"**Analýza aktivity (Survival):**\n"
+                    f"- Očekávaná doba setrvání v pozorované aktivitě: {life_exp_str}\n"
+                    f"- Medián setrvání v aktivitě: {median_survival_str}"
                 )
             else:
                 res_text = "Nepodařilo se vypočítat výzkumná data (nedostatek historie nebo chyba zpracování)."

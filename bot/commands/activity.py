@@ -43,9 +43,14 @@ class ActivityMonitor(commands.Cog):
 
     async def get_action_weights(self) -> dict:
         """Fetch action weights from Redis or use defaults."""
+        from shared.analytics_config import DEFAULT_MII_WEIGHTS
         defaults = {
-            "bans": 300, "kicks": 180, "timeouts": 180, "unbans": 120, 
-            "verifications": 120, "msg_deleted": 60, "role_updates": 30,
+            "ban": DEFAULT_MII_WEIGHTS["ban"], 
+            "kick": DEFAULT_MII_WEIGHTS["kick"], 
+            "timeout": DEFAULT_MII_WEIGHTS["timeout"],
+            "msg_delete": DEFAULT_MII_WEIGHTS["msg_delete"],
+            "unbans": 120, 
+            "verifications": 120, "role_updates": 30,
             "chat_time": 1, "voice_time": 1
         }
         
@@ -290,12 +295,10 @@ class ActivityMonitor(commands.Cog):
             
             
             metric_map = {
-                "ban": "bans", "kick": "kicks", "timeout": "timeouts",
-                "unban": "unbans", "role_update": "role_updates",
-                "msg_delete": "msg_deleted"
+                "unban": "unbans", "role_update": "role_updates"
             }
             
-            metric = metric_map.get(action_type, action_type + "s")
+            metric = metric_map.get(action_type, action_type)
             stats[metric] += 1
         
         

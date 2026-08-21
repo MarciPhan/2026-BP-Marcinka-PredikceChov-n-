@@ -173,25 +173,25 @@ def generate_security_insights(metrics: Dict[str, Any]):
     insights = []
     
     
-    mod_ratio = metrics.get("mod_ratio", 100)
-    users_per_mod = metrics.get("users_per_mod", 100)
-    mod_actions = metrics.get("mod_actions", 0)
-    ver_level = metrics.get("verification_level", 0)
-    mfa_level = metrics.get("mfa_level", 0)
-    explicit_filter = metrics.get("explicit_filter", 1)
-    participation_rate = metrics.get("participation_rate", 0)
-    reply_ratio = metrics.get("reply_ratio", 0)
-    voice_hours = metrics.get("voice_hours_per_dau", 0)
-    churn_rate = metrics.get("churn_rate", 0)
-    stickiness = metrics.get("stickiness", 0)
-    overall_score = metrics.get("overall_score", 0)
-    total_members = metrics.get("total_members", 0)
-    avg_dau = metrics.get("avg_dau", 0)
-    growth_rate = metrics.get("growth_rate", 0)
-    engagement_score = metrics.get("engagement_score", 50)
-    avg_msg_length = metrics.get("avg_msg_length", 0)
-    weekend_ratio = metrics.get("weekend_ratio", 1.0)
-    new_member_retention = metrics.get("new_member_retention", 100)
+    mod_ratio = metrics.get("mod_ratio")
+    users_per_mod = metrics.get("users_per_mod")
+    mod_actions = metrics.get("mod_actions")
+    ver_level = metrics.get("verification_level")
+    mfa_level = metrics.get("mfa_level")
+    explicit_filter = metrics.get("explicit_filter")
+    participation_rate = metrics.get("participation_rate")
+    reply_ratio = metrics.get("reply_ratio")
+    voice_hours = metrics.get("voice_hours_per_dau")
+    churn_rate = metrics.get("churn_rate")
+    stickiness = metrics.get("stickiness")
+    overall_score = metrics.get("overall_score")
+    total_members = metrics.get("total_members")
+    avg_dau = metrics.get("avg_dau")
+    growth_rate = metrics.get("growth_rate")
+    engagement_score = metrics.get("engagement_score")
+    avg_msg_length = metrics.get("avg_msg_length")
+    weekend_ratio = metrics.get("weekend_ratio")
+    new_member_retention = metrics.get("new_member_retention")
     
     def add(priority: str, category: str, title: str, detail: str):
         """Helper to add structured insight"""
@@ -207,16 +207,19 @@ def generate_security_insights(metrics: Dict[str, Any]):
     
     
     
-    if mod_ratio < 40:
-        add("critical", "team", "Kritický stav", f"{users_per_mod:.0f} členů na moderátora! Urgentně naberte.")
-    elif mod_ratio < 60:
-        add("warning", "team", "Nedostatek moderátorů", f"{users_per_mod:.0f} uživatelů na mod je nad limitem.")
-    elif mod_ratio < 80:
-        add("info", "team", "Vytížení týmu", "Poměr je hraniční – mějte záložní členy.")
-    elif mod_ratio >= 95 and users_per_mod < 30:
-        add("success", "team", "Silný tým", "Skvělý poměr moderátorů – rychlá reakce zaručena.")
+    if mod_ratio is not None and users_per_mod is not None:
+        if mod_ratio < 40:
+            add("critical", "team", "Kritický stav", f"{users_per_mod:.0f} členů na moderátora! Urgentně naberte.")
+        elif mod_ratio < 60:
+            add("warning", "team", "Nedostatek moderátorů", f"{users_per_mod:.0f} uživatelů na mod je nad limitem.")
+        elif mod_ratio < 80:
+            add("info", "team", "Vytížení týmu", "Poměr je hraniční – mějte záložní členy.")
+        elif mod_ratio >= 95 and users_per_mod < 30:
+            add("success", "team", "Silný tým", "Skvělý poměr moderátorů – rychlá reakce zaručena.")
     
-    if mod_actions == 0:
+    if mod_actions is None:
+        add("info", "team", "Moderační data", "K určení moderační aktivity chybí dostatek dat.")
+    elif mod_actions == 0:
         add("warning", "team", "Žádná moderace", "Za měsíc 0 akcí. Ověřte logging bota.")
     elif mod_actions < 3:
         add("info", "team", "Klidná komunita", "Minimální zásahy – komunita je ukázněná.")
@@ -231,139 +234,137 @@ def generate_security_insights(metrics: Dict[str, Any]):
     
     
     
-    if ver_level == 0:
-        add("critical", "security", "Bez ověření", "Kdokoli může psát ihned po vstupu!")
-    elif ver_level == 1:
-        add("warning", "security", "Slabé ověření", "Pouze e-mail. Zvažte vyšší úroveň.")
-    elif ver_level >= 3:
-        add("success", "security", "Silné ověření", f"Úroveň {ver_level}/4 – dobrá ochrana.")
+    if ver_level is not None:
+        if ver_level == 0:
+            add("critical", "security", "Bez ověření", "Kdokoli může psát ihned po vstupu!")
+        elif ver_level == 1:
+            add("warning", "security", "Slabé ověření", "Pouze e-mail. Zvažte vyšší úroveň.")
+        elif ver_level >= 3:
+            add("success", "security", "Silné ověření", f"Úroveň {ver_level}/4 – dobrá ochrana.")
     
-    if mfa_level == 0:
-        add("warning", "security", "Chybí 2FA", "Moderátoři nemají povinné 2FA.")
-    else:
-        add("success", "security", "2FA aktivní", "Moderátoři mají povinné 2FA.")
+    if mfa_level is not None:
+        if mfa_level == 0:
+            add("warning", "security", "Chybí 2FA", "Moderátoři nemají povinné 2FA.")
+        else:
+            add("success", "security", "2FA aktivní", "Moderátoři mají povinné 2FA.")
     
-    if explicit_filter == 0:
-        add("warning", "security", "Žádný filtr", "Explicitní obsah není skenován.")
-    elif explicit_filter == 1:
-        add("info", "security", "Částečný filtr", "Skenování jen u členů bez role.")
-    elif explicit_filter == 2:
-        add("success", "security", "Plný filtr", "Veškerý obsah je skenován.")
-    
-    
-    
-    
-    
-    if participation_rate < 1:
-        add("critical", "activity", "Mrtvý server", "Pod 1% aktivních. Potřeba reaktivace.")
-    elif participation_rate < 5:
-        add("warning", "activity", "Velmi nízká aktivita", f"Pouze {participation_rate:.1f}% denně aktivních.")
-    elif participation_rate < 10:
-        add("info", "activity", "Nízké zapojení", f"{participation_rate:.1f}% aktivních. Zkuste eventy.")
-    elif participation_rate < 20:
-        add("info", "activity", "Průměrná aktivita", f"{participation_rate:.1f}% denní účast.")
-    elif participation_rate >= 30:
-        add("success", "activity", "Vysoké zapojení", f"{participation_rate:.1f}% aktivních – výborné!")
-    
-    if reply_ratio < 5:
-        add("info", "activity", "Oznámkový styl", "Téměř žádné odpovědi – server je broadcast.")
-    elif reply_ratio < 15:
-        add("info", "activity", "Málo konverzací", f"{reply_ratio:.0f}% odpovědí. Zkuste ankety.")
-    elif reply_ratio >= 40:
-        add("success", "activity", "Živá diskuze", f"{reply_ratio:.0f}% zpráv jsou odpovědi!")
-    
-    if voice_hours < 0.05:
-        add("info", "activity", "Prázdné voice", "Téměř nulová hlasová aktivita.")
-    elif voice_hours < 0.1:
-        add("info", "activity", "Tiché kanály", "Minimální voice. Zkuste events.")
-    elif voice_hours >= 0.5:
-        add("success", "activity", "Aktivní voice", f"Průměrně {voice_hours:.1f}h/den na uživatele.")
+    if explicit_filter is not None:
+        if explicit_filter == 0:
+            add("warning", "security", "Žádný filtr", "Explicitní obsah není skenován.")
+        elif explicit_filter == 1:
+            add("info", "security", "Částečný filtr", "Skenování jen u členů bez role.")
+        elif explicit_filter == 2:
+            add("success", "security", "Plný filtr", "Veškerý obsah je skenován.")
     
     
     
     
     
-    if churn_rate > 50:
-        add("critical", "retention", "Masový exodus", f"{churn_rate:.0f}% odchodů! Kritické.")
-    elif churn_rate > 30:
-        add("critical", "retention", "Vysoký odliv", f"{churn_rate:.1f}% opouští. Prověřte příčiny.")
-    elif churn_rate > 15:
-        add("warning", "retention", "Zvýšený churn", f"{churn_rate:.1f}% odchodů. Zlepšete onboarding.")
-    elif churn_rate > 5:
-        add("info", "retention", "Normální fluktuace", f"{churn_rate:.1f}% – běžné rozmezí.")
-    elif churn_rate <= 2:
-        add("success", "retention", "Excelentní retence", "Minimální odchody – členové zůstávají!")
+    if participation_rate is not None:
+        if participation_rate < 1:
+            add("critical", "activity", "Mrtvý server", "Pod 1% aktivních. Potřeba reaktivace.")
+        elif participation_rate < 5:
+            add("warning", "activity", "Velmi nízká aktivita", f"Pouze {participation_rate:.1f}% denně aktivních.")
+        elif participation_rate < 10:
+            add("info", "activity", "Nízké zapojení", f"{participation_rate:.1f}% aktivních. Zkuste eventy.")
+        elif participation_rate < 20:
+            add("info", "activity", "Průměrná aktivita", f"{participation_rate:.1f}% denní účast.")
+        elif participation_rate >= 30:
+            add("success", "activity", "Vysoké zapojení", f"{participation_rate:.1f}% aktivních – výborné!")
     
-    if stickiness < 5:
-        add("warning", "retention", "Nízká stickiness", "DAU/MAU pod 5%. Vrací se zřídka.")
-    elif stickiness < 15:
-        add("info", "retention", "Příležitostní návštěvy", f"Stickiness {stickiness:.0f}% – hobby komunita.")
-    elif stickiness < 30:
-        add("info", "retention", "Dobrá stickiness", f"{stickiness:.0f}% DAU/MAU – solidní.")
-    elif stickiness >= 40:
-        add("success", "retention", "Návyková komunita", f"Stickiness {stickiness:.0f}%! Denně se vrací.")
-    
-    
-    
-    
-    
-    if growth_rate < -10:
-        add("critical", "growth", "Úbytek členů", f"{growth_rate:.1f}% – server ztrácí lidi.")
-    elif growth_rate < 0:
-        add("warning", "growth", "Stagnace", f"{growth_rate:.1f}% – mírný pokles.")
-    elif growth_rate > 0 and growth_rate < 5:
-        add("info", "growth", "Pomalý růst", f"+{growth_rate:.1f}% – stabilní.")
-    elif growth_rate >= 5 and growth_rate < 15:
-        add("success", "growth", "Zdravý růst", f"+{growth_rate:.1f}% měsíčně.")
-    elif growth_rate >= 15:
-        add("success", "growth", "Virální růst", f"+{growth_rate:.1f}%! Moderace stíhá?")
+    if reply_ratio is not None:
+        if reply_ratio < 5:
+            add("info", "activity", "Oznámkový styl", "Téměř žádné odpovědi – server je broadcast.")
+        elif reply_ratio < 10:
+            add("warning", "activity", "Slabá komunikace", f"Jen {reply_ratio:.0f}% relevantních požadavků získalo odpověď.")
+        elif reply_ratio < 15:
+            add("info", "activity", "Málo konverzací", f"{reply_ratio:.0f}% odpovědí. Zkuste ankety.")
+        elif reply_ratio > 40:
+            add("success", "activity", "Živá diskuze", f"{reply_ratio:.0f}% relevantních požadavků získalo odpověď!")
+            
+    if voice_hours is not None:
+        if voice_hours >= 0.5:
+            add("success", "activity", "Aktivní voice", f"Průměrně {voice_hours:.1f}h/den na uživatele.")
     
     
     
     
     
-    if avg_msg_length > 0 and avg_msg_length < 20:
-        add("info", "community", "Krátké zprávy", f"Průměr {avg_msg_length:.0f} znaků – chat styl.")
-    elif avg_msg_length >= 100:
-        add("success", "community", "Obsahové diskuze", f"Průměr {avg_msg_length:.0f} znaků – kvalita!")
+    if churn_rate is not None:
+        if churn_rate > 50:
+            add("critical", "retention", "Masový exodus", f"{churn_rate:.0f}% odchodů! Kritické.")
+        elif churn_rate > 30:
+            add("critical", "retention", "Vysoký odliv", f"{churn_rate:.1f}% opouští. Prověřte příčiny.")
+        elif churn_rate > 15:
+            add("warning", "retention", "Zvýšený churn", f"{churn_rate:.1f}% odchodů. Zlepšete onboarding.")
+        elif churn_rate > 5:
+            add("info", "retention", "Normální fluktuace", f"{churn_rate:.1f}% – běžné rozmezí.")
+        elif churn_rate <= 2:
+            add("success", "retention", "Excelentní retence", "Minimální odchody – členové zůstávají!")
     
-    if weekend_ratio > 1.5:
-        add("info", "community", "Víkendová komunita", "1.5x vyšší aktivita o víkendech.")
-    elif weekend_ratio < 0.5:
-        add("info", "community", "Pracovní komunita", "Aktivnější během týdne.")
+    if stickiness is not None:
+        if stickiness < 5:
+            add("warning", "retention", "Nízká stickiness", "DAU/MAU pod 5%. Vrací se zřídka.")
+        elif stickiness < 15:
+            add("info", "retention", "Příležitostní návštěvy", f"Stickiness {stickiness:.0f}% – hobby komunita.")
+        elif stickiness < 30:
+            add("info", "retention", "Dobrá stabilita", f"Stickiness {stickiness:.0f}% – stabilní komunita.")
+        elif stickiness >= 40:
+            add("success", "retention", "Vysoká věrnost", f"Stickiness {stickiness:.0f}% – komunita se vrací každý den!")
+            
+    if growth_rate is not None:
+        if growth_rate < -10:
+            add("critical", "growth", "Úbytek členů", f"{growth_rate:.1f}% – server ztrácí lidi.")
+        elif growth_rate < 0:
+            add("warning", "growth", "Stagnace", f"{growth_rate:.1f}% – mírný pokles.")
+        elif growth_rate > 0 and growth_rate < 5:
+            add("info", "growth", "Pomalý růst", f"+{growth_rate:.1f}% – stabilní.")
+        elif growth_rate >= 5 and growth_rate < 15:
+            add("success", "growth", "Zdravý růst", f"+{growth_rate:.1f}% měsíčně.")
+        elif growth_rate >= 15:
+            add("success", "growth", "Virální růst", f"+{growth_rate:.1f}%! Moderace stíhá?")
+            
+    if avg_msg_length is not None:
+        if avg_msg_length > 0 and avg_msg_length < 20:
+            add("info", "community", "Krátké zprávy", f"Průměr {avg_msg_length:.0f} znaků – chat styl.")
+        elif avg_msg_length >= 100:
+            add("success", "community", "Obsahové diskuze", f"Průměr {avg_msg_length:.0f} znaků – kvalita!")
+            
+    if weekend_ratio is not None:
+        if weekend_ratio > 1.5:
+            add("info", "community", "Víkendová komunita", "1.5x vyšší aktivita o víkendech.")
+        elif weekend_ratio < 0.5:
+            add("info", "community", "Pracovní komunita", "Aktivnější během týdne.")
+            
+    if new_member_retention is not None:
+        if new_member_retention < 30:
+            add("warning", "community", "Únik nováčků", "Pod 30% zůstává. Vylepšete onboarding.")
+        elif new_member_retention >= 70:
+            add("success", "community", "Vítající komunita", f"{new_member_retention:.0f}% nováčků zůstává!")
+
+    if total_members is not None and participation_rate is not None and voice_hours is not None:
+        if total_members > 100 and participation_rate < 10 and voice_hours < 0.1:
+            add("tip", "tips", "Event tip", "Zkuste voice event nebo AMA session pro oživení.")
     
-    if new_member_retention < 30:
-        add("warning", "community", "Únik nováčků", "Pod 30% zůstává. Vylepšete onboarding.")
-    elif new_member_retention >= 70:
-        add("success", "community", "Vítající komunita", f"{new_member_retention:.0f}% nováčků zůstává!")
+    if reply_ratio is not None and participation_rate is not None:
+        if reply_ratio < 20 and participation_rate > 5:
+            add("tip", "tips", "Interakce tip", "Přidejte ankety/hlasování pro více konverzací.")
     
+    if churn_rate is not None and new_member_retention is not None:
+        if churn_rate > 10 and new_member_retention < 50:
+            add("tip", "tips", "Onboarding tip", "Vytvořte uvítací kanál s pravidly a FAQ.")
     
-    
-    
-    
-    if total_members > 100 and participation_rate < 10 and voice_hours < 0.1:
-        add("tip", "tips", "Event tip", "Zkuste voice event nebo AMA session pro oživení.")
-    
-    if reply_ratio < 20 and participation_rate > 5:
-        add("tip", "tips", "Interakce tip", "Přidejte ankety/hlasování pro více konverzací.")
-    
-    if churn_rate > 10 and new_member_retention < 50:
-        add("tip", "tips", "Onboarding tip", "Vytvořte uvítací kanál s pravidly a FAQ.")
-    
-    if mod_actions > 200 and mod_ratio < 70:
-        add("tip", "tips", "Automatizace tip", "Zvažte AutoMod pro odlehčení týmu.")
-    
-    
-    
-    
+    if mod_actions is not None and mod_ratio is not None:
+        if mod_actions > 200 and mod_ratio < 70:
+            add("tip", "tips", "Automatizace tip", "Zvažte AutoMod pro odlehčení týmu.")
     
     achievements = 0
-    if overall_score >= 80: achievements += 1
-    if participation_rate >= 20: achievements += 1
-    if churn_rate <= 5: achievements += 1
-    if mod_ratio >= 90: achievements += 1
-    if stickiness >= 30: achievements += 1
-    if growth_rate >= 5: achievements += 1
+    if overall_score is not None and overall_score >= 80: achievements += 1
+    if participation_rate is not None and participation_rate >= 20: achievements += 1
+    if churn_rate is not None and churn_rate <= 5: achievements += 1
+    if mod_ratio is not None and mod_ratio >= 90: achievements += 1
+    if stickiness is not None and stickiness >= 30: achievements += 1
+    if growth_rate is not None and growth_rate >= 5: achievements += 1
     
     if achievements >= 4:
         add("success", "achievement", "Vzorová komunita", f"Vynikáte v {achievements} oblastech! 🏆")
@@ -375,12 +376,15 @@ def generate_security_insights(metrics: Dict[str, Any]):
     
     
     if not insights:
-        if overall_score >= 90:
-            add("success", "general", "Perfektní kondice", "Všechny metriky jsou ukázkové!")
-        elif overall_score >= 70:
-            add("success", "general", "Stabilní stav", "Vše v normě. Skvělá práce!")
+        if overall_score is not None:
+            if overall_score >= 90:
+                add("success", "general", "Perfektní kondice", "Všechny metriky jsou ukázkové!")
+            elif overall_score >= 70:
+                add("success", "general", "Stabilní stav", "Vše v normě. Skvělá práce!")
+            else:
+                add("info", "general", "Standardní úroveň", "Server funguje – prostor pro růst.")
         else:
-            add("info", "general", "Standardní úroveň", "Server funguje – prostor pro růst.")
+            add("info", "general", "Nedostatek dat", "Pro detailní analýzu chybí dostatek dat.")
     
     
     priority_order = {"critical": 0, "warning": 1, "info": 2, "tip": 3, "success": 4}

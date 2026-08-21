@@ -22,18 +22,44 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             stats = await self.repo.get_activity_stats(guild_id, days=30)
             dau_data = stats.get("dau_data", [])
             
-            dau_7d_vals = dau_data[-7:] if len(dau_data) >= 7 else dau_data
+            if not dau_data:
+                return {
+                    "available": False,
+                    "reason": "no_activity_history",
+                    "growth_7d": None,
+                    "growth_30d": None,
+                    "avg_dau": None,
+                    "trend_projection": None,
+                    "prediction": None,
+                    "projection_method": None,
+                    "validated_prediction": False
+                }
+                
+            if len(dau_data) < 7:
+                return {
+                    "available": False,
+                    "reason": "insufficient_history",
+                    "growth_7d": None,
+                    "growth_30d": None,
+                    "avg_dau": None,
+                    "trend_projection": None,
+                    "prediction": None,
+                    "projection_method": None,
+                    "validated_prediction": False
+                }
+            
+            dau_7d_vals = dau_data[-7:]
             dau_30d_vals = dau_data
             
-            start_7 = dau_7d_vals[0] if dau_7d_vals else 0
-            current_7 = dau_7d_vals[-1] if dau_7d_vals else 0
-            growth_7d = ((current_7 - start_7) / max(1, start_7)) * 100
+            start_7 = dau_7d_vals[0]
+            current_7 = dau_7d_vals[-1]
+            growth_7d = ((current_7 - start_7) / start_7) * 100 if start_7 > 0 else 0
             
-            start_30 = dau_30d_vals[0] if dau_30d_vals else 0
-            current_30 = dau_30d_vals[-1] if dau_30d_vals else 0
-            growth_30d = ((current_30 - start_30) / max(1, start_30)) * 100
+            start_30 = dau_30d_vals[0]
+            current_30 = dau_30d_vals[-1]
+            growth_30d = ((current_30 - start_30) / start_30) * 100 if start_30 > 0 else 0
             
-            avg_dau = sum(dau_30d_vals) / max(1, len(dau_30d_vals))
+            avg_dau = sum(dau_30d_vals) / len(dau_30d_vals)
             
             trend_projection = int(avg_dau * (1 + (growth_30d / 100)))
             
@@ -647,10 +673,10 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                 reasons.append("Nedostatečný počet zpráv (méně než 100).")
                 
             # 3. Required event types (moderation)
-            mod_actions = int(await r.get(f"stats:mod_actions_30d:{guild_id}") or 0)
-            if mod_actions == 0:
+            mod_actions_str = await r.get(f"stats:mod_actions_30d:{guild_id}")
+            if mod_actions_str is None:
                 score -= 15
-                reasons.append("Chybí moderační události (index zátěže bude 0).")
+                reasons.append("Moderační data nejsou dostupná.")
                 
             # 4. Voice events
             has_voice = False
@@ -680,28 +706,30 @@ class DefaultAnalyticsService(BaseAnalyticsService):
         except Exception as e:
             print(f"DQS error: {e}")
             return {
-                "score": 0,
+                "score": None,
                 "is_sufficient": False,
-                "history_days": 0,
-                "total_events": 0,
+                "history_days": None,
+                "total_events": None,
+                "available": False,
+                "reason": "calculation_error",
                 "reasons": ["Chyba při výpočtu kvality dat."]
             }
 
     async def get_mii_weights(self) -> dict:
         """Fetch MII weights."""
-        return {
-            "ban": 50,
-            "kick": 30,
-            "timeout": 10,
-            "msg_delete": 1
-        }
+        from shared.analytics_config import DEFAULT_MII_WEIGHTS
+        return DEFAULT_MII_WEIGHTS
 
     async def get_action_weights(self) -> dict:
         """Fetch action weights from Redis or use defaults."""
         
+        from shared.analytics_config import DEFAULT_MII_WEIGHTS
         defaults = {
-            "bans": 300, "kicks": 180, "timeouts": 180, "unbans": 120, 
-            "verifications": 120, "msg_deleted": 60, "role_updates": 30,
+            "ban": DEFAULT_MII_WEIGHTS["ban"], 
+            "kick": DEFAULT_MII_WEIGHTS["kick"], 
+            "timeout": DEFAULT_MII_WEIGHTS["timeout"],
+            "msg_delete": DEFAULT_MII_WEIGHTS["msg_delete"],
+            "unbans": 120, "verifications": 120, "role_updates": 30,
             "chat_time": 1, "voice_time": 1,
             "session_base": 180, "char_weight": 1, "reply_weight": 60, "msg_weight": 0
         }
@@ -738,9 +766,9 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             
             # 1. Total Members & DAU
             total_members_str = await r.get(f"presence:total:{guild_id}")
-            total_members = int(total_members_str) if total_members_str else 0
+            total_members = int(total_members_str) if total_members_str is not None else None
             dau = await r.pfcount(f"hll:dau:{guild_id}:{today_str}")
-            activity_rate = (dau / max(1, total_members))
+            activity_rate = (dau / total_members) if total_members is not None and total_members > 0 else None
             
             # Moderation Intervention Index (MII)
             weights = await self.get_mii_weights()
@@ -752,7 +780,7 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                 for evt_json in events:
                     try:
                         data = json.loads(evt_json)
-                        action_type = data.get("action", "unknown")
+                        action_type = data.get("type") or data.get("action") or "unknown"
                         if action_type in weights:
                             weighted_mod_actions += weights[action_type]
                         elif action_type.endswith("s") and action_type[:-1] in weights:
@@ -810,6 +838,8 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             transitions = []
             current_distribution = [0, 0, 0, 0] # New, Active, Passive, Inactive
             
+            global_new_state_basis = "first_observed_activity"
+            
             for uid, active_days in user_activity.items():
                 prev_state = None
                 
@@ -817,6 +847,7 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                 if join_ts_str:
                     first_observed_ts = float(join_ts_str)
                     new_state_basis = "member_join"
+                    global_new_state_basis = "member_join"
                 else:
                     first_observed_ts = user_first_observed_activity.get(uid, ts_30d_ago)
                     new_state_basis = "first_observed_activity"
@@ -842,7 +873,13 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                         current_distribution[state.value] += 1
                         
             # 4. Markov Prediction
-            if transitions:
+            p_stay_active = None
+            p_inactive = None
+            future_dist = None
+            predicted_distribution_available = False
+            predicted_distribution_reason = "insufficient_transitions"
+            
+            if len(transitions) >= 5:
                 matrix = CommunityModels.calculate_markov_matrix(transitions, num_states=4)
                 total_users = sum(current_distribution)
                 if total_users > 0:
@@ -850,14 +887,18 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                     future_vec = CommunityModels.predict_future_states(current_vec, matrix, steps=7)
                     p_stay_active = future_vec[UserState.ACTIVE.value] + future_vec[UserState.PASSIVE.value]
                     p_inactive = future_vec[UserState.INACTIVE.value]
-                else:
-                    p_stay_active = None
-                    p_inactive = None
-            else:
-                p_stay_active = None
-                p_inactive = None
+                    future_dist = {
+                        "new": future_vec[UserState.NEW.value],
+                        "active": future_vec[UserState.ACTIVE.value],
+                        "passive": future_vec[UserState.PASSIVE.value],
+                        "inactive": future_vec[UserState.INACTIVE.value]
+                    }
+                    predicted_distribution_available = True
+                    predicted_distribution_reason = None
                 
-            ACTIVITY_INACTIVITY_THRESHOLD_SECONDS = 14 * 86400
+            from shared.config import settings
+            ACTIVITY_INACTIVITY_THRESHOLD_DAYS = settings.activity_inactivity_threshold_days
+            ACTIVITY_INACTIVITY_THRESHOLD_SECONDS = ACTIVITY_INACTIVITY_THRESHOLD_DAYS * 86400
             durations = []
             event_observed = []
             global_first_seen = ts_now
@@ -916,26 +957,29 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                 "inactive": current_distribution[UserState.INACTIVE.value]
             }
             
-            future_dist = {
-                "new": future_vec[UserState.NEW.value] if 'future_vec' in locals() else 0,
-                "active": future_vec[UserState.ACTIVE.value] if 'future_vec' in locals() else 0,
-                "passive": future_vec[UserState.PASSIVE.value] if 'future_vec' in locals() else 0,
-                "inactive": future_vec[UserState.INACTIVE.value] if 'future_vec' in locals() else 0
-            }
+            future_dist_api = {
+                "available": predicted_distribution_available,
+                "reason": predicted_distribution_reason,
+                "distribution": future_dist
+            } if not predicted_distribution_available else future_dist
                 
             return {
                 "success": True,
-                "activity_rate_pct": round(activity_rate * 100, 1),
-                "mii": round(mii, 2) if mii is not None else None,
+                "activity_rate_pct": round(activity_rate * 100, 1) if activity_rate is not None else None,
+                "mii": round(mii, 4) if mii is not None else None,
+                "mii_window_days": 30,
+                "mii_weighted_actions": weighted_mod_actions,
+                "mii_interactions": total_interactions_30d,
                 "retention_pct": round(p_stay_active * 100, 1) if p_stay_active is not None else None,
                 "inactivity_risk_pct": round(p_inactive * 100, 1) if p_inactive is not None else None,
                 "activity_survival_expectancy_days": round(life_exp, 1) if life_exp is not None else None,
                 "median_activity_survival_days": median_survival,
                 "survival_event": "first_inactivity_period",
-                "inactivity_threshold_days": 14,
+                "inactivity_threshold_days": ACTIVITY_INACTIVITY_THRESHOLD_DAYS,
                 "survival_basis": "observed_activity",
+                "new_state_basis": global_new_state_basis,
                 "state_distribution": dist_dict,
-                "predicted_distribution": future_dist,
+                "predicted_distribution": future_dist_api,
                 "survival_curve": curve
             }
         except Exception as e:
