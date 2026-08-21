@@ -37,7 +37,7 @@ Built with Python, FastAPI, and Redis, it features a modular Service-Oriented Ar
 
 #### 3. Privacy-by-Design
 - **Zero Message Storage:** The platform strictly adheres to data protection standards. Message content is processed and immediately discarded.
-- **Anonymized Aggregation:** User events are aggregated into statistical metadata, and all temporary event keys are subjected to strict Time-to-Live (TTL) expiration mechanisms.
+- **Anonymized Aggregation:** User events are aggregated into statistical metadata. While temporary cache keys utilize strict Time-to-Live (TTL) expirations, historical analytics events are stored indefinitely until manually deleted.
 
 #### 4. Enterprise Architecture
 - **Dependency Injection:** Fully decoupled Repository and Service layers. The underlying data store (Redis) is accessed through a generic `BaseRepository` interface, allowing for seamless technology substitution (e.g., swapping to PostgreSQL) without altering the business logic.
@@ -95,7 +95,7 @@ The codebase adheres strictly to SOLID design principles and the MVC pattern to 
 
 To execute the isolated test suite:
 ```bash
-python3 tests/test_architecture.py
+pytest tests/
 ```
 
 ### Contributing
@@ -123,7 +123,7 @@ Platforma je postavena na Pythonu, FastAPI a Redisu. Vyznačuje se modulární s
 
 #### 3. Ochrana soukromí
 - **Žádné ukládání zpráv:** Platforma splňuje nejpřísnější standardy ochrany dat. Obsah zpráv je strojově zpracován za běhu a okamžitě zahozen.
-- **Anonymizace a agregace:** Veškeré aktivity uživatelů se agregují výhradně do metadat. Všechny dočasné klíče v databázi navíc podléhají automatické expiraci (TTL).
+- **Anonymizace a agregace:** Veškeré aktivity uživatelů se agregují výhradně do metadat. Zatímco dočasné cache klíče podléhají automatické expiraci (TTL), historické analytické události jsou uloženy neomezeně až do jejich smazání administrátorem.
 
 #### 4. Enterprise Architektura
 - **Dependency Injection:** Kompletní oddělení datové (Repository) a logické (Service) vrstvy. Přístup do Redisu probíhá přes generické rozhraní `BaseRepository`. To umožňuje okamžitou výměnu databázové technologie (např. za PostgreSQL) bez jediného zásahu do analytického kódu.
@@ -181,7 +181,7 @@ Kód repozitáře přísně dodržuje principy SOLID a návrhový vzor MVC:
 
 Spuštění testovací sady:
 ```bash
-python3 tests/test_architecture.py
+pytest tests/
 ```
 
 ### Jak přispět

@@ -32,16 +32,12 @@ def test_insights_with_invalid_types():
 
 @pytest.mark.asyncio
 async def test_scores_with_zero_division():
-    data = {
-        'avg_dau': 0, # Může způsobit dělení nulou u některých výpočtů
-        'mau': 0,
-        'participation_rate': 0,
-        'reply_ratio': 0,
-        'voice_hours_per_dau': 0,
-        'retention_7d': 0
-    }
-    mock_r = AsyncMock()
-    with patch('web.backend.core.container.AppContainer.repo.get_client', return_value=mock_r):
-        score = await get_engagement_score(data)
+    import fakeredis.aioredis
+    fake_r = fakeredis.aioredis.FakeRedis(decode_responses=True)
+    # Simulate empty or zero data
+    await fake_r.set("stats:total_members:999", 0)
+    with patch('web.backend.core.container.AppContainer.repo.get_client', return_value=fake_r):
+        score = await get_engagement_score(999)
             
-    assert score.get('score', -1) == 0.0
+    assert score.get('score') is None
+    assert score.get('available') is False

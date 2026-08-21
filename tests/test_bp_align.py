@@ -110,8 +110,8 @@ async def test_engagement_score_formula():
     # Expected components: u=80, m=100, r=100
     # Overall score: (80 + 100 + 100) / 3 = 93.33 -> 93
     
-    assert score_data["components"]["users"] == 80
-    assert score_data["components"]["messages"] == 100
-    assert score_data["components"]["reactions"] == 100
-    assert "voice" not in score_data["components"] # V should be excluded
+    assert score_data["components"]["users"]["value"] == 80
+    assert score_data["components"]["messages"]["value"] == 100
+    assert score_data["components"]["reactions"]["value"] == 100
+    assert not score_data["components"]["voice"]["available"] # V should be excluded
     assert score_data["score"] == 93
