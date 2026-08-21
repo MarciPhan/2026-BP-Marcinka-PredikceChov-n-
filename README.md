@@ -64,7 +64,7 @@ nano .env  # Supply your BOT_TOKEN and database details
 ./start.sh
 ```
 
-The web dashboard and backend API will be available at `http://localhost:8092`.
+The web dashboard and backend API will be available at `http://localhost:8093`.
 
 #### Docker (Production)
 For containerized deployments, use the provided Docker Compose configuration to orchestrate the backend, bot, and Redis instances simultaneously.
@@ -150,7 +150,7 @@ nano .env  # Vyplňte svůj BOT_TOKEN a konfiguraci databáze
 ./start.sh
 ```
 
-Webové rozhraní a API backend budou dostupné na adrese `http://localhost:8092`.
+Webové rozhraní a API backend budou dostupné na adrese `http://localhost:8093`.
 
 #### Docker (Produkce)
 Pro nasazení v kontejnerech použijte přiloženou konfiguraci Docker Compose. Ta automaticky vytvoří propojenou infrastrukturu skládající se z backendu, bota a Redisu.
@@ -207,27 +207,14 @@ Obsah zpráv se neukládá. Ukládají se pouze identifikátory, čas, kanál, v
 3. Pro analýzu pomoci vložte ID podpůrných kanálů.
 4. Historická data lze doplnit příkazem `/health backfill` (maximálně 180 dní).
 
-### Integrační API v1
+### Interní API
 
-Dokumentace je dostupná na `/api/docs`. API klíč se vytváří na stránce Zdraví komunity a posílá se v hlavičce:
+Dokumentace aktuálně nasazených FastAPI endpointů je dostupná na `/docs`. Backend API slouží přednostně pro interakci s webovým dashboardem (využívá Session/CSRF ověřování).
 
-```http
-X-API-Key: mtr_...
-```
-
-Příklady endpointů:
-
-```text
-GET /api/v1/health/overview
-GET /api/v1/health/moderation/conflicts
-GET /api/v1/health/help-requests
-GET /api/v1/health/departures
-GET /api/v1/health/events
-GET /api/v1/health/role-evidence/{user_id}
-GET /api/v1/channels
-```
-
-Klíče mají omezené rozsahy oprávnění. Hodnocení vhodnosti člověka pro roli API záměrně nevrací.
+Příklady nasazených endpointů (viz `docs/api.md`):
+- `GET /api/analytics-tools`
+- `GET /api/predictions-data`
+- `POST /api/discourse/add`
 
 ### Testy
 
