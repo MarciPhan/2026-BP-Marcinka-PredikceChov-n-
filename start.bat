@@ -7,7 +7,7 @@ if not exist ".env" (
     copy .env.example .env >nul 2>&1
 )
 
-set DASHBOARD_PORT=8092
+set DASHBOARD_PORT=8093
 if exist ".env" (
     for /f "tokens=1,2 delims==" %%a in (.env) do (
         if "%%a"=="DASHBOARD_PORT" set DASHBOARD_PORT=%%b

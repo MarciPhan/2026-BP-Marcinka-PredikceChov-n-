@@ -9,11 +9,11 @@ Od sledování aktivity jednotlivých členů, přes analýzu voice kanálů, pr
 | Vlastnost | Popis | Kategorie |
 | --- | --- | --- |
 | **Real-time analytika** | Sledování aktivity v momentě, kdy se děje. Sub-sekundové zpracování. | Analytika |
-| **Predikce chování** | Markovovy řetězce pro předpověď retence a churn rate na 7 dní dopředu. | AI / ML |
-| **Survival analýza** | Kaplan-Meier křivky ukazující střední délku setrvání uživatelů na serveru. | AI / ML |
+| **Predikce aktivity** | Prototypový model využívající Markovovy řetězce k analýze změn aktivity. | Analytika |
+| **Analýza aktivity** | Kaplanův-Meierův odhad ukazující medián doby setrvání v aktivitě. | Analytika |
 | **Engagement Score** | Kompozitní index zdraví komunity (0–100). | Metriky |
 | **XP & Leveling** | Anti-spam XP systém s cooldownem a voice trackingem. | Gamifikace |
-| **Smart Insights** | Automatická doporučení a varování pro moderátory. | AI |
+| **Smart Insights** | Automatická doporučení a varování pro moderátory. | Analytika |
 | **Export dat** | JSON/CSV export pro další zpracování v Excelu nebo Pythonu. | Data |
 | **Skóre bezpečnosti** | Hodnocení zabezpečení serveru (MFA, verifikace, filtry). | Bezpečnost |
 

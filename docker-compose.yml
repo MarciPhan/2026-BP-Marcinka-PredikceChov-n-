@@ -37,7 +37,8 @@ services:
     container_name: discord-bot-dashboard
     restart: always
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     environment:
       - BOT_TOKEN=${DASHBOARD_TOKEN}
       - BOT_LITE_MODE=1
@@ -54,7 +55,8 @@ services:
     container_name: web-dashboard
     restart: always
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     command: [ "uvicorn", "web.backend.main:app", "--host", "0.0.0.0", "--port", "${DASHBOARD_PORT:-8093}" ]
     environment:
       - REDIS_URL=redis://redis:6379/0
@@ -77,7 +79,8 @@ services:
     container_name: discourse-sync
     restart: always
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     command: [ "python", "-m", "scripts.discourse_sync" ]
     environment:
       - REDIS_URL=redis://redis:6379/0

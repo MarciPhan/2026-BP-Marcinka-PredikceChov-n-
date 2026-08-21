@@ -8,7 +8,7 @@ fi
 
 DASHBOARD_PORT=$(grep -E '^DASHBOARD_PORT=' .env 2>/dev/null | cut -d'=' -f2 | tr -d '\r" ' || true)
 if [ -z "$DASHBOARD_PORT" ]; then
-    DASHBOARD_PORT="8092"
+    DASHBOARD_PORT="8093"
 fi
 
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then

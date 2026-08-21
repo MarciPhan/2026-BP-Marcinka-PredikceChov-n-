@@ -30,7 +30,7 @@ Data se zpracovávají výhradně pro:
 
 1. **XP systém a automatické role** - výpočet skóre aktivity a přidělování rolí na základě úrovně.
 2. **Analytický dashboard** - vizualizace trendů, Heatmapa aktivity, distribuce zpráv.
-3. **Prediktivní modely** - Markovovy řetězce (predikce churnu), Kaplan-Meier (survival analýza).
+3. **Prediktivní modely** - Markovovy řetězce (prototyp predikce stavů), Kaplan-Meier (analýza aktivity).
 4. **Smart Insights** - automatická detekce anomálií a rizikových uživatelů.
 5. **Moderátorský report** - přehled aktivity moderátorského týmu.
 

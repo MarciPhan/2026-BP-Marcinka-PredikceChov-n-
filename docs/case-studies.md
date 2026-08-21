@@ -6,11 +6,11 @@ Konkrétní scénáře, jak využít data z CommunityMetrics k řešení reáln�
 **Problém:** Majitel serveru si všiml, že nejaktivnější členové (Level 20+) začínají být méně aktivní. Existuje riziko "dominového efektu" odchodu komunity.
 
 **Řešení s CommunityMetrics:**
-1. **Identifikace:** V sekci *Predikce* vyfiltrujte uživatele s vysokým *Churn Risk* (>70 %), kteří mají zároveň vysoké celkové XP.
+1. **Identifikace:** V sekci *Predikce* vyfiltrujte uživatele s vysokým *Rizikem neaktivity* (>70 %), kteří mají zároveň vysoké celkové XP.
 2. **Analýza:** Model *Kaplan-Meier* ukázal, že tito uživatelé obvykle odcházejí po 6 měsících.
 3. **Akce:** Vytvoření speciálního private kanálu pro tyto "veterány" a zavedení nového systému odměn (Achievements) pro Level 30+.
 
-**Výsledek:** Churn Risk u klíčové skupiny klesl o 45 % během prvního měsíce.
+**Výsledek:** Riziko neaktivity u klíčové skupiny kleslo o 45 % během prvního měsíce.
 :::
 
 ::: danger Scénář B: Detekce "Tichého raidu"
@@ -57,7 +57,7 @@ Konkrétní scénáře, jak využít data z CommunityMetrics k řešení reáln�
 Při řešení scénářů postupujte podle cyklu **CommunityMetrics Analytics Loop**:
 
 1. **Monitor (Sledování):** Kontrola základních Dashboard metrik (DAU, Heatmapy).
-2. **Predict (Předpověď):** Identifikace anomálií a rizik (Churn Risk, Stability Score).
+2. **Predict (Předpověď):** Identifikace anomálií a rizik (Riziko neaktivity, Stability Score).
 3. **Analyze (Analýza):** Hloubkový pohled na data konkrétních uživatelů nebo kanálů.
 4. **Intervene (Zásah):** Implementace změn na serveru (nové role, eventy, úpravy pravidel).
 5. **Evaluate (Vyhodnocení):** Zpětné ověření po 14 dnech, zda měřená metrika vykázala zlepšení.

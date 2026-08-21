@@ -4,7 +4,7 @@ Systém přiděluje zkušenostní body (XP) za aktivitu na serveru. Body se kumu
 
 ## Výpočet XP
 
-Každá akce prochází filtrem kvality. Systém neodměňuje pouhou přítomnost, ale smysluplnou interakci.
+Každá akce je hodnocena podle objemu (délky). Systém neodměňuje pouhou přítomnost, ale aktivní interakci.
 
 | Typ akce | XP | Podmínky |
 | :--- | :--- | :--- |
@@ -62,7 +62,7 @@ Váhy XP akcí lze měnit bez restartu bota:
 redis-cli HSET config:xp:weights msg_short 1 msg_medium 5 msg_long 15
 
 # Přes REST API
-curl -X POST http://localhost:8092/admin/config/weights \
+curl -X POST http://localhost:8093/admin/config/weights \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{"msg_short": 1, "msg_medium": 5}'
 ```

@@ -25,8 +25,8 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 
 | Proměnná | Výchozí | Popis |
 | :--- | :--- | :--- |
-| `DASHBOARD_PORT` | `8092` | Port webového dashboardu. |
-| `DISCORD_REDIRECT_URI` | `http://localhost:8092/auth/callback` | OAuth2 callback URL. |
+| `DASHBOARD_PORT` | `8093` | Port webového dashboardu. |
+| `DISCORD_REDIRECT_URI` | `http://localhost:8093/auth/callback` | OAuth2 callback URL. |
 | `BOT_LITE_MODE` | `0` | `1` pro sekundární instanci bez slash příkazů. |
 | `API_ACCESS_TOKEN` | - | Bearer token pro REST API (pokud není nastaven, API je veřejné). |
 | `SMTP_HOST` | - | SMTP server pro e-mailový OTP. |
@@ -63,7 +63,7 @@ DASHBOARD_SECRET_KEY=a1b2c3d4e5f6...  # min 32 znaků
 REDIS_URL=redis://default:heslo@localhost:6379/0
 
 # Volitelné
-DASHBOARD_PORT=8092
+DASHBOARD_PORT=8093
 BOT_LITE_MODE=0
 ```
 

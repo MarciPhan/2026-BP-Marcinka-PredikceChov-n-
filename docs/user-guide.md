@@ -19,9 +19,10 @@ CommunityMetrics ovládáte pomocí lomítkových příkazů (Slash Commands). D
 Engagement Score vyjadřuje úroveň vašeho zapojení do komunity na stupnici 0–100. Čím vyšší skóre máte, tím aktivnějším členem jste.
 
 ### Složky vašeho skóre
-- **Konzistence (40 %):** Pravidelné psaní každý den zvyšuje vaše skóre nejvíce.
-- **Interakce (30 %):** Body získáte, když ostatní reagují na vaše zprávy.
-- **Hloubka (30 %):** Systém hodnotí délku a smysluplnost vašich příspěvků.
+- **Aktivní uživatelé (U):** Poměr denně aktivních uživatelů vůči celkové velikosti komunity.
+- **Zprávy (M):** Průměrný počet odeslaných zpráv na aktivního uživatele.
+- **Reakce (R):** Průměrný počet obdržených reakcí na zprávu.
+- **Hlasová aktivita (V):** Průměrná doba strávená v hlasových kanálech na uživatele.
 
 ## Získávání úrovní (Leveling)
 

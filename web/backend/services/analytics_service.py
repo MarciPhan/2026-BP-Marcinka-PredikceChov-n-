@@ -727,11 +727,11 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                     p_stay_active = future_vec[UserState.ACTIVE.value] + future_vec[UserState.PASSIVE.value]
                     p_inactive = future_vec[UserState.INACTIVE.value]
                 else:
-                    p_stay_active = 0.6
-                    p_inactive = 0.4
+                    p_stay_active = None
+                    p_inactive = None
             else:
-                p_stay_active = 0.6 + (activity_rate * 0.4)
-                p_inactive = 0.4 - (activity_rate * 0.4)
+                p_stay_active = None
+                p_inactive = None
                 
             # 5. Kaplan-Meier Activity Survival Analysis
             durations = []
@@ -776,8 +776,8 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                 "activity_rate_pct": round(activity_rate * 100, 1),
                 "mii": round(mii, 2),
                 "rec_mods": rec_mods,
-                "retention_pct": round(p_stay_active * 100, 1),
-                "inactivity_risk_pct": round(p_inactive * 100, 1),
+                "retention_pct": round(p_stay_active * 100, 1) if p_stay_active is not None else None,
+                "inactivity_risk_pct": round(p_inactive * 100, 1) if p_inactive is not None else None,
                 "life_expectancy_days": round(life_exp, 1),
                 "median_survival_days": median_survival,
                 "state_distribution": dist_dict,

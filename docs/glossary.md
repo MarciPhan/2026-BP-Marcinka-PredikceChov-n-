@@ -6,20 +6,20 @@ Kompletní přehled termínů a zkratek, se kterými se v dokumentaci CommunityM
 - **Aktivní uživatel (Active User):** Uživatel, který v daném období (24h nebo 30d) provedl alespoň jednu aktivní akci (zpráva, voice).
 - **Anti-Spam XP:** Mechanismus omezující zisk bodů na jednou za 60 sekund (Cooldown).
 - **AOF (Append-Only File):** Režim persistence Redisu, který loguje každou operaci zápisu. Minimalizuje ztrátu dat při výpadku.
-- **At-Risk Users:** Uživatelé v pasivním nebo inaktivním stavu, u kterých hrozí brzký odchod (Churn).
+- **At-Risk Users:** Uživatelé v pasivním nebo inaktivním stavu, u kterých hrozí dlouhodobá neaktivita.
 
 ### B
 - **Backfill:** Zpětné načtení historie zpráv ze serveru do Redisu pro okamžité vyplnění analytických dat.
 
 ### C
 - **Cenzorovaná data (Censored Data):** Informace o uživatelích, kteří jsou stále na serveru. Jsou klíčová pro přesný odhad retence (Kaplan-Meier).
-- **Churn (Odchod):** Stav, kdy uživatel opustil server nebo je inaktivní déle než 14–30 dní.
+- **Neaktivita:** Stav, kdy uživatel přestal vykazovat aktivitu na serveru déle než 14–30 dní.
 - **Confidence Score (Skóre spolehlivosti):** Číslo od 0 do 1 vyjadřující, jak moc lze věřit předpovědi modelu na základě objemu dat.
 - **Cooldown:** Časový limit (typicky 60 s), během kterého uživatel po napsání zprávy nezískává další XP, aby se zabránilo spamu.
 
 ### D
 - **DAU (Daily Active Users):** Počet unikátních uživatelů, kteří byli aktivní během jednoho kalendářního dne.
-- **DQS (Data Quality Score):** Metrika kvality dat určující spolehlivost predikcí. Nízké DQS (< 0,5) značí nedostatek historie.
+- **DQS (Data Quality Score):** Metrika kvality dat indikující úplnost vstupních dat pro analytiku. Nízké DQS (< 0,5) značí nedostatek historie.
 
 ### E
 - **Engagement Score:** Metrika vyjadřující míru zapojení komunity, vypočítaná z poměru aktivity a velikosti serveru.
@@ -35,7 +35,7 @@ Kompletní přehled termínů a zkratek, se kterými se v dokumentaci CommunityM
 - **Markovův řetězec (Markov Chain):** Matematický model, který CommunityMetrics používá k předpovědi budoucího stavu uživatele na základě jeho současné aktivity.
 - **Matice přechodu (Transition Matrix):** Tabulka pravděpodobností popisující šance, že uživatel přejde z jednoho stavu (např. Active) do jiného (např. Passive).
 - **MAU (Monthly Active Users):** Počet unikátních uživatelů aktivních za posledních 30 dní.
-- **MII (Moderator Intervention Index):** Poměr moderátorských zásahů k celkovému objemu zpráv. Indikátor toxicity nebo konfliktů na serveru.
+- **MII (Moderator Intervention Index):** Poměr moderátorských zásahů k celkovému objemu zpráv. Indikátor moderační zátěže na serveru.
 
 ### P
 - **Pipeline:** Sekvence kroků (Extraction -> Preprocessing -> Classification -> Computation), kterými procházejí data při výpočtu predikcí.

@@ -19,7 +19,7 @@ redis-cli GET bot:heartbeat
 redis-cli INFO memory | grep used_memory_human
 
 # 4. Dashboard dostupnost
-curl -s http://localhost:8092/health
+curl -s http://localhost:8093/health
 
 # 5. Docker kontejnery (pokud používáte Docker)
 docker-compose ps
@@ -50,14 +50,14 @@ python3 bot/main.py
 | Blokovaný port | `lsof -i :6379` — ověřte, kdo port používá |
 | Docker síť | Ověřte, že síť `botnet` existuje: `docker network ls` |
 
-### Port 8092 je obsazený
+### Port 8093 je obsazený
 
 ```bash
 # Zjistěte, co port používá
-lsof -i :8092
+lsof -i :8093
 
 # Ukončete proces
-lsof -t -i :8092 | xargs kill -9
+lsof -t -i :8093 | xargs kill -9
 
 # Nebo změňte port v .env
 # DASHBOARD_PORT=8093
@@ -112,7 +112,7 @@ docker-compose logs --tail=100 discord-bot-primary
 
 1. Otevřete [Discord Developer Portal](https://discord.com/developers/applications).
 2. V sekci **OAuth2 → Redirects** přidejte přesnou URL z `.env`:
-   - Lokální: `http://localhost:8092/auth/callback`
+   - Lokální: `http://localhost:8093/auth/callback`
    - Produkce: `https://vase-domena.com/auth/callback`
 
 > [!WARNING]

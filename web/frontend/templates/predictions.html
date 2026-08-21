@@ -191,10 +191,10 @@
     </div>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
         <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 20px; font-weight: 700; color: #10b981;" id="res-tox">--%</div>
+            <div style="font-size: 20px; font-weight: 700; color: #10b981;" id="res-tox">--</div>
             <div style="font-size: 11px; color: var(--text-secondary);">
-                Index Toxicity serveru
-                <span class="info-icon dash-tooltip" style="margin-left: 4px;">? <span class="dash-tooltip-text">MII (Moderator Intervention Index) - procentuální poměr mezi moderovanými/toxickými projevy a celkovým objemem komunikace.</span></span>
+                Moderation Intervention Index (MII)
+                <span class="info-icon dash-tooltip" style="margin-left: 4px;">? <span class="dash-tooltip-text">MII (Moderator Intervention Index) - poměr mezi moderační zátěží a celkovým objemem komunikace.</span></span>
             </div>
         </div>
         <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
@@ -576,12 +576,12 @@
                 if (resData.success) {
                     safeSetText('res-retention', resData.retention_pct + '%');
                     safeSetText('res-life', resData.life_expectancy_days + ' d');
-                    safeSetText('res-tox', resData.toxicity_index_pct + '%');
+                    safeSetText('res-tox', resData.mii);
                     safeSetText('res-mods', resData.rec_mods);
                     
                     const toxEl = document.getElementById('res-tox');
                     if(toxEl){
-                        toxEl.style.color = resData.toxicity_index_pct > 2.0 ? '#ef4444' : (resData.toxicity_index_pct > 1.0 ? '#f59e0b' : '#10b981');
+                        toxEl.style.color = resData.mii > 0.2 ? '#ef4444' : (resData.mii > 0.1 ? '#f59e0b' : '#10b981');
                     }
                     
                     // Survival Chart
@@ -617,7 +617,7 @@
                     if (document.getElementById('stateDistChart') && resData.state_distribution) {
                         const dist = resData.state_distribution;
                         const p_dist = resData.predicted_distribution || {};
-                        const states = ['New (S0)', 'Active (S1)', 'Passive (S2)', 'Inactive (S3)', 'Churned (S4)'];
+                        const states = ['New (S0)', 'Active (S1)', 'Passive (S2)', 'Inactive (S3)'];
                         
                         const total_current = Object.values(dist).reduce((a,b)=>a+b, 0) || 1;
                         
@@ -625,16 +625,14 @@
                             dist.new || 0,
                             dist.active || 0,
                             dist.passive || 0,
-                            dist.inactive || 0,
-                            dist.churned || 0
+                            dist.inactive || 0
                         ].map(v => (v/total_current*100).toFixed(1));
                         
                         const predictedData = [
                             p_dist.new || 0,
                             p_dist.active || 0,
                             p_dist.passive || 0,
-                            p_dist.inactive || 0,
-                            p_dist.churned || 0
+                            p_dist.inactive || 0
                         ].map(v => (v*100).toFixed(1));
                         
                         new Chart(document.getElementById('stateDistChart'), {

@@ -8,7 +8,7 @@ Vítejte u podrobné dokumentace systému **CommunityMetrics**. Tento dokument s
 1. [Úvod a filozofie systému](#1-úvod-a-filozofie-systému)
 2. [Interpretace metrik v dashboardu](#2-interpretace-metrik-v-dashboardu)
 3. [Prediktivní modely a včasné varování](#3-prediktivní-modely-a-včasné-varování)
-4. [Toxicity Index (MII) a správa týmu](#4-toxicity-index-mii-a-správa-týmu)
+4. [Moderační zátěž (MII) a správa týmu](#4-moderační-zátěž-mii-a-správa-týmu)
 5. [Bot příkazy pro moderátory](#5-bot-příkazy-pro-moderátory)
 6. [Gamifikace a XP systém](#6-gamifikace-a-xp-systém)
 7. [GDPR a ochrana soukromí](#7-gdpr-a-ochrana-soukromí)
@@ -20,7 +20,7 @@ Vítejte u podrobné dokumentace systému **CommunityMetrics**. Tento dokument s
 ## 1. Úvod a filozofie systému
 CommunityMetrics není jen "další bot na statistiky". Je to analytický ekosystém, který se snaží pomocí agregace aktivity a jednoduchých heuristik pochopit **životní cyklus uživatele**.
 
-**Cíl moderátora:** Udržet uživatele co nejdéle v aktivních stavech a minimalizovat "Churn" (odchod ze serveru).
+**Cíl moderátora:** Udržet uživatele co nejdéle v aktivních stavech a minimalizovat ztrátu aktivity.
 
 ---
 
@@ -35,8 +35,8 @@ Vzorec: `(DAU / MAU) * 100`.
 - **Interpretace:** Kolik % vašich měsíčních uživatelů se vrací každý den. 
 - **Cíl:** Nad 20% pro velmi aktivní komunity.
 
-###  Churn Rate (Míra odchodu)
-Klíčový indikátor problému. Pokud Churn Rate náhle vzroste, zkontrolujte:
+###  Míra neaktivity (Inactivity Rate)
+Klíčový indikátor problému. Pokud Míra neaktivity náhle vzroste, zkontrolujte:
 1. Poslední konflikty v chatu.
 2. Změny v pravidlech nebo struktuře serveru.
 3. Aktivitu moderátorů (přílišná přísnost vs. anarchie).
@@ -52,14 +52,14 @@ Systém analyzuje historická data (vstupy a výstupy uživatelů) a extrapoluje
 
 ---
 
-## 4. Toxicity Index (MII) a správa týmu
+## 4. Moderační zátěž (MII) a správa týmu
 
-**MII (Moderator Intervention Index)** měří toxicitu jako poměr moderátorských zásahů k objemu zpráv.
+**MII (Moderator Intervention Index)** měří moderační zátěž jako poměr moderátorských zásahů k objemu zpráv. To neindikuje primárně toxicitu, ale spíše úroveň potřebných zásahů.
 - **Nízký MII + Nízký Engagement:** Komunita je mrtvá.
-- **Vysoký MII + Vysoký Engagement:** Komunita je živá, ale konfliktní (typické pro politické nebo herní servery).
+- **Vysoký MII + Vysoký Engagement:** Komunita vyžaduje hodně moderátorských zásahů (např. kvůli přísnějším pravidlům nebo vysoké aktivitě).
 
 **Doporučení pro tým:**
-CommunityMetrics automaticky vypočítává `N_mod` – ideální počet moderátorů pro aktuální zátěž. Pokud systém hlásí "Nedostatek moderátorů", hrozí vyhoření týmu nebo nárůst neřešené toxicity.
+CommunityMetrics automaticky vypočítává `N_mod` – doporučený počet moderátorů pro aktuální zátěž. Pokud systém hlásí "Nedostatek moderátorů", hrozí vyhoření týmu.
 
 ---
 
@@ -101,7 +101,7 @@ Jako moderátoři máte přístup k analytickým datům. Respektujte soukromí u
 1. **Sledujte Peak Times:** Podle Heatmapy v dashboardu plánujte eventy na hodiny s nejvyšší přirozenou aktivitou.
 2. **Reagujte na Exodus:** Pokud predikce ukazuje nárůst odchodů, uspořádejte "Community Meeting".
 3. **Odměňujte věrnost:** Používejte leaderboard pro identifikaci klíčových členů ("Evangelists") a dejte jim speciální role.
-4. **Kalibrace toxicity:** Pokud je MII dlouhodobě vysoký, zvažte úpravu pravidel pro automatické filtry Discordu.
+4. **Kalibrace moderační zátěže:** Pokud je MII dlouhodobě vysoký, zvažte revizi pravidel nebo posílení moderátorského týmu.
 
 ---
 

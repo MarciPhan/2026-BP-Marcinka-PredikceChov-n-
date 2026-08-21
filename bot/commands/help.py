@@ -86,7 +86,7 @@ PAGE_DATA = [
     {
         "name": "Webový dashboard",
         "desc": (
-            "**Přístup:** http://localhost:8092\n\n"
+            "**Přístup:** http://localhost:8093\n\n"
             "**Funkce:**\n"
             "• Real-time metriky (DAU/MAU/WAU)\n"
             "• Interaktivní grafy aktivity\n"

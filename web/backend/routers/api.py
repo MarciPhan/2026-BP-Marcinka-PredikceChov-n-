@@ -66,7 +66,7 @@ async def api_add_discourse(
             for result in addr_info:
                 ip = result[4][0]
                 ip_obj = ipaddress.ip_address(ip)
-                if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_multicast or ip_obj.is_link_local or str(ip_obj) == "169.254.169.254":
+                if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_multicast or ip_obj.is_link_local or ip_obj.is_reserved or str(ip_obj) == "169.254.169.254":
                     return False
             return True
             
@@ -1357,12 +1357,12 @@ async def api_health_research(request: Request):
         return {
             "success": True,
             "activity_rate_pct": 14.5,
-            "toxicity_index_pct": 0.8,
+            "mii_pct": 0.8,
             "rec_mods": 4,
             "retention_pct": 82.3,
             "churn_risk_pct": 17.7,
             "life_expectancy_days": 42.5,
-            "half_life_days": 29.3,
+            "median_survival_days": 29.3,
             "survival_curve": {
                 "0": 1.0,
                 "7": 0.95,
@@ -1377,15 +1377,13 @@ async def api_health_research(request: Request):
                 "new": 120,
                 "active": 350,
                 "passive": 150,
-                "inactive": 80,
-                "churned": 40
+                "inactive": 80
             },
             "predicted_distribution": {
                 "new": 140,
                 "active": 330,
                 "passive": 180,
-                "inactive": 110,
-                "churned": 60
+                "inactive": 110
             }
         }
     return await get_health_research_data(gid)

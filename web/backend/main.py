@@ -33,6 +33,8 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT_DIR))
 
+from shared.config import settings as app_settings
+
 try:
     from scripts.discourse_sync import DiscourseSync
 except ImportError:
@@ -100,7 +102,7 @@ app = FastAPI(
 )
 
 
-app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, max_age=SESSION_EXPIRY_HOURS * 3600, same_site="lax", https_only=True)
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, max_age=SESSION_EXPIRY_HOURS * 3600, same_site="lax", https_only=(app_settings.environment == "production"))
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -327,7 +329,7 @@ async def custom_general_exception_handler(request: Request, exc: Exception):
 
 
 if __name__ == "__main__":
-    uvicorn.run("dashboard.main:app", host="0.0.0.0", port=8092, reload=True)
+    uvicorn.run("web.backend.main:app", host="0.0.0.0", port=app_settings.web_port, reload=True)
 
 
 

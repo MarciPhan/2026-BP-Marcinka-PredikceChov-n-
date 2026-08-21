@@ -39,7 +39,7 @@ Výpočet Engagement Score vyžaduje minimálně **7 dní historie dat** (příp
 :::
 
 ::: details Co je DQS a proč jsou predikce deaktivovány?
-DQS (Data Quality Score) měří kvalitu dat pro prediktivní modely. Pokud je DQS < 0,5, systém nemá dostatek dat pro spolehlivé predikce a automaticky je deaktivuje. Spusťte [backfill](/backfill) nebo počkejte alespoň 7 dní.
+DQS (Data Quality Score) indikuje úplnost dat pro prediktivní modely. Pokud je DQS < 0,5, systém nemá dostatek dat pro analytiku a automaticky ji deaktivuje. Spusťte [backfill](/backfill) nebo počkejte alespoň 7 dní.
 :::
 
 ## Soukromí a GDPR

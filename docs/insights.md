@@ -15,7 +15,7 @@ Insights Engine automaticky vyhodnocuje metriky serveru a generuje varování, d
 | Insight | Podmínka | Doporučená akce |
 | :--- | :--- | :--- |
 | **Dead Server Warning** | DAU pokles > 30 % oproti 30dennímu průměru | Analyzujte příčinu. Uspořádejte event. |
-| **Churn Spike** | Náhlý nárůst odchodů | Zkontrolujte poslední změny pravidel. |
+| **Inactivity Spike** | Náhlý nárůst neaktivity | Zkontrolujte poslední změny pravidel. |
 | **Onboarding Failure** | Survival křivka ukazuje > 60 % odchod do 48 h | Vylepšete uvítací kanál, přidejte role-select. |
 | **Engagement Plateau** | Engagement Score stagnuje 7+ dní | Komunita potřebuje nový impulz. |
 

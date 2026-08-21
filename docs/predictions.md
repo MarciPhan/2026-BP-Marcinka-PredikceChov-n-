@@ -158,11 +158,11 @@ $$
 
 Lineární predikce růstu se násobí příslušným sezónním indexem pro daný budoucí den, čímž získáte realističtější předpověď.
 
-## Prototyp analýzy stability (Churn Risk Analysis)
+## Prototyp analýzy stability aktivity (Inactivity Risk Analysis)
 
 Widget „Predikce stability" na dashboardu experimentálně zobrazuje:
 
-- **Odhadovaná míra odchodu (Churn Rate)** - poměr uživatelů, kteří ztratili aktivitu, k celkové velikosti komunity za měsíc.
+- **Odhadovaná míra neaktivity (Inactivity Rate)** - poměr uživatelů, kteří ztratili aktivitu, k celkové velikosti komunity za měsíc.
 - **At-Risk Users** - počet uživatelů ve stavu Passive nebo Inactive.
 - **Odhadovaný vývoj (7 dní)** - modelový odhad budoucí míry odchodů na základě Markovova řetězce.
 

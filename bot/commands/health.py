@@ -46,25 +46,25 @@ class HealthCog(commands.Cog):
             
         total_msgs_str = await r.get(f"stats:total_msgs:{guild.id}")
         total_msgs = int(total_msgs_str) if total_msgs_str else 1
-        toxicity_index = (total_actions / total_msgs)
+        mii = (total_actions / total_msgs)
         
         # Doporučený počet moderátorů
         # N = (DAU * (1 + MII * 10)) / 150 + 2
-        rec_mods = int(np.ceil((dau * (1 + toxicity_index * 10)) / 150 + 2))
+        rec_mods = int(np.ceil((dau * (1 + mii * 10)) / 150 + 2))
         
         embed = discord.Embed(
             title=f"📊 Health Report: {guild.name}",
-            color=discord.Color.green() if toxicity_index < 0.01 else discord.Color.orange(),
+            color=discord.Color.green() if mii < 0.01 else discord.Color.orange(),
             timestamp=datetime.now()
         )
         
         embed.add_field(name="👥 Aktivita (AER)", value=f"**{activity_rate:.1%}** (DAU: {dau})", inline=True)
-        embed.add_field(name="⚠️ Toxicita (MII)", value=f"**{toxicity_index:.2%}**", inline=True)
+        embed.add_field(name="⚠️ Moderační zátěž (MII)", value=f"**{mii:.2%}**", inline=True)
         embed.add_field(name="🛡️ Doporučený tým", value=f"**{rec_mods} moderátorů**", inline=True)
         
         status_text = "✅ Komunita je zdravá a stabilní."
         if activity_rate < 0.05: status_text = "💤 Server vykazuje nízkou aktivitu (pod 5 %)."
-        if toxicity_index > 0.02: status_text = "🚨 Vysoká toxicita! Tým je pravděpodobně přetížen."
+        if mii > 0.02: status_text = "🚨 Vysoká moderační zátěž! Tým je pravděpodobně přetížen."
         
         embed.description = status_text
         
@@ -78,15 +78,15 @@ class HealthCog(commands.Cog):
                 p_stay_active = research_data.get("retention_pct", 0) / 100.0
                 p_churn = research_data.get("churn_risk_pct", 0) / 100.0
                 life_exp = research_data.get("life_expectancy_days", 0)
-                half_life = research_data.get("half_life_days", 0)
+                median_survival = research_data.get("median_survival_days", 0)
                 
                 res_text = (
                     f"**Markovova analýza (Predikce 7 dní):**\n"
                     f"- Pravděpodobnost setrvání (Retention): **{p_stay_active:.1%}**\n"
                     f"- Riziko odchodu (Churn Risk): **{p_churn:.1%}**\n\n"
                     f"**Analýza přežití (Survival):**\n"
-                    f"- Očekávaná délka členství: **{life_exp} dní**\n"
-                    f"- Poločas rozpadu komunity: **{half_life} dní**"
+                    f"- Očekávaná délka aktivity: **{life_exp} dní**\n"
+                    f"- Medián přežití aktivity: **{median_survival} dní**"
                 )
             else:
                 res_text = "Nepodařilo se vypočítat výzkumná data (nedostatek historie nebo chyba zpracování)."

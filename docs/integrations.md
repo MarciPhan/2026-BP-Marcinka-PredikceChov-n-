@@ -19,7 +19,7 @@ V dashboardu přejděte do sekce **Settings → Webhooks**:
 | Událost | Podmínka spuštění |
 | :--- | :--- |
 | `member_join_anomaly` | Přípojení > 10 členů za 5 minut |
-| `churn_risk_high` | AI identifikuje u člena riziko odchodu > 0,8 |
+| `activity_risk_high` | Prototypový model identifikuje u člena riziko dlouhodobé neaktivity |
 | `dqs_drop` | DQS (Data Quality Score) klesne pod nastavenou hranici |
 | `engagement_drop` | Engagement Score klesne o > 20 % za 7 dní |
 
@@ -28,7 +28,7 @@ V dashboardu přejděte do sekce **Settings → Webhooks**:
 ```json
 {
   "guild_id": "123456789012345678",
-  "event": "churn_risk_high",
+  "event": "activity_risk_high",
   "timestamp": "2026-04-13T12:00:00Z",
   "details": {
     "user_id": "987654321",

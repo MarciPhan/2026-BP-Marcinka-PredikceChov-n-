@@ -42,7 +42,7 @@ Pokud chcete používat webový dashboard s přihlášením přes Discord:
 
 1.  V sekci **OAuth2 → General** zkopírujte `CLIENT_ID` a `CLIENT_SECRET`.
 2.  V **Redirects** přidejte callback URL:
-    - Lokální vývoj: `http://localhost:8092/auth/callback`
+    - Lokální vývoj: `http://localhost:8093/auth/callback`
     - Produkce: `https://vase-domena.com/auth/callback`
 
 ## Konfigurace proměnných prostředí
@@ -61,7 +61,7 @@ BOT_TOKEN=<VÁŠ_BOT_TOKEN_Z_DEVELOPER_PORTALU>
 DISCORD_CLIENT_SECRET=abcdefghijklmnopqrstuvwxyz123456
 
 # Web Dashboard
-DASHBOARD_PORT=8092
+DASHBOARD_PORT=8093
 DASHBOARD_SECRET_KEY=           # min 32 znaků (viz generování níže)
 DASHBOARD_ACCESS_TOKEN=         # Bearer token pro REST API
 
@@ -109,7 +109,7 @@ Co `start.sh` udělá:
 2. Zkontroluje existenci `.env` a přítomnost `BOT_TOKEN`.
 3. Spustí Redis/Valkey server (pokud neběží).
 4. Spustí **Discord bota** → ukládá eventy do Redisu.
-5. Spustí **FastAPI dashboard** na portu `8092`.
+5. Spustí **FastAPI dashboard** na portu `8093`.
 6. Spustí **VitePress dokumentaci** na portu `5173`.
 
 ### Varianta B: Docker Compose (produkce)
@@ -148,7 +148,7 @@ redis-cli GET bot:heartbeat
 # Měl by vrátit aktuální UNIX timestamp
 
 # 3. Dashboard je dostupný?
-curl -s http://localhost:8092/health
+curl -s http://localhost:8093/health
 ```
 
 Na Discord serveru ověřte, že bot je **online** (zelená tečka). Pokud nereaguje na příkazy, zaregistrujte slash příkazy:

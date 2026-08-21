@@ -7,14 +7,14 @@ Jak integrovat CommunityMetrics data do vašich vlastních projektů, botů nebo
 ::: code-group
 
 ```bash [cURL]
-curl -X GET "http://localhost:8092/api/v1/stats/123456789/DAU" \
+curl -X GET "http://localhost:8093/api/v1/stats/123456789/DAU" \
      -H "Authorization: Bearer YOUR_SERVER_TOKEN"
 ```
 
 ```python [Python]
 import requests
 
-url = "http://localhost:8092/api/v1/stats/123456789/MAU"
+url = "http://localhost:8093/api/v1/stats/123456789/MAU"
 headers = {"Authorization": "Bearer YOUR_SERVER_TOKEN"}
 
 response = requests.get(url, headers=headers)
@@ -24,7 +24,7 @@ print(f"Unikátních uživatelů za měsíc: {data['count']}")
 
 ```javascript [JavaScript]
 const fetchStats = async (guildId) => {
-  const res = await fetch(`http://localhost:8092/api/v1/stats/${guildId}/DAU`, {
+  const res = await fetch(`http://localhost:8093/api/v1/stats/${guildId}/DAU`, {
     headers: { 'Authorization': 'Bearer YOUR_SERVER_TOKEN' }
   });
   const data = await res.json();
@@ -40,7 +40,7 @@ CommunityMetrics umožňuje odesílat kritická varování (Alerts) přímo na v
 
 ```json
 {
-  "type": "CHURN_ALERT",
+  "type": "INACTIVITY_ALERT",
   "guild_id": "123456789",
   "severity": "HIGH",
   "users": [
@@ -58,7 +58,7 @@ import requests
 import json
 
 def export_guild_data(guild_id, token):
-    url = f"http://localhost:8092/api/v1/admin/export/{guild_id}"
+    url = f"http://localhost:8093/api/v1/admin/export/{guild_id}"
     headers = {"Authorization": f"Bearer {token}"}
     
     response = requests.get(url, headers=headers, stream=True)

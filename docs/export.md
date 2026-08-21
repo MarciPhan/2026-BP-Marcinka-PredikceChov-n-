@@ -55,8 +55,9 @@ Strukturovaný formát pro strojové zpracování a integrace:
 Stejná data lze získat programově přes REST API:
 
 ```bash
-curl -X GET "http://localhost:8092/api/v1/guild/{guild_id}/export?format=csv&range=30" \
+curl -X GET "http://localhost:8093/api/export/csv?range=30" \
      -H "Authorization: Bearer YOUR_TOKEN" \
+     -H "Cookie: session=YOUR_SESSION_COOKIE" \
      -o export.csv
 ```
 

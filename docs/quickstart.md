@@ -79,7 +79,7 @@ Po spuštění by měly běžet tři služby:
 | Služba | URL / Kontrola | Co dělá |
 | :--- | :--- | :--- |
 | **Bot** | `redis-cli GET bot:heartbeat` | Sběr událostí z Discordu |
-| **Dashboard** | `http://localhost:8092` | Webové rozhraní s grafy |
+| **Dashboard** | `http://localhost:8093` | Webové rozhraní s grafy |
 | **Dokumentace** | `http://localhost:5173` | Tato dokumentace (VitePress) |
 
 > [!TIP]
@@ -87,7 +87,7 @@ Po spuštění by měly běžet tři služby:
 
 ## 4. Přihlášení k dashboardu
 
-1.  Přejděte na `http://localhost:8092` (nebo vaši produkční doménu).
+1.  Přejděte na `http://localhost:8093` (nebo vaši produkční doménu).
 2.  Klikněte na **Login** a autorizujte se přes Discord OAuth2.
 3.  CommunityMetrics automaticky zobrazí servery, kde máte právo **Manage Server**.
 4.  Vyberte cílový server z postranního panelu.
@@ -130,7 +130,7 @@ Analytika CommunityMetrics pracuje v několika cyklech. Očekávejte tyto milní
 | :--- | :--- | :--- |
 | **Ihned** | Real-time Heatmapa | Okamžitý přehled o špičce aktivity. |
 | **24 hodin** | DAU (Denní aktivita) | Porovnání dnešní aktivity s předchozím dnem. |
-| **7 dní** | Churn Predictions | První odhady pravděpodobnosti odchodu členů. |
+| **7 dní** | Predikce aktivity | První odhady pravděpodobnosti ztráty aktivity členů. |
 | **30 dní** | Kaplan-Meier | Kompletní křivky přežití a dlouhodobá retence. |
 
 ## Co dál?

@@ -18,7 +18,7 @@ CommunityMetrics využívá **lomítkové příkazy** (Slash Commands). Stačí 
 ---
 
 ## 2. XP Systém a Úrovně
-Body (XP) získáváte přirozenou aktivitou. Systém je navržen tak, aby odměňoval kvalitu a konverzaci:
+Body (XP) získáváte přirozenou aktivitou. Systém je navržen tak, aby odměňoval aktivitu a zapojení do konverzace:
 
 *   **Chatování:** XP za každou zprávu. Delší zprávy = mírně více bodů.
 *   **Konverzace:** Bonusové body za odpovídání na zprávy ostatních přes funkci "Reply".

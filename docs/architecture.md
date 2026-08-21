@@ -117,7 +117,7 @@ Umožňuje sledovat unikátní uživatele (DAU/MAU) s fixní paměťovou nároč
 
 | Struktura | Klíč (Shared Keys) | Použití |
 | :--- | :--- | :--- |
-| **Sorted Set (ZSET)** | `events:msg:{gid}:{uid}` | Score = Timestamp. Umožňuje `ZRANGEBYSCORE` pro analýzu churnu. |
+| **Sorted Set (ZSET)** | `events:msg:{gid}:{uid}` | Score = Timestamp. Umožňuje `ZRANGEBYSCORE` pro analýzu stability aktivity. |
 | **Hash (HASH)** | `stats:heatmap:{gid}` | Agregovaná aktivita pro heatmapu. |
 | **Set (SET)** | `bot:guilds` | Globální seznam aktivních serverů. |
 

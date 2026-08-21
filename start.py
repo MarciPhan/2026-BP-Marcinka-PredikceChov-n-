@@ -97,7 +97,7 @@ def main():
         print_color("Redis detected.", "1;32")
 
     # 4. Port prep
-    dashboard_port = int(os.getenv("DASHBOARD_PORT", "8092"))
+    dashboard_port = int(os.getenv("DASHBOARD_PORT", "8093"))
     if not check_port_free(dashboard_port):
         kill_processes_on_port(dashboard_port)
         time.sleep(1)

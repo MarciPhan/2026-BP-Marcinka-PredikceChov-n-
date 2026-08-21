@@ -1,6 +1,6 @@
 # Skóre bezpečnosti serveru (Doplňková funkce)
 
-Skóre bezpečnosti ($S$) vyjadřuje doplňkový indikátor odolnosti Discord serveru proti spamu a útokům a kvalitu podpory. Tato metrika je experimentální, stojí mimo hlavní analytické cíle (Engagement, MII) a vypočítává se z nastavení serveru, aktivity moderátorského týmu a míry odpovědí na dotazy.
+Skóre bezpečnosti ($S$) vyjadřuje doplňkový indikátor odolnosti Discord serveru proti spamu a útokům a míru řešení podpory. Tato metrika je experimentální, stojí mimo hlavní analytické cíle (Engagement, MII) a vypočítává se z nastavení serveru, aktivity moderátorského týmu a míry odpovědí na dotazy.
 
 ## Výpočet skóre
 
