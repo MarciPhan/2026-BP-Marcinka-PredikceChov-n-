@@ -1,7 +1,13 @@
-
 import numpy as np
 from datetime import datetime, timedelta
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
+from enum import IntEnum
+
+class UserState(IntEnum):
+    NEW = 0
+    ACTIVE = 1
+    PASSIVE = 2
+    INACTIVE = 3
 
 class CommunityModels:
     """
@@ -10,10 +16,9 @@ class CommunityModels:
     """
 
     @staticmethod
-    def calculate_markov_matrix(transitions: List[Tuple[int, int]], num_states: int = 5) -> np.ndarray:
+    def calculate_markov_matrix(transitions: List[Tuple[int, int]], num_states: int = len(UserState)) -> np.ndarray:
         """
-        Calculates the transition probability matrix.
-        States: 0: New, 1: Active, 2: Passive, 3: Inactive, 4: Churned
+        Calculates the transition probability matrix based strictly on historical data.
         """
         matrix = np.zeros((num_states, num_states))
         
@@ -27,8 +32,11 @@ class CommunityModels:
             if row_sum > 0:
                 matrix[i] = matrix[i] / row_sum
             else:
-                # If no data for a state, assume it stays in that state (equilibrium)
-                matrix[i][i] = 1.0
+                # BP requirement: Do not use artificial probabilities (e.g., matrix[i][i] = 1.0)
+                # for missing data. The row remains all zeros. This means if a system enters
+                # an unobserved state, the prediction will explicitly yield zeros (undefined)
+                # rather than fabricating a false continuation.
+                pass
                 
         return matrix
 
@@ -45,9 +53,9 @@ class CommunityModels:
     @staticmethod
     def calculate_survival_rate(durations: List[int], event_observed: List[bool]) -> Dict[int, float]:
         """
-        Kaplan-Meier estimator for survival (retention) rate.
-        durations: list of days since join until last activity or leave.
-        event_observed: True if the user actually left (churned), False if censored (still active).
+        Kaplan-Meier estimator for activity survival (not necessarily membership).
+        durations: list of days since observation started until last activity or event.
+        event_observed: True if the user actually dropped activity (event occurred), False if censored (still active).
         """
         if not durations:
             return {}
@@ -74,6 +82,17 @@ class CommunityModels:
             n_at_risk -= (n_events + n_censored)
 
         return survival_curve
+
+    @staticmethod
+    def estimate_median_survival(survival_curve: Dict[int, float]) -> Optional[int]:
+        """
+        Calculates the exact median survival time (first t where S(t) <= 0.5).
+        If the curve never drops to 0.5, the median is undefined (returns None).
+        """
+        for t in sorted(survival_curve.keys()):
+            if survival_curve[t] <= 0.5:
+                return t
+        return None
 
     @staticmethod
     def estimate_life_expectancy(survival_curve: Dict[int, float]) -> float:

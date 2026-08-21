@@ -1,96 +1,74 @@
 # Referenční příručka API (RESTful)
 
-Rozhraní API CommunityMetrics umožňuje programový přístup k nasbíraným datům, integraci s externími systémy a automatizaci správy. Celé API je postaveno na standardu REST s výstupy ve formátu JSON.
+Rozhraní API CommunityMetrics umožňuje programový přístup k nasbíraným datům a správu konfigurace z pohledu webového dashboardu. 
 
 ::: tip Základní URL (Base URL)
-`https://dashboard.communitymetrics.app/api/v1`
+`https://dashboard.communitymetrics.app/` (nebo lokální adresa vaší instance)
 :::
 
 ## Zabezpečení a autentizace
 
-CommunityMetrics API využívá dva hlavní způsoby ověření identity.
+API v současné verzi primárně spoléhá na autentizaci pomocí sezení (Session-based).
 
-### A. Autentizace pomocí sezení (Session-based)
-Tuto metodu využívá webový dashboard. Po přihlášení přes Discord systém vytvoří **HTTP-only cookie** se zašifrovaným ID uživatele. Tento přístup vás chrání před útoky typu XSS a CSRF.
-
-### B. Bearer Token (Statický klíč)
-Pro automatizované skripty použijte statické API klíče:
--   Vložte klíč do hlavičky požadavku: `Authorization: Bearer <vas_token>`.
--   API klíč vygenerujte v nastavení svého profilu na dashboardu.
+### Autentizace pomocí sezení (Session-based)
+Po přihlášení přes Discord systém vytvoří **HTTP-only cookie** se zašifrovanými údaji uživatele. Pro všechny stavové metody (`POST`, `DELETE`) je vyžadován platný **CSRF token**, který systém ověřuje proti timing útokům pomocí kryptograficky bezpečné funkce `secrets.compare_digest`. Zamezuje se tak nežádoucím CSRF útokům.
 
 > [!WARNING]
-> API klíč považujte za ekvivalent hesla. Nikdy jej nepoužívejte ve veřejných skriptech na straně klienta (JavaScript v prohlížeči).
+> Metoda Bearer Token (statické API klíče pro skripty třetích stran) není v aktuálním produkčním kódu zahrnuta. Systém je optimalizován primárně pro interakci přes webový dashboard.
 
-## Omezení četnosti požadavků (Rate Limiting)
-
-Pro zajištění stability systému aplikujeme na každý uzel algoritmus **Token Bucket**:
--   **Limit:** Maximálně 60 požadavků za minutu na jednu IP adresu.
 ---
 
 ## Endpointy: Analytika a metriky
 
-### Získání klíčových metrik serveru
-Vrátí aktuální hodnoty DAU, MAU a Engagement Score.
+### Analytické nástroje (MII, Engagement Score)
+Vrátí aktuální vypočítané metriky pro zvolené časové okno. Využívá se pro vykreslení analytické stránky v dashboardu.
 
-**`GET` /guild/{guild_id}/metrics**
+**`GET` /api/analytics-tools**
 
 | Parametr | Typ | Povinný | Popis |
 | :--- | :--- | :--- | :--- |
-| `range` | Integer | Ne | Počet dní historie (výchozí 7). |
+| `start_date` | String | Ne | Počáteční datum (YYYY-MM-DD). |
+| `end_date` | String | Ne | Koncové datum (YYYY-MM-DD). |
 
 **Příklad odpovědi (`200 OK`):**
 ```json
 {
-  "guild_id": "123456789012345678",
-  "metrics": {
-    "active_users_dau": 1540,
-    "active_users_mau": 8500,
-    "total_messages": 125000,
-    "engagement_score": 88.5
+  "status": "ok",
+  "trends": { ... },
+  "engagement": { 
+      "score": 85,
+      "components": { "users": 80, "messages": 90, "reactions": 85 } 
   },
-  "metadata": { "cached": true, "expiry": "2026-04-13T18:30:00Z" }
+  "insights": [ ... ],
+  "dqs": { "score": 95, "is_sufficient": true }
 }
 ```
 
-### Data pro Heatmapu aktivity
-Vrátí matici 7 × 24 s intenzitou zpráv pro vizualizaci.
+### Prototyp predikčních dat
+Vrátí data pro zobrazení historických trendů, odhadovaného růstu (Markov, lineární trend se sezónností) a analýzy setrvání v aktivitě.
 
-**`GET` /guild/{guild_id}/metrics/heatmap**
+**`GET` /api/predictions-data**
 
 ---
 
-## Endpointy: Predikce a AI
+## Endpointy: Integrace a Administrace
 
-### Předpověď odchodu (Churn Prediction)
-Vypočítá pravděpodobnost odchodu uživatelů v následujících 7 dnech.
+### Přidání fóra Discourse
+Tento endpoint umožňuje administrátorům napojit fórum Discourse. Obsahuje zabudovanou robustní validaci **proti SSRF (Server-Side Request Forgery)** a DNS Rebinding útokům, blokující privátní a lokální adresy.
 
-**`GET` /guild/{guild_id}/predict/churn**
+**`POST` /api/discourse/add**
 
-**Příklad odpovědi (`200 OK`):**
-```json
-{
-  "churn_probability_7d": 0.12,
-  "at_risk_users_count": 42,
-  "confidence_score": 0.94
-}
-```
+| Parametr (Form) | Typ | Povinný | Popis |
+| :--- | :--- | :--- | :--- |
+| `url` | String | Ano | URL adresa Discourse fóra. |
+| `api_key` | String | Ano | API klíč s oprávněním ke čtení. |
+| `api_user` | String | Ano | API Username na fóru. |
+| `csrf_token`| String | Ano | Bezpečnostní token ze sezení. |
 
----
+### Ruční smazání dat
+Smaže veškerá analytická data (Redis klíče) pro aktuálně vybraný server. Vyžaduje administrátorská oprávnění a správný CSRF token.
 
-## Endpointy: Administrace a konfigurace
-
-### Aktualizace konfigurace XP systému
-Změní parametry pro přidělování zkušenostních bodů.
-
-**`POST` /admin/config/update**
-
-**Tělo požadavku (JSON):**
-```json
-{
-  "xp_per_msg": 15,
-  "voice_multiplier": 1.5
-}
-```
+**`POST` /api/delete-server-data**
 
 > [!TIP]
-> Kompletní interaktivní dokumentaci ve formátu **Swagger/OpenAPI** naleznete na adrese `/api/v1/docs` vaší instance.
+> Kompletní schéma interního API je k dispozici přímo ve zdrojovém kódu (`web/backend/routers/api.py`), který jakožto FastAPI router standardně nabízí autogenerovanou OpenAPI dokumentaci (obvykle na `/docs`).

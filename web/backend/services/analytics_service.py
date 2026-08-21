@@ -51,9 +51,15 @@ class DefaultAnalyticsService(BaseAnalyticsService):
 
 
     async def get_engagement_score(self, guild_id: int, start_date: str = None, end_date: str = None) -> Dict[str, Any]:
-        """Calculate engagement score based on messages, voice, and retention."""
+        """
+        Calculate Engagement Score using formula:
+        S_eng = 100 * (w_u*U + w_m*M + w_r*R + w_v*V) / sum(w)
+        Missing components are omitted from the denominator.
+        All components U, M, R, V are normalized to 0-1.
+        """
         r = await self.repo.get_client()
         try:
+            import json
             
             if start_date and end_date:
                 try:
@@ -69,7 +75,19 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             days_diff = (end_dt - start_dt).days + 1
             if days_diff < 1: days_diff = 1
             
+            ts_start = start_dt.timestamp()
+            ts_end = end_dt.replace(hour=23, minute=59, second=59).timestamp()
             
+            # Fetch config weights
+            raw_weights = await r.hgetall(f"config:engagement_weights:{guild_id}")
+            weights = {
+                "u": float(raw_weights.get("u", 1.0)),
+                "m": float(raw_weights.get("m", 1.0)),
+                "r": float(raw_weights.get("r", 1.0)),
+                "v": float(raw_weights.get("v", 1.0))
+            }
+            
+            # 1. Users (U): DAU / Total Members (Normalized 0 to 25% max)
             tm_str = await r.get(f"stats:total_members:{guild_id}")
             total_members = int(tm_str) if tm_str else 100
             
@@ -81,18 +99,40 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                 current_day += timedelta(days=1)
             
             avg_dau = dau_sum / days_diff
+            val_u = (avg_dau / max(1, total_members))
+            norm_u = min(1.0, val_u / 0.25) # 25% participation is 1.0
             
+            # 2. Messages (M) & 3. Reactions (R)
+            total_msgs = 0
+            total_reactions = 0
+            has_message_data = False
+            has_reaction_data = False
             
-            msg_participation_rate = (avg_dau / max(1, total_members))
-            msg_score = min(100, (msg_participation_rate / 0.25) * 100)
+            async for key in r.scan_iter(f"events:msg:{guild_id}:*"):
+                events = await r.zrangebyscore(key, ts_start, ts_end)
+                for evt_json in events:
+                    has_message_data = True
+                    try:
+                        data = json.loads(evt_json)
+                        total_msgs += 1
+                        reactions = int(data.get("reaction_count", 0))
+                        if reactions > 0 or "reaction_count" in data:
+                            has_reaction_data = True
+                        total_reactions += reactions
+                    except: pass
             
+            val_m = total_msgs / max(1, avg_dau * days_diff) # Msgs per DAU
+            norm_m = min(1.0, val_m / 5.0) # 5 messages per DAU is 1.0
             
-            ts_start = start_dt.timestamp()
-            ts_end = end_dt.replace(hour=23, minute=59, second=59).timestamp()
+            val_r = total_reactions / max(1, total_msgs) # Reactions per msg
+            norm_r = min(1.0, val_r / 2.0) # 2 reactions per msg is 1.0
             
+            # 4. Voice (V)
             total_voice_seconds = 0
+            has_voice_data = False
             
             async for key in r.scan_iter(f"events:voice:{guild_id}:*"):
+                has_voice_data = True
                 events = await r.zrangebyscore(key, ts_start, ts_end)
                 for evt_json in events:
                     try:
@@ -100,47 +140,47 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                         total_voice_seconds += data.get("duration", 0)
                     except: pass
             
+            val_v = (total_voice_seconds / days_diff / 3600) / max(1, avg_dau) # Hours per DAU
+            norm_v = min(1.0, val_v / 0.5) # 0.5 hours per DAU is 1.0
             
-            hours_per_dau = (total_voice_seconds / days_diff / 3600) / max(1, avg_dau)
-            voice_score = min(100, (hours_per_dau / 0.5) * 100)
+            # Compute S_eng
+            numerator = weights["u"] * norm_u
+            denominator = weights["u"]
             
+            components = {"users": int(norm_u * 100)}
             
+            if has_message_data:
+                numerator += weights["m"] * norm_m
+                denominator += weights["m"]
+                components["messages"] = int(norm_m * 100)
             
-            
-            keys = []
-            curr = start_dt
-            while curr <= end_dt:
-                 keys.append(f"hll:dau:{guild_id}:{curr.strftime('%Y%m%d')}")
-                 curr += timedelta(days=1)
-            
-            period_unique = 0
-            if keys:
-                 
-                 
-                 
-                 period_unique = await r.pfcount(*keys)
-                 
-            
-            
-            stickiness = (avg_dau / max(1, period_unique)) if period_unique > 0 else 0
-            
-            
-            retention_score = min(100, (stickiness / 0.30) * 100)
-            
-            overall_score = int((msg_score * 0.4) + (voice_score * 0.3) + (retention_score * 0.3))
+            if has_reaction_data:
+                numerator += weights["r"] * norm_r
+                denominator += weights["r"]
+                components["reactions"] = int(norm_r * 100)
+                
+            if has_voice_data:
+                numerator += weights["v"] * norm_v
+                denominator += weights["v"]
+                components["voice"] = int(norm_v * 100)
+                
+            if denominator > 0:
+                overall_score = int(100 * (numerator / denominator))
+            else:
+                overall_score = 0
             
             return {
                 "score": overall_score,
-                "msg_activity": int(msg_score),
-                "voice_activity": int(voice_score),
-                "retention": int(retention_score),
+                "msg_activity": components.get("messages", 0),
+                "voice_activity": components.get("voice", 0),
+                "retention": components.get("users", 0), # Legacy field fallback
+                "components": components,
                 "debug_avg_dau": avg_dau,
-                "debug_voice_hours": total_voice_seconds / 3600,
-                "debug_unique": period_unique
+                "debug_voice_hours": total_voice_seconds / 3600
             }
         except Exception as e:
              print(f"Engagement error: {e}")
-             return {"score": 0, "msg_activity": 0, "voice_activity": 0, "retention": 0}
+             return {"score": 0, "msg_activity": 0, "voice_activity": 0, "retention": 0, "components": {}}
         finally:
             pass
 
@@ -222,22 +262,23 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             
             
             
-            total_msgs = 0
-            total_replies = 0
-            async for key in r.scan_iter(f"events:msg:{guild_id}:*"):
-                
-                
-                events = await r.zrangebyscore(key, start_ts, "+inf")
-                for evt_json in events:
-                    try:
-                        data = json.loads(evt_json)
-                        total_msgs += 1
-                        if data.get("reply"): total_replies += 1
-                    except: pass
+            from web.backend.services.community_health_service import CommunityHealthService
+            health_svc = CommunityHealthService(r)
+            help_data = await health_svc.help_requests(guild_id, days=days, limit=1)
             
-            measured_reply_ratio = (total_replies / max(1, total_msgs)) * 100
-            reply_score = min(30, (measured_reply_ratio / 20) * 30) 
+            answerable_posts = help_data.get("total", 0)
+            answered_posts = help_data.get("answered", 0)
             
+            if answerable_posts > 0:
+                measured_reply_ratio = (answered_posts / answerable_posts) * 100
+            else:
+                # If there are no support channels or no posts, we shouldn't penalize it.
+                # The BP says: "Tuto metriku používej pouze v kanálech označených jako diskusní nebo podpůrné".
+                # If there's no data, default to 100% or exclude from score (here we default to max to not penalize).
+                measured_reply_ratio = 100.0
+                
+            # Reply score max is 30. If we answer 80% of posts, we get max score.
+            reply_score = min(30.0, (measured_reply_ratio / 80.0) * 30.0)
             
             total_voice_seconds = 0
             async for key in r.scan_iter(f"events:voice:{guild_id}:*"):
@@ -585,7 +626,7 @@ class DefaultAnalyticsService(BaseAnalyticsService):
     async def get_health_research_data(self, guild_id: int) -> dict:
         import numpy as np
         from datetime import datetime, timedelta
-        from shared.models import CommunityModels
+        from shared.models import CommunityModels, UserState
         import json
         
         r = await self.repo.get_client()
@@ -594,19 +635,33 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             today_str = now.strftime("%Y%m%d")
             ts_now = now.timestamp()
             
-            # 1. Total Members & DAU & Toxicity
+            # 1. Total Members & DAU
             total_members_str = await r.get(f"presence:total:{guild_id}")
             total_members = int(total_members_str) if total_members_str else 0
             dau = await r.pfcount(f"hll:dau:{guild_id}:{today_str}")
             activity_rate = (dau / max(1, total_members))
             
-            total_actions = 0
+            # Moderation Intervention Index (MII)
+            # MII = sum(w_k * M_k) / max(1, N_interactions)
+            weights = await self.get_action_weights()
+            weighted_mod_actions = 0
+            ts_30d_ago = (now - timedelta(days=30)).timestamp()
+            
             async for key in r.scan_iter(f"events:action:{guild_id}:*"):
-                total_actions += await r.zcard(key)
+                events = await r.zrangebyscore(key, ts_30d_ago, "+inf")
+                for evt_json in events:
+                    try:
+                        data = json.loads(evt_json)
+                        action_type = data.get("action", "unknown")
+                        # e.g., "bans", "kicks", "timeouts" mapping to weights
+                        w = weights.get(f"{action_type}s", weights.get(action_type, 10))
+                        weighted_mod_actions += w
+                    except: pass
+                    
             total_msgs_str = await r.get(f"stats:total_msgs:{guild_id}")
             total_msgs = int(total_msgs_str) if total_msgs_str else 1
-            toxicity_index = (total_actions / total_msgs)
-            rec_mods = int(np.ceil((dau * (1 + toxicity_index * 10)) / 150 + 2))
+            mii = weighted_mod_actions / max(1, total_msgs)
+            rec_mods = int(np.ceil((dau * (1 + mii * 0.1)) / 150 + 2)) # Adjust heuristic safely
             
             # 2. Extract User Timelines for ML Models
             user_activity = {} # uid -> list of active days (0 to 29, where 29 is today)
@@ -617,7 +672,7 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             
             async for key in r.scan_iter(f"events:msg:{guild_id}:*"):
                 uid = key.split(":")[-1]
-                msgs = await r.zrange(key, 0, -1, withscores=True)
+                msgs = await r.zrangebyscore(key, ts_30d_ago, "+inf", withscores=True)
                 if not msgs: continue
                 
                 first_ts = float(msgs[0][1])
@@ -636,9 +691,9 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                             active_days.add(day_idx)
                 user_activity[uid] = active_days
 
-            # 3. Build Markov Transitions
+            # 3. Build Markov Transitions (4 states)
             transitions = []
-            current_distribution = [0, 0, 0, 0, 0] # New, Active, Passive, Inactive, Churned
+            current_distribution = [0, 0, 0, 0] # New, Active, Passive, Inactive
             
             for uid, active_days in user_activity.items():
                 prev_state = None
@@ -646,41 +701,39 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                 join_day_idx = 29 - (now - join_date).days
                 
                 for day_idx in range(max(0, join_day_idx), 30):
-                    # Calculate days since last active relative to current simulated day
                     last_active_before_or_on = [d for d in active_days if d <= day_idx]
                     days_since = day_idx - last_active_before_or_on[-1] if last_active_before_or_on else (day_idx - join_day_idx)
                     
-                    state = 4 # Churned
-                    if days_since == 0 and day_idx == join_day_idx: state = 0 # New
-                    elif days_since <= 2: state = 1 # Active
-                    elif days_since <= 7: state = 2 # Passive
-                    elif days_since <= 14: state = 3 # Inactive
+                    state = UserState.INACTIVE
+                    if days_since == 0 and day_idx == join_day_idx: state = UserState.NEW
+                    elif days_since <= 2: state = UserState.ACTIVE
+                    elif days_since <= 7: state = UserState.PASSIVE
+                    else: state = UserState.INACTIVE
                     
                     if prev_state is not None:
-                        transitions.append((prev_state, state))
+                        transitions.append((prev_state.value, state.value))
                     prev_state = state
                     
                     if day_idx == 29: # Today
-                        current_distribution[state] += 1
+                        current_distribution[state.value] += 1
                         
             # 4. Markov Prediction
             if transitions:
-                matrix = CommunityModels.calculate_markov_matrix(transitions, num_states=5)
-                # Normalize current distribution
+                matrix = CommunityModels.calculate_markov_matrix(transitions, num_states=4)
                 total_users = sum(current_distribution)
                 if total_users > 0:
                     current_vec = np.array(current_distribution) / total_users
                     future_vec = CommunityModels.predict_future_states(current_vec, matrix, steps=7)
-                    p_stay_active = future_vec[1] + future_vec[2] # Active + Passive
-                    p_churn = future_vec[4] # Predicted Churned
+                    p_stay_active = future_vec[UserState.ACTIVE.value] + future_vec[UserState.PASSIVE.value]
+                    p_inactive = future_vec[UserState.INACTIVE.value]
                 else:
                     p_stay_active = 0.6
-                    p_churn = 0.05
+                    p_inactive = 0.4
             else:
-                p_stay_active = 0.6 + (activity_rate * 0.5)
-                p_churn = 0.05 + (toxicity_index * 2)
+                p_stay_active = 0.6 + (activity_rate * 0.4)
+                p_inactive = 0.4 - (activity_rate * 0.4)
                 
-            # 5. Kaplan-Meier Survival Analysis
+            # 5. Kaplan-Meier Activity Survival Analysis
             durations = []
             event_observed = []
             
@@ -689,44 +742,44 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                 days_active = (last_ts - first_ts) / 86400.0
                 days_since_last = (ts_now - last_ts) / 86400.0
                 
-                is_churned = days_since_last > 14
+                # If they haven't been active in 14 days, we consider their activity "dropped" (event observed).
+                # Otherwise, they are still active, so the observation is censored.
+                is_dropped_activity = days_since_last > 14
                 durations.append(int(max(1, days_active)))
-                event_observed.append(is_churned)
+                event_observed.append(is_dropped_activity)
                 
-            life_exp = 30.0
-            half_life = 15.0
+            life_exp = 0.0
+            median_survival = None
             curve = {}
             if durations:
                 curve = CommunityModels.calculate_survival_rate(durations, event_observed)
                 life_exp = CommunityModels.estimate_life_expectancy(curve)
-                half_life = life_exp * 0.69 # Approximate
+                median_survival = CommunityModels.estimate_median_survival(curve)
                 
             # Převod stavů pro API
             dist_dict = {
-                "new": current_distribution[0],
-                "active": current_distribution[1],
-                "passive": current_distribution[2],
-                "inactive": current_distribution[3],
-                "churned": current_distribution[4]
+                "new": current_distribution[UserState.NEW.value],
+                "active": current_distribution[UserState.ACTIVE.value],
+                "passive": current_distribution[UserState.PASSIVE.value],
+                "inactive": current_distribution[UserState.INACTIVE.value]
             }
             
             future_dist = {
-                "new": future_vec[0] if 'future_vec' in locals() else 0,
-                "active": future_vec[1] if 'future_vec' in locals() else 0,
-                "passive": future_vec[2] if 'future_vec' in locals() else 0,
-                "inactive": future_vec[3] if 'future_vec' in locals() else 0,
-                "churned": future_vec[4] if 'future_vec' in locals() else 0
+                "new": future_vec[UserState.NEW.value] if 'future_vec' in locals() else 0,
+                "active": future_vec[UserState.ACTIVE.value] if 'future_vec' in locals() else 0,
+                "passive": future_vec[UserState.PASSIVE.value] if 'future_vec' in locals() else 0,
+                "inactive": future_vec[UserState.INACTIVE.value] if 'future_vec' in locals() else 0
             }
                 
             return {
                 "success": True,
                 "activity_rate_pct": round(activity_rate * 100, 1),
-                "toxicity_index_pct": round(toxicity_index * 100, 2),
+                "mii": round(mii, 2),
                 "rec_mods": rec_mods,
                 "retention_pct": round(p_stay_active * 100, 1),
-                "churn_risk_pct": round(p_churn * 100, 1),
+                "inactivity_risk_pct": round(p_inactive * 100, 1),
                 "life_expectancy_days": round(life_exp, 1),
-                "half_life_days": round(half_life, 1),
+                "median_survival_days": median_survival,
                 "state_distribution": dist_dict,
                 "predicted_distribution": future_dist,
                 "survival_curve": curve

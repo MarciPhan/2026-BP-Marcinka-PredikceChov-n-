@@ -28,7 +28,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 # 4. Instalace Node.js závislostí pro dokumentaci
-cd docs-site && npm install && cd ..
+cd docs && npm install && cd ..
 ```
 
 ## Konfigurace prostředí
@@ -47,7 +47,7 @@ BOT_TOKEN=<váš bot token z Developer Portalu>
 DISCORD_CLIENT_SECRET=<OAuth2 Client Secret>
 
 # Web Dashboard
-DASHBOARD_PORT=8092
+DASHBOARD_PORT=8093
 DASHBOARD_SECRET_KEY=<vygenerujte: python3 -c "import secrets; print(secrets.token_hex(32))">
 DASHBOARD_ACCESS_TOKEN=<Bearer token pro API>
 
@@ -79,10 +79,10 @@ python3 bot/main.py
 
 # Terminál 3: Dashboard (FastAPI)
 export PYTHONPATH=$PWD
-uvicorn web.backend.main:app --host 0.0.0.0 --port 8092 --reload
+uvicorn web.backend.main:app --host 0.0.0.0 --port 8093 --reload
 
 # Terminál 4: Dokumentace (VitePress)
-cd docs-site && npm run docs:dev
+cd docs && npm run docs:dev
 ```
 
 ### Co běží po spuštění?
@@ -90,7 +90,7 @@ cd docs-site && npm run docs:dev
 | Služba | Port | URL | Popis |
 | :--- | :--- | :--- | :--- |
 | **Discord Bot** | — | — | Připojí se k Discordu přes Gateway WebSocket |
-| **FastAPI Backend** | 8092 | `http://localhost:8092` | Dashboard s OAuth2, REST API |
+| **FastAPI Backend** | 8093 | `http://localhost:8093` | Dashboard s OAuth2, REST API |
 | **VitePress Docs** | 5173 | `http://localhost:5173` | Tato dokumentace |
 | **Redis** | 6379 | `redis://localhost:6379` | In-memory databáze |
 
@@ -129,14 +129,14 @@ communitymetrics/
 
 Dokumentace běží na VitePress s hot-reload (HMR):
 
-- Soubory: `docs-site/*.md`
-- Konfigurace navigace: `docs-site/.vitepress/config.mts`
-- Custom CSS: `docs-site/.vitepress/theme/custom.css`
+- Soubory: `docs/*.md`
+- Konfigurace navigace: `docs/.vitepress/config.mts`
+- Custom CSS: `docs/.vitepress/theme/custom.css`
 - Změny se projeví okamžitě po uložení.
 
 ### Přidání nové stránky
 
-1. Vytvořte nový `.md` soubor v `docs-site/`.
+1. Vytvořte nový `.md` soubor v `docs/`.
 2. Přidejte odkaz do sidebaru v `.vitepress/config.mts`:
    ```typescript
    { text: 'Název stránky', link: '/nazev-souboru' }
@@ -146,9 +146,9 @@ Dokumentace běží na VitePress s hot-reload (HMR):
 ### Build pro produkci
 
 ```bash
-cd docs-site
+cd docs
 npm run docs:build
-# Výstup: docs-site/.vitepress/dist/
+# Výstup: docs/.vitepress/dist/
 ```
 
 ## Vývoj bota
@@ -194,8 +194,8 @@ await redis_client.pfadd(f"hll:dau:{guild_id}:{date}", user_id)
 
 | Problém | Řešení |
 | :--- | :--- |
-| **Port 8092 je obsazen** | Změňte `DASHBOARD_PORT` v `.env` nebo ukončete proces: `lsof -t -i :8092 \| xargs kill` |
-| **Bílá obrazovka v dokumentaci** | Ujistěte se, že běží NPM server (`cd docs-site && npm run docs:dev`). |
+| **Port 8093 je obsazen** | Změňte `DASHBOARD_PORT` v `.env` nebo ukončete proces: `lsof -t -i :8093 \| xargs kill` |
+| **Bílá obrazovka v dokumentaci** | Ujistěte se, že běží NPM server (`cd docs && npm run docs:dev`). |
 | **Redis Connection Error** | Zkontrolujte, zda běží Redis: `redis-cli ping`. Pokud ne: `redis-server --daemonize yes`. |
 | **Bot nereaguje na příkazy** | Zaregistrujte slash příkazy: `*sync`. Ověřte, že bot má oprávnění `Use Application Commands`. |
 | **Import Error** | Ověřte `PYTHONPATH`: `export PYTHONPATH=$PWD`. |

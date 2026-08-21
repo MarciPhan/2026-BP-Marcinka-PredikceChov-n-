@@ -9,8 +9,8 @@ services:
       - botnet
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
+      interval: 10s
+      timeout: 5s
       retries: 5
 
   discord-bot-primary:
@@ -24,28 +24,9 @@ services:
       - BOT_TOKEN=${BOT_TOKEN}
       - REDIS_URL=redis://redis:6379/0
       - TZ=Europe/Prague
-      - PYTHONPATH=/app
+      - ENVIRONMENT=production
     volumes:
-      - .:/app:z
-      - ./bot_std.log:/app/bot_std.log:z
       - ./data:/app/data:z
-    networks:
-      - botnet
-
-  discord-bot-dashboard:
-    build: .
-    container_name: discord-bot-dashboard
-    restart: always
-    depends_on:
-      - redis
-    environment:
-      - BOT_TOKEN=${DASHBOARD_TOKEN}
-      - BOT_LITE_MODE=1
-      - REDIS_URL=redis://redis:6379/0
-      - TZ=Europe/Prague
-      - PYTHONPATH=/app
-    volumes:
-      - .:/app:z
     networks:
       - botnet
 
@@ -54,21 +35,18 @@ services:
     container_name: web-dashboard
     restart: always
     depends_on:
-      - redis
-    command: [ "uvicorn", "web.backend.main:app", "--host", "0.0.0.0", "--port", "${DASHBOARD_PORT:-8093}" ]
+      redis:
+        condition: service_healthy
+    command: [ "uvicorn", "web.backend.main:app", "--host", "0.0.0.0", "--port", "${WEB_PORT:-8093}" ]
     environment:
       - REDIS_URL=redis://redis:6379/0
       - DASHBOARD_SECRET_KEY=${DASHBOARD_SECRET_KEY}
-      - DASHBOARD_ACCESS_TOKEN=${DASHBOARD_ACCESS_TOKEN}
       - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
       - BOT_TOKEN=${BOT_TOKEN}
       - TZ=Europe/Prague
-      - PYTHONPATH=/app
+      - ENVIRONMENT=production
     ports:
-      - "${DASHBOARD_PORT:-8093}:${DASHBOARD_PORT:-8093}"
-    volumes:
-      - .:/app:z
-      - ./dashboard_std.log:/app/dashboard_std.log:z
+      - "${WEB_PORT:-8093}:${WEB_PORT:-8093}"
     networks:
       - botnet
 
@@ -77,17 +55,15 @@ services:
     container_name: discourse-sync
     restart: always
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     command: [ "python", "-m", "scripts.discourse_sync" ]
     environment:
       - REDIS_URL=redis://redis:6379/0
       - TZ=Europe/Prague
-      - PYTHONPATH=/app
-    volumes:
-      - .:/app:z
+      - ENVIRONMENT=production
     networks:
       - botnet
-
 
 networks:
   botnet:

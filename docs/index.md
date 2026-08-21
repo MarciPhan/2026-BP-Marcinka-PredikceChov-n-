@@ -18,7 +18,7 @@ hero:
 
 features:
   - title: Predikce chování
-    details: Markovovy řetězce pro předpověď retence a churn rate na 7 dní dopředu.
+    details: Prototyp prediktivního modelu využívající Markovovy řetězce pro analýzu pravděpodobnosti změn uživatelské aktivity.
     link: /predictions
   - title: Real-time analytika
     details: Sledování aktivity v momentě, kdy se děje. Sub-sekundové zpracování každé zprávy.

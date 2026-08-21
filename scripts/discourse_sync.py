@@ -10,17 +10,16 @@ class DiscourseSync:
     Tato třída slouží k integraci událostí (témata, příspěvky) z externího fóra.
     """
     
-    def __init__(self):
-        pass
+    def __init__(self, redis_client=None):
+        self.redis_client = redis_client
         
     async def sync_guild(self, guild_id: str):
         """
         Provede synchronizaci fóra se zadaným ID.
-        V aktuální verzi stahuje základní statistiky přes Discourse API.
+        Stahuje témata přes Discourse API a idempotně je ukládá.
         """
-        r = await get_redis()
+        r = self.redis_client or await get_redis()
         try:
-            # Načteme konfiguraci z Redis
             conf = await r.hgetall(f"discourse:conf:{guild_id}")
             if not conf:
                 raise ValueError("Konfigurace Discourse fóra nenalezena.")
@@ -38,37 +37,50 @@ class DiscourseSync:
             }
             
             async with httpx.AsyncClient() as client:
-                # Načtení site.json pro základní statistiky
-                site_resp = await client.get(f"{url}/site.json", headers=headers)
-                if site_resp.status_code != 200:
-                    raise Exception(f"Chyba při komunikaci s Discourse API: {site_resp.status_code}")
+                # Načtení topics (latest)
+                topics_resp = await client.get(f"{url}/latest.json", headers=headers)
+                if topics_resp.status_code != 200:
+                    raise Exception(f"Chyba při komunikaci s Discourse API: {topics_resp.status_code}")
                     
-                # Načtení about.json pro statistiky uživatelů
-                about_resp = await client.get(f"{url}/about.json", headers=headers)
-                about_data = about_resp.json() if about_resp.status_code == 200 else {}
+                topics_data = topics_resp.json()
+                topics = topics_data.get("topic_list", {}).get("topics", [])
                 
-                # Zpracování statistik (simulace CommunityMetrics eventů)
-                stats = about_data.get("about", {}).get("stats", {})
+                # Zpracování témat idempotně
+                synced_set_key = f"discourse:synced_topics:{guild_id}"
+                new_msgs = 0
                 
-                total_topics = stats.get("topic_count", 0)
-                total_posts = stats.get("post_count", 0)
-                total_users = stats.get("user_count", 0)
-                
-                # Uložíme základní statistiky do Redis tak, aby je viděl dashboard
-                await r.set(f"presence:total:{guild_id}", total_users)
-                await r.set(f"stats:total_msgs:{guild_id}", total_posts)
-                
-                # Vytvoření falešných DAU pro demonstraci
-                now = time.time()
-                active_users = stats.get("active_users_7_days", 0)
-                estimated_dau = max(1, active_users // 7)
-                
-                import datetime
-                d_str = datetime.datetime.now().strftime("%Y%m%d")
-                
-                # Pro jednoduchost přidáme náhodná ID do HLL
-                for i in range(estimated_dau):
-                    await r.pfadd(f"hll:dau:{guild_id}:{d_str}", f"d_user_{i}")
+                for topic in topics:
+                    t_id = str(topic.get("id"))
+                    
+                    # Idempotence: Zkontrolujeme, zda už jsme toto téma zpracovali
+                    is_member = await r.sismember(synced_set_key, t_id)
+                    if is_member:
+                        continue
+                        
+                    # Přidáme do setu zpracovaných
+                    await r.sadd(synced_set_key, t_id)
+                    
+                    # Vytvoření eventu
+                    import datetime
+                    created_at_str = topic.get("created_at")
+                    try:
+                        dt = datetime.datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+                        ts = dt.timestamp()
+                    except:
+                        ts = time.time()
+                        
+                    event_data = {
+                        "id": t_id,
+                        "title": topic.get("title"),
+                        "source": "discourse",
+                        "reaction_count": topic.get("like_count", 0)
+                    }
+                    
+                    await r.zadd(f"events:msg:{guild_id}:discourse", {json.dumps(event_data): ts})
+                    new_msgs += 1
+                    
+                if new_msgs > 0:
+                    await r.incrby(f"stats:total_msgs:{guild_id}", new_msgs)
                     
                 return True
                 
@@ -76,7 +88,8 @@ class DiscourseSync:
             print(f"Chyba při synchronizaci Discourse (ID: {guild_id}): {e}")
             raise e
         finally:
-            await r.close()
+            if not self.redis_client:
+                await r.close()
 
     async def sync_all(self):
         """

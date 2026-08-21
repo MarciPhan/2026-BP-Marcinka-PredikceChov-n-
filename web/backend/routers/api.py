@@ -51,41 +51,50 @@ async def api_add_discourse(
     if not url.startswith("http"):
         return JSONResponse({"error": "Invalid URL"}, status_code=400)
         
-    # SSRF Protection: Prevent connecting to localhost or private IPs
+    # SSRF & DNS Rebinding Protection
     from urllib.parse import urlparse
     import socket
     import ipaddress
+    
     try:
         parsed_url = urlparse(url)
         if parsed_url.scheme not in ("http", "https"):
             return JSONResponse({"error": "Invalid scheme"}, status_code=400)
         
-        # Omezíme DNS na první záznam pro jednoduchost obrany proti SSRF
-        ip = socket.gethostbyname(parsed_url.hostname)
-        ip_obj = ipaddress.ip_address(ip)
-        if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_multicast:
+        def validate_hostname_ips(hostname):
+            addr_info = socket.getaddrinfo(hostname, None)
+            for result in addr_info:
+                ip = result[4][0]
+                ip_obj = ipaddress.ip_address(ip)
+                if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_multicast or ip_obj.is_link_local or str(ip_obj) == "169.254.169.254":
+                    return False
+            return True
+            
+        if not validate_hostname_ips(parsed_url.hostname):
             return JSONResponse({"error": "SSRF Protection: Local or private IPs are not allowed"}, status_code=403)
+            
     except Exception as e:
         return JSONResponse({"error": f"Invalid URL hostname: {str(e)}"}, status_code=400)
         
     # Verify connection to Discourse
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(
                 f"{url}/site.json",
-                headers={"Api-Key": api_key, "Api-Username": api_user}
+                headers={"Api-Key": api_key, "Api-Username": api_user},
+                follow_redirects=False # Prevent SSRF via redirects
             )
+            
+            # Post-Fetch DNS Rebinding Validation
+            if not validate_hostname_ips(parsed_url.hostname):
+                return JSONResponse({"error": "SSRF Protection: DNS Rebinding detected"}, status_code=403)
+                
             if resp.status_code != 200:
                  return JSONResponse({"error": f"Failed to connect: {resp.status_code}"}, status_code=400)
             
             site_data = resp.json()
             title = site_data.get("title", "Discourse Forum")
             icon = ""
-            # Try to find an icon
-            if "icon" in site_data:
-                 # Helper to resolve relative URLs if needed, specific to discourse structure
-                 pass
-
     except Exception as e:
         return JSONResponse({"error": f"Connection error: {str(e)}"}, status_code=400)
 

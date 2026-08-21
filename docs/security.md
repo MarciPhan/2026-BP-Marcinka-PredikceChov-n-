@@ -1,19 +1,20 @@
-# Skóre bezpečnosti serveru
+# Skóre bezpečnosti serveru (Doplňková funkce)
 
-Skóre bezpečnosti ($S$) vyjadřuje odolnost Discord serveru proti spamu a útokům. Metrika se vypočítává z nastavení serveru a aktivity moderátorského týmu.
+Skóre bezpečnosti ($S$) vyjadřuje doplňkový indikátor odolnosti Discord serveru proti spamu a útokům a kvalitu podpory. Tato metrika je experimentální, stojí mimo hlavní analytické cíle (Engagement, MII) a vypočítává se z nastavení serveru, aktivity moderátorského týmu a míry odpovědí na dotazy.
 
 ## Výpočet skóre
 
-Skóre je vážený průměr 4 faktorů v rozsahu 0–100:
+Skóre je vážený průměr 5 faktorů v rozsahu 0–100:
 
-$$S = 0{,}3 \cdot F_{\text{MFA}} + 0{,}2 \cdot F_{\text{verif}} + 0{,}2 \cdot F_{\text{filter}} + 0{,}3 \cdot F_{\text{mod}}$$
+$$S = w_1 \cdot F_{\text{MFA}} + w_2 \cdot F_{\text{verif}} + w_3 \cdot F_{\text{filter}} + w_4 \cdot F_{\text{mod}} + w_5 \cdot F_{\text{reply}}$$
 
-| Faktor | Váha | Zdroj dat | Výpočet |
+| Faktor | Váha (výchozí) | Zdroj dat | Výpočet |
 | :--- | :--- | :--- | :--- |
-| $F_{\text{MFA}}$ (MFA Requirement) | 30 % | `guild.mfa_level` | 100 pokud vyžaduje MFA, jinak 0 |
-| $F_{\text{verif}}$ (Verification Level) | 20 % | `guild.verification_level` | 0 / 25 / 50 / 75 / 100 podle úrovně |
-| $F_{\text{filter}}$ (Content Filter) | 20 % | `guild.explicit_content_filter` | 0 / 50 / 100 podle nastavení |
-| $F_{\text{mod}}$ (Moderator Activity) | 30 % | Audit log + přítomnost online | Průměrná reakční doba moderátorů |
+| $F_{\text{MFA}}$ (MFA Requirement) | 20 % | `guild.mfa_level` | 100 pokud vyžaduje MFA, jinak 0 |
+| $F_{\text{verif}}$ (Verification Level) | 15 % | `guild.verification_level` | 0 / 25 / 50 / 75 / 100 podle úrovně |
+| $F_{\text{filter}}$ (Content Filter) | 15 % | `guild.explicit_content_filter` | 0 / 50 / 100 podle nastavení |
+| $F_{\text{mod}}$ (Moderator Activity) | 20 % | Audit log | Intenzita moderačních zásahů |
+| $F_{\text{reply}}$ (Reply Ratio) | 30 % | Help Requests | Podíl zodpovězených dotazů v určených kanálech |
 
 ## Klasifikace
 

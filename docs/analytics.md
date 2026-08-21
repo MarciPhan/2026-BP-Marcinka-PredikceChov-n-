@@ -24,11 +24,11 @@ $$ \text{Stickiness} = \frac{\text{DAU}}{\text{MAU}} \times 100 $$
 | **10–15 %** | Standardní úroveň pro hobby a zájmové servery. |
 | **> 25 %** | Extrémně silné a věrné jádro komunity. |
 
-## Index intenzity moderace (MII)
+## Index moderační zátěže (MII)
 
-MII (Moderator Intervention Index) měří úroveň toxicity a potřebu moderátorských zásahů vzhledem k objemu diskuze.
+MII (Moderation Intervention Index) vyjadřuje míru moderační zátěže vzhledem k celkovému objemu diskuze. Zvýšená hodnota neindikuje nutně "toxicitu" komunity, nýbrž může odrážet změnu pravidel nebo aktivnější přístup moderátorů.
 
-$$ MII = \sum_{i \in \text{Akce}} \frac{\text{Váha}(i)}{\text{Celkový počet zpráv}} $$
+$$ MII = \frac{\sum_k w_k M_k}{\max(1, N_{\text{interactions}})} $$
 
 Váhy jednotlivých akcí:
 -   **Ban:** 50 bodů
@@ -36,18 +36,20 @@ Váhy jednotlivých akcí:
 -   **Timeout:** 10 bodů
 -   **Smazaná zpráva:** 1 bod
 
-## Metrika zdraví serveru (Engagement Score)
+## Engagement Score (Skóre aktivity)
 
-Engagement Score (ES) je kompozitní index (0–100), který shrnuje celkový stav serveru na základě čtyř klíčových oblastí:
+Engagement Score je normalizovaný index (0–100), který slouží k porovnání aktivity stejné komunity v čase. Není to univerzální hodnocení "kvality" serveru. Vypočítá se jako vážený průměr dostupných datových zdrojů:
 
-$$ ES = 0,25 \cdot M + 0,25 \cdot S + 0,25 \cdot E + 0,25 \cdot T $$
+$$ S_{eng} = 100 \cdot \frac{w_uU + w_mM + w_rR + w_vV}{w_u + w_m + w_r + w_v} $$
 
 | Složka | Význam |
 | :--- | :--- |
-| **$M$ (Moderace)** | Hodnota odvozená od MII a rychlosti reakce týmu. |
-| **$S$ (Bezpečnost)** | Skóre zabezpečení (MFA, verifikace, filtry). |
-| **$E$ (Zapojení)** | Participation Rate a Reply Ratio. |
-| **$T$ (Tým)** | Intenzita aktivity moderátorského týmu. |
+| **$U$ (Uživatelé)** | Normalizovaný podíl aktivních uživatelů (DAU/Total). |
+| **$M$ (Zprávy)** | Normalizovaný objem odeslaných zpráv. |
+| **$R$ (Reakce)** | Normalizovaný počet interakcí/reakcí. |
+| **$V$ (Hlas)** | Normalizovaná hlasová aktivita (pokud je dostupná). |
+
+Váhy ($w$) jsou konfigurovatelné. Pokud některý údaj není dostupný (např. chybí hlasový kanál), odpovídající váha se vyřadí ze jmenovatele, aby nedošlo k umělému snížení skóre. Nulová hodnota a nedostupný údaj jsou striktně odlišeny.
 
 ## Vizualizace aktivity (Heatmapa)
 
@@ -57,12 +59,14 @@ Analytický engine generuje matici 7 × 24 (den v týdnu × hodina), která vizu
 -   **Formát pole:** `den:hodina` (např. `1:14` pro pondělí 14:00 UTC).
 -   **Využití:** Plánujte své klíčové aktivity na časy s nejvyšší hustotou v heatmapě.
 
-## Kvalita dat pro predikce (DQS)
+## Kvalita dat (DQS)
 
-DQS (Data Quality Score) určuje spolehlivost prediktivních modelů. Pokud je historie dat příliš krátká, systém predikce automaticky deaktivuje.
+DQS (Data Quality Score) je pomocný indikátor úplnosti vstupních dat pro celkovou analýzu, nikoliv statistická pravděpodobnost správnosti modelů. 
 
-| Hodnota DQS | Stav modelů | Poznámka |
-| :--- | :--- | :--- |
-| **1,0** | Aktivní (Plná důvěra) | Historie dat > 30 dní. |
-| **0,5–0,9** | Aktivní (Omezená důvěra) | Historie 7–30 dní. Možné odchylky. |
-| **< 0,5** | Deaktivováno | Nedostatek dat pro validní výpočet. |
+Zohledňuje rozdíl mezi situací, kdy **událost nenastala** (hodnota je 0), a kdy **údaj není dostupný** (platforma data neposkytuje).
+
+| Indikace DQS | Interpretace |
+| :--- | :--- |
+| **Vysoká (> 80 %)** | Dostatek historie (např. > 30 dní) a kompletní datové zdroje. |
+| **Střední** | Částečná historie nebo chybějící některé sekundární zdroje. |
+| **Nízká (< 50 %)** | Nedostatek dat pro validní výpočet trendů. Data z agregace mohou být zkreslená. |

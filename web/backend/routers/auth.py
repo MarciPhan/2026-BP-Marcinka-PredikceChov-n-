@@ -7,6 +7,7 @@ import urllib.parse
 import httpx
 import base64
 import os
+import secrets
 
 # OTP email auth removed – přihlášení pouze přes Discord OAuth2 nebo Demo
 
@@ -58,8 +59,8 @@ async def login_page(request: Request):
             "error": "Discord OAuth není nakonfigurován. Kontaktujte administrátora."
         })
     
-    orig_host = request.headers.get("x-forwarded-host") or request.headers.get("host", "")
-    state_str = base64.urlsafe_b64encode(orig_host.encode()).decode() if orig_host else "default"
+    state_str = secrets.token_urlsafe(32)
+    request.session["oauth_state"] = state_str
     
     params = {
         "client_id": DISCORD_CLIENT_ID,
@@ -78,6 +79,13 @@ async def auth_callback(request: Request, code: str = None, error: str = None, s
         return templates.TemplateResponse("login.html", {"request": request, "error": f"Discord error: {error}"})
     if not code:
         return RedirectResponse(url="/login")
+        
+    saved_state = request.session.get("oauth_state")
+    if "oauth_state" in request.session:
+        del request.session["oauth_state"]
+        
+    if not state or not saved_state or not secrets.compare_digest(str(state), str(saved_state)):
+        return templates.TemplateResponse("login.html", {"request": request, "error": "Chyba zabezpečení: Neplatný stavový kód (možný CSRF útok). Zkuste se přihlásit znovu."})
     
     try:
         async with httpx.AsyncClient() as client:

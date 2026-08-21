@@ -1,14 +1,14 @@
 # ML pipeline
 
-Popis prediktivního systému CommunityMetrics - od sběru dat přes klasifikaci uživatelů až po vizualizaci výsledků.
+Popis prototypového prediktivního systému CommunityMetrics – od sběru dat po vizualizaci experimentálních výsledků. Tyto funkce představují budoucí možnosti analýzy a nejsou určeny pro produkční rozhodování o uživatelích.
 
-::: warning Predikce jsou odhady
-Všechny predikce vycházejí z historických dat. Nepředvídatelné události (raid, zmínka influencera, sezónní výkyvy) mohou realitu výrazně změnit.
+::: warning Prototypové odhady
+Všechny predikce vycházejí z historických dat. Nepředvídatelné události (raid, zmínka influencera, sezónní výkyvy) mohou realitu výrazně změnit. Modely slouží jako analytický experiment.
 :::
 
-## Architektura pipeline
+## Architektura prototypu
 
-Prediktivní systém zpracovává data v 5 fázích:
+Tento experimentální systém zpracovává data v 5 fázích:
 
 ```mermaid
 graph LR
@@ -51,15 +51,14 @@ Tyto hodnoty se vynásobí konfiguratelnými váhami (viz `config:action_weights
 
 ### Fáze 3: Classification (přiřazení stavů)
 
-Každému uživateli se přiřadí jeden z 5 diskrétních stavů na základě jeho aktivity za posledních 30 dní. Klasifikace probíhá pro každý den v historii zvlášť, což umožňuje sestavit historii přechodů pro Markovův model.
+Každému uživateli se přiřadí jeden z 4 diskrétních stavů na základě jeho aktivity za posledních 30 dní. Klasifikace probíhá pro každý den v historii zvlášť, což umožňuje sestavit historii přechodů pro Markovův model.
 
 | Stav | Označení | Technické kritérium | Význam pro komunitu |
 | :--- | :--- | :--- | :--- |
 | **New** | $S_0$ | Join date < 24h | Nováčci v procesu onboardingu. |
 | **Active** | $S_1$ | Aktivita v $[T-2, T]$ | Jádro komunity, které se pravidelně zapojuje. |
 | **Passive** | $S_2$ | Aktivita v $[T-7, T-3]$ | Uživatelé, u kterých dochází k poklesu zájmu. |
-| **Inactive** | $S_3$ | Aktivita v $[T-14, T-8]$ | Kritická fáze před úplným odchodem (Churn). |
-| **Churned** | $S_4$ | Aktivita > 14 dní nebo opuštění | Uživatelé, kteří se pravděpodobně nevrátí (Absorpční stav). |
+| **Inactive** | $S_3$ | Aktivita > 7 dní zpět | Kritická fáze dlouhodobé neaktivity. |
 
 ### Fáze 4: Computation (výpočet)
 
@@ -87,7 +86,7 @@ def calculate_markov_matrix(transitions, num_states=5):
         if row_sum > 0:
             matrix[i] = matrix[i] / row_sum
         else:
-            matrix[i][i] = 1.0
+            matrix[i] = np.zeros(num_states) # Zůstává 0, pokud nepozorováno
     return matrix
 ```
 
@@ -97,13 +96,13 @@ Aktuální rozložení komunity (vektor $\mathbf{v}_0$) se vynásobí maticí $P
 
 $$\mathbf{v}_n = \mathbf{v}_0 \cdot P^n$$
 
-Příklad: pokud aktuální rozložení je $\mathbf{v}_0 = [0{,}05,\ 0{,}40,\ 0{,}25,\ 0{,}20,\ 0{,}10]$, model po 7 dnech předpoví nové rozložení uživatelů ve stavech New, Active, Passive, Inactive a Churned.
+Příklad: pokud aktuální rozložení je $\mathbf{v}_0 = [0{,}05,\ 0{,}40,\ 0{,}30,\ 0{,}25]$, model po 7 dnech odhadne nové teoretické rozložení uživatelů ve stavech New, Active, Passive a Inactive.
 
 #### Kaplan-Meier (Survival)
 
-Pro odhad retence se z historických dat vytvoří dva vektory:
-- `durations` - počet dní od připojení do poslední aktivity (nebo odchodu).
-- `event_observed` - `True` pokud uživatel skutečně odešel, `False` pokud je stále aktivní (cenzorovaná data).
+Pro odhad doby setrvání v aktivitě se z historických dat vytvoří dva vektory:
+- `durations` - počet dní od připojení do poslední pozorované aktivity.
+- `event_observed` - `True` pokud aktivita ustala (neaktivita přesáhla práh), `False` pokud je uživatel stále aktivní (cenzorovaná data).
 
 ```python
 @staticmethod
@@ -117,25 +116,25 @@ def calculate_survival_rate(durations, event_observed):
     return survival_curve
 ```
 
-Výstupem je křivka přežití - monotónně klesající funkce $\hat{S}(t)$, která udává pravděpodobnost, že uživatel zůstane na serveru alespoň $t$ dní.
+Výstupem je křivka přežití - monotónně klesající funkce $\hat{S}(t)$, která udává pravděpodobnost, že uživatel zůstane aktivní alespoň $t$ dní.
 
-#### Střední délka setrvání
+#### Medián doby setrvání v aktivitě
 
-Z křivky přežití se vypočítá střední délka setrvání jako plocha pod křivkou:
+Z křivky přežití se stanovuje medián, tedy čas $t$, kdy křivka klesne na hodnotu 0,5 (50 %):
 
-$$E[T] = \int_0^\infty \hat{S}(t) \, dt \approx \sum_{i} \hat{S}(t_i) \cdot \Delta t_i$$
+$$ \text{Medián} = \min \{ t \mid \hat{S}(t) \le 0,5 \} $$
 
 ### Fáze 5: Visualization (vizualizace)
 
 Výsledky se vrátí jako JSON struktura, kterou Chart.js na dashboardu vykreslí:
 
 - **Survival Curve** - čárový graf $\hat{S}(t)$ vs. $t$ (dny).
-- **State Distribution** - sloupcový graf rozložení komunity ve stavech $S_0$ až $S_4$ (aktuální vs. predikované).
+- **State Distribution** - sloupcový graf rozložení komunity ve stavech $S_0$ až $S_3$ (aktuální vs. modelované).
 - **Growth Forecast** - kombinovaný graf s lineární predikcí a sezónními indexy.
 
-## Predikce růstu členů
+## Odhad růstu členů
 
-Model odhaduje počet členů v horizontu 30, 60 a 90 dní.
+Prototyp odhaduje možný budoucí počet členů v horizontu 30, 60 a 90 dní. Toto není produkční predikce, nýbrž explorativní datový pohled.
 
 ### Metodika
 
@@ -159,13 +158,13 @@ $$
 
 Lineární predikce růstu se násobí příslušným sezónním indexem pro daný budoucí den, čímž získáte realističtější předpověď.
 
-## Predikce stability (Churn Analysis)
+## Prototyp analýzy stability (Churn Risk Analysis)
 
-Widget „Predikce stability" na dashboardu zobrazuje:
+Widget „Predikce stability" na dashboardu experimentálně zobrazuje:
 
-- **Churn Rate** - poměr odchodů k celkové velikosti komunity za měsíc.
+- **Odhadovaná míra odchodu (Churn Rate)** - poměr uživatelů, kteří ztratili aktivitu, k celkové velikosti komunity za měsíc.
 - **At-Risk Users** - počet uživatelů ve stavu Passive nebo Inactive.
-- **Predicted Churn (7 dní)** - odhad počtu odchodů na základě Markovova modelu.
+- **Odhadovaný vývoj (7 dní)** - modelový odhad budoucí míry odchodů na základě Markovova řetězce.
 
 Pokud odchody přesáhnou 5 % celkového počtu členů za měsíc, systém vygeneruje Smart Insight s varováním.
 

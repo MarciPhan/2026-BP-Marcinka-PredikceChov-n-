@@ -13,16 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy requirements
 # We construct a requirements list based on analysis since requirements.txt is incomplete
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir \
-    fastapi \
-    uvicorn \
-    jinja2 \
-    python-multipart \
-    pydantic \
-    httpx \
-    requests \
-    itsdangerous
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 

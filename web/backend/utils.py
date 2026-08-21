@@ -82,7 +82,8 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 
-from shared.redis_client import get_redis, REDIS_URL
+from shared.redis_client import get_redis
+from shared.config import settings
 
 try:
     from config.dashboard_secrets import BOT_TOKEN
