@@ -1,34 +1,41 @@
 # Pokročilé API příklady
 
-Jak integrovat CommunityMetrics data do vašich vlastních projektů, botů nebo firemních dashboardů.
+Jak integrovat CommunityMetrics data do vašich vlastních projektů, botů nebo vlastních nástrojů.
+
+::: warning Autentizace
+Aktuální implementace používá hlavičku `X-API-Key` (SHA-256 hash) pro autentizaci API požadavků. Hlavní přístup k dashboardu je přes Discord OAuth2 session.
+:::
 
 ## Příklady implementace
 
 ::: code-group
 
 ```bash [cURL]
-curl -X GET "http://localhost:8093/api/v1/stats/123456789/DAU" \
-     -H "Authorization: Bearer YOUR_SERVER_TOKEN"
+curl -X GET "http://localhost:8093/api/stats" \
+     -H "X-API-Key: YOUR_API_KEY" \
+     -H "Cookie: session=YOUR_SESSION_COOKIE"
 ```
 
 ```python [Python]
 import requests
 
-url = "http://localhost:8093/api/v1/stats/123456789/MAU"
-headers = {"Authorization": "Bearer YOUR_SERVER_TOKEN"}
+url = "http://localhost:8093/api/stats"
+headers = {"X-API-Key": "YOUR_API_KEY"}
+cookies = {"session": "YOUR_SESSION_COOKIE"}
 
-response = requests.get(url, headers=headers)
+response = requests.get(url, headers=headers, cookies=cookies)
 data = response.json()
-print(f"Unikátních uživatelů za měsíc: {data['count']}")
+print(f"Dashboard stats: {data}")
 ```
 
 ```javascript [JavaScript]
-const fetchStats = async (guildId) => {
-  const res = await fetch(`http://localhost:8093/api/v1/stats/${guildId}/DAU`, {
-    headers: { 'Authorization': 'Bearer YOUR_SERVER_TOKEN' }
+const fetchStats = async () => {
+  const res = await fetch('http://localhost:8093/api/stats', {
+    headers: { 'X-API-Key': 'YOUR_API_KEY' },
+    credentials: 'include'
   });
   const data = await res.json();
-  console.log('Daily Active Users:', data.count);
+  console.log('Stats:', data);
 };
 ```
 
@@ -57,19 +64,20 @@ Pokud chcete provádět vlastní hloubkovou analýzu, můžete využít endpoint
 import requests
 import json
 
-def export_guild_data(guild_id, token):
-    url = f"http://localhost:8093/api/v1/admin/export/{guild_id}"
-    headers = {"Authorization": f"Bearer {token}"}
+def export_guild_data(api_key, session_cookie):
+    url = "http://localhost:8093/api/export/activity?format=json"
+    headers = {"X-API-Key": api_key}
+    cookies = {"session": session_cookie}
     
-    response = requests.get(url, headers=headers, stream=True)
+    response = requests.get(url, headers=headers, cookies=cookies)
     if response.status_code == 200:
-        with open(f"communitymetrics_export_{guild_id}.json", "wb") as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
+        data = response.json()
+        with open("communitymetrics_export.json", "w") as f:
+            json.dump(data, f, indent=2)
         print("Export úspěšně dokončen.")
 
 # Použití
-export_guild_data("123456789", "VAŠ_API_TOKEN")
+export_guild_data("VAŠ_API_KEY", "VAŠ_SESSION_COOKIE")
 ```
 
 ::: tip Doporučení

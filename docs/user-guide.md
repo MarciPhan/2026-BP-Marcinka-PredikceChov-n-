@@ -1,3 +1,5 @@
+> **Note:** These features (including XP, leveling, and achievements) are additional extensions and are not part of the core functionality evaluated in the bachelor thesis.
+
 # Uživatelská příručka
 
 Vítejte v CommunityMetrics! Tato příručka vám vysvětlí, jak bot funguje, jaká data o vás shromažďuje a jak se zapojíte do života své komunity.
@@ -54,4 +56,4 @@ Ukládáme pouze metadata, nikoliv obsah vašich zpráv:
 Pomocí příkazu `/gdpr help` získáte přístup ke svým datům:
 
 - `/gdpr data_request` - Stáhněte si kompletní JSON soubor se všemi svými daty.
-- `/gdpr forget_me` - Nevratně smažte svůj profil a anonymizujte všechny své záznamy v databázi.
+- `/gdpr forget_me` - Nevratně smažte svůj profil a všechny své záznamy v databázi.

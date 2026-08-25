@@ -86,7 +86,7 @@ CO SBÍRÁME:
 PROČ:
 - XP systém a automatické role
 - Statistiky aktivity pro správce serveru
-- Predikce zdraví komunity
+- Predikce Engagement Score
 
 VAŠE PRÁVA:
 - /gdpr export - stáhněte si kopii všech svých dat
@@ -108,4 +108,4 @@ Tato šablona je doporučeným výchozím textem. Majitel serveru nese odpovědn
 - Komunikace mezi botem a Redis probíhá přes interní Docker síť (bez expozice na veřejný port).
 - Dashboard vyžaduje přihlášení přes Discord OAuth2 a ověření oprávnění `Manage Server`.
 - Žádná data nejsou sdílena s třetími stranami.
-- API endpointy jsou chráněny Bearer token autentizací a rate limitingem (60 req/min).
+- API endpointy jsou chráněny X-API-Key autentizací (SHA-256 hash) a rate limitingem (120 req/min pro veřejné endpointy).

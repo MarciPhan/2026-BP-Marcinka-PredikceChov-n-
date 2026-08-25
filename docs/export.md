@@ -55,8 +55,8 @@ Strukturovaný formát pro strojové zpracování a integrace:
 Stejná data lze získat programově přes REST API:
 
 ```bash
-curl -X GET "http://localhost:8093/api/export/csv?range=30" \
-     -H "Authorization: Bearer YOUR_TOKEN" \
+curl -X GET "http://localhost:8093/api/export/activity?format=csv" \
+     -H "X-API-Key: YOUR_API_KEY" \
      -H "Cookie: session=YOUR_SESSION_COOKIE" \
      -o export.csv
 ```
@@ -69,5 +69,5 @@ curl -X GET "http://localhost:8093/api/export/csv?range=30" \
 ## Omezení
 
 - Maximální rozsah jednoho exportu je 365 dní.
-- Export je omezen na 60 požadavků za minutu (rate limit).
+- Export je omezen na 120 požadavků za minutu (rate limit).
 - Exportovaná data neobsahují obsah zpráv - pouze agregované metriky.

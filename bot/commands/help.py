@@ -63,7 +63,7 @@ PAGE_DATA = [
     {
         "name": "Skóre komunity",
         "desc": (
-            "**Detailní výpočet skóre zdraví komunity (0-100)**\n\n"
+            "**Detailní výpočet skóre Engagement Score (0-100)**\n\n"
             "Skóre se skládá ze 4 vážených složek (každá 25%):\n\n"
             "**1. Tým & Moderace (25%)**\n"
             "• Ideální poměr: **50-100 členů na moderátora**\n"

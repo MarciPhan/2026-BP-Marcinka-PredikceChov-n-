@@ -76,7 +76,7 @@ Implementace v `shared/models.py`:
 
 ```python
 @staticmethod
-def calculate_markov_matrix(transitions, num_states=5):
+def calculate_markov_matrix(transitions, num_states=4):
     matrix = np.zeros((num_states, num_states))
     for start, end in transitions:
         matrix[start][end] += 1

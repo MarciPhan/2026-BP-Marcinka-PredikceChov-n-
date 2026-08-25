@@ -231,11 +231,11 @@
 </div>
 {% elif id == 'widget_stability' %}
 <div class="card" data-id="widget_stability">
-    <h3 style="margin-bottom: 16px;">Predikce stability</h3>
+    <h3 style="margin-bottom: 16px;">Analýza stability</h3>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
         <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; text-align: center;">
             <div style="font-size: 24px; font-weight: 700; color: var(--success);" id="churn-risk-val">--%</div>
-            <div style="font-size: 12px; color: var(--text-secondary);">Skóre stability</div>
+            <div style="font-size: 12px; color: var(--text-secondary);">Riziko inaktivity</div>
         </div>
         <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; text-align: center;">
             <div style="font-size: 24px; font-weight: 700;" id="leaves-3m">--</div>
@@ -243,7 +243,7 @@
         </div>
     </div>
     <div id="risk-details" style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px;">
-        <div style="font-weight: 600; margin-bottom: 8px;" id="risk-title">Analýza</div>
+        <div style="font-weight: 600; margin-bottom: 8px;" id="risk-title">Markovův model</div>
         <p id="risk-explanation" style="font-size: 13px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
             Načítám data...</p>
     </div>
@@ -559,25 +559,29 @@
                 container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);"><div style="font-size:48px;margin-bottom:12px;"></div><p>Žádná data pro predikci kanálů</p></div>';
             }
 
-            // Risk Analysis
-            const currentMembers = data.predictions.current_members || 500;
+            // Risk Analysis (BP Markov model output)
             const leaves3m = (data.history.leaves || []).slice(-3).reduce((a, b) => a + b, 0);
-            let stability = 100;
-            if (leaves3m > 0 && currentMembers > 0) {
-                const churnPct = (leaves3m / currentMembers) * 100;
-                stability = Math.max(0, Math.round(100 - (churnPct * 10)));
-            }
-            safeSetText('churn-risk-val', stability + '%');
             safeSetText('leaves-3m', leaves3m);
-            const stabilityEl = document.getElementById('churn-risk-val');
-            if (stabilityEl) stabilityEl.style.color = stability < 50 ? '#ef4444' : stability < 80 ? '#f59e0b' : '#10b981';
-
+            
             const titleEl = document.getElementById('risk-title');
             const explEl = document.getElementById('risk-explanation');
-            let explanation = `Za 3 měsíce odešlo ${leaves3m} členů.`;
-            if (titleEl && explEl) {
-                titleEl.textContent = stability >= 90 ? '✅ Výborná stabilita' : '⚠️ Pozor na odchody';
-                explEl.textContent = explanation;
+            
+            if (data.predictions && data.predictions.churn_available) {
+                const churnRisk = data.predictions.churn_risk;
+                safeSetText('churn-risk-val', churnRisk + '%');
+                const stabilityEl = document.getElementById('churn-risk-val');
+                if (stabilityEl) stabilityEl.style.color = churnRisk > 20 ? '#ef4444' : churnRisk > 10 ? '#f59e0b' : '#10b981';
+                
+                if (titleEl && explEl) {
+                    titleEl.textContent = 'Markovův model: Riziko inaktivity';
+                    explEl.textContent = `Odhadovaná pravděpodobnost, že aktivní uživatelé přejdou do inaktivního stavu, je ${churnRisk} %. Historicky za poslední 3 měsíce odešlo ${leaves3m} členů.`;
+                }
+            } else {
+                safeSetText('churn-risk-val', 'N/A');
+                if (titleEl && explEl) {
+                    titleEl.textContent = 'Markovův model: Nedostatek dat';
+                    explEl.textContent = `Pro výpočet rizika inaktivity je zapotřebí více historických dat o přechodech stavů uživatelů. Za poslední 3 měsíce odešlo ${leaves3m} členů.`;
+                }
             }
 
             // --- Research API Fetch ---

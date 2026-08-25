@@ -1,3 +1,5 @@
+> **Note:** These features (including XP, leveling, and achievements) are additional extensions and are not part of the core functionality evaluated in the bachelor thesis.
+
 # Úvod do CommunityMetrics
 
 Vítejte v oficiální dokumentaci **CommunityMetrics** — analytické platformy nové generace pro Discord komunity. CommunityMetrics zpracovává události v reálném čase a poskytuje prediktivní analýzy, které vám pomohou aktivně řídit zdraví a růst vaší komunity.
@@ -11,14 +13,14 @@ Od sledování aktivity jednotlivých členů, přes analýzu voice kanálů, pr
 | **Real-time analytika** | Sledování aktivity v momentě, kdy se děje. Sub-sekundové zpracování. | Analytika |
 | **Predikce aktivity** | Prototypový model využívající Markovovy řetězce k analýze změn aktivity. | Analytika |
 | **Analýza aktivity** | Kaplanův-Meierův odhad ukazující medián doby setrvání v aktivitě. | Analytika |
-| **Engagement Score** | Kompozitní index zdraví komunity (0–100). | Metriky |
+| **Engagement Score** | Kompozitní index Engagement Score (0–100). | Metriky |
 | **XP & Leveling** | Anti-spam XP systém s cooldownem a voice trackingem. | Gamifikace |
 | **Smart Insights** | Automatická doporučení a varování pro moderátory. | Analytika |
 | **Export dat** | JSON/CSV export pro další zpracování v Excelu nebo Pythonu. | Data |
 | **Skóre bezpečnosti** | Hodnocení zabezpečení serveru (MFA, verifikace, filtry). | Bezpečnost |
 
 ::: info Tip pro komunity
-Pro dosažení nejlepších výsledků doporučujeme nechat bota běžet alespoň 7 dní, aby mohl nasbírat dostatek dat pro přesné predikce a trendy. Pokud chcete data ihned, použijte [Backfill systém](/backfill) pro synchronizaci historie.
+Pro dosažení nejlepších výsledků doporučujeme nechat bota běžet alespoň 30 dní, aby mohl nasbírat dostatek dat pro experimentální predikce (Markov, Kaplan-Meier). Základní statistiky jsou dostupné okamžitě. Pokud chcete data ihned, použijte [Backfill systém](/backfill) pro synchronizaci historie.
 :::
 
 ## Pro koho je tato dokumentace?

@@ -17,7 +17,7 @@ class HealthCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="health", description="Zobrazí celkové zdraví komunity a pokročilé predikce.")
+    @app_commands.command(name="health", description="Zobrazí celkové Engagement Score a pokročilé predikce.")
     @app_commands.describe(research="Zobrazit detailní Markovův model a analýzu přežití?")
     async def health(self, interaction: discord.Interaction, research: bool = False):
         await interaction.response.defer()

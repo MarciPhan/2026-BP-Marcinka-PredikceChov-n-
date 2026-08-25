@@ -68,6 +68,24 @@ class AnalyticsTrackingCog(commands.Cog):
             emoji_str = str(reaction.emoji)
             
             await r.zincrby(f"stats:emojis:{reaction.message.guild.id}", 1, emoji_str)
+            
+            # OPRAVA PRO MII: Update zprávy s novým počtem reakcí pro jmenovatel MII (30 dní)
+            msg = reaction.message
+            author = msg.author
+            if not author.bot:
+                import json
+                ts = msg.created_at.timestamp()
+                key = f"events:msg:{msg.guild.id}:{author.id}"
+                items = await r.zrangebyscore(key, ts - 2, ts + 2)
+                for item_str in items:
+                    try:
+                        data = json.loads(item_str)
+                        if data.get("mid") == msg.id:
+                            await r.zrem(key, item_str)
+                            data["reaction_count"] = sum(r.count for r in msg.reactions)
+                            await r.zadd(key, {json.dumps(data): ts})
+                            break
+                    except: pass
         except Exception as e:
             print(f"Error recording reaction usage: {e}")
 

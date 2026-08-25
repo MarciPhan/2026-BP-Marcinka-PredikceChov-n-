@@ -28,7 +28,7 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 | `DASHBOARD_PORT` | `8093` | Port webového dashboardu. |
 | `DISCORD_REDIRECT_URI` | `http://localhost:8093/auth/callback` | OAuth2 callback URL. |
 | `BOT_LITE_MODE` | `0` | `1` pro sekundární instanci bez slash příkazů. |
-| `API_ACCESS_TOKEN` | - | Bearer token pro REST API (pokud není nastaven, API je veřejné). |
+| `API_ACCESS_TOKEN` | - | API klíč pro REST API (hashován SHA-256, odesílá se v hlavičce `X-API-Key`). |
 | `SMTP_HOST` | - | SMTP server pro e-mailový OTP. |
 | `SMTP_PORT` | `587` | Port SMTP serveru. |
 | `SMTP_USER` | - | Uživatelské jméno pro SMTP. |

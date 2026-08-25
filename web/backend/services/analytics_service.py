@@ -808,6 +808,7 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             if total_interactions_30d > 0:
                 mii = weighted_mod_actions / total_interactions_30d
             else:
+                # BP requirement: if N_interactions == 0, MII is unavailable, not zero
                 mii = None
             
             # 2. Extract User Timelines for ML Models
@@ -819,6 +820,9 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             
             async for key in r.scan_iter(f"events:msg:{guild_id}:*"):
                 uid = key.split(":")[-1]
+                # BP requirement: skip Discourse pseudo-user from Markov analysis
+                if uid == "discourse":
+                    continue
                 first_msg = await r.zrange(key, 0, 0, withscores=True)
                 if first_msg:
                     user_first_observed_activity[uid] = float(first_msg[0][1])

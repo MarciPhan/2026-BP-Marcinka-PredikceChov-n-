@@ -28,7 +28,9 @@ $$ \text{Stickiness} = \frac{\text{DAU}}{\text{MAU}} \times 100 $$
 
 MII (Moderation Intervention Index) vyjadřuje míru moderační zátěže vzhledem k celkovému objemu diskuze. Zvýšená hodnota neindikuje nutně "toxicitu" komunity, nýbrž může odrážet změnu pravidel nebo aktivnější přístup moderátorů.
 
-$$ MII = \frac{\sum_k w_k M_k}{\max(1, N_{\text{interactions}})} $$
+$$ MII = \\frac{\\sum_k w_k M_k}{N_{\\text{interactions}}} \\quad \\text{(definováno pouze pro } N_{\\text{interactions}} > 0 \\text{)} $$
+
+Pokud $N_{\\text{interactions}} = 0$, MII je nedostupné (`unavailable`), nikoliv nulové. Jmenovatel zahrnuje zprávy a zaznamenané reakce v posledních 30 dnech.
 
 Váhy jednotlivých akcí:
 -   **Ban:** 50 bodů

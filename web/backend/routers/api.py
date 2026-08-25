@@ -323,11 +323,23 @@ async def get_predictions_data(request: Request, _=Depends(require_auth)):
     activity_history = []
     hist_dates = []
     
+    global_first_seen = end_dt.timestamp()
+    async for key in r.scan_iter(f"events:msg:{guild_id}:*"):
+        msgs = await r.zrange(key, 0, 0, withscores=True)
+        if msgs:
+            ts = float(msgs[0][1])
+            if ts < global_first_seen:
+                global_first_seen = ts
+
+    first_date = datetime.datetime.fromtimestamp(global_first_seen).date()
     
     for i in range(30):
         d = end_dt - datetime.timedelta(days=29-i)
         d_str = d.strftime("%Y%m%d")
         
+        if d.date() < first_date:
+            continue
+            
         h_data = await r.hgetall(f"stats:hourly:{guild_id}:{d_str}")
         daily_sum = sum(int(float(v)) for v in h_data.values())
         activity_history.append(daily_sum)
@@ -461,12 +473,10 @@ async def get_predictions_data(request: Request, _=Depends(require_auth)):
     
     mau_key = f"hll:mau:{guild_id}:{end_dt.strftime('%Y%m')}"
     mau = await r.pfcount(mau_key)
-    if mau == 0:
-        
-        mau = round(avg_dau * 3.5) if avg_dau > 0 else 0
+    mau_available = mau > 0
+    # BP principle: missing data != zero. Do not fabricate MAU from DAU.
     
-    
-    dau_mau_ratio = round((avg_dau / mau * 100), 1) if mau > 0 else 0
+    dau_mau_ratio = round((avg_dau / mau * 100), 1) if mau > 0 else None
     
     
     mau_growth_rate = 1.0 + (avg_monthly_growth / max(1, current_members)) if avg_monthly_growth > 0 else 1.0
@@ -475,14 +485,15 @@ async def get_predictions_data(request: Request, _=Depends(require_auth)):
         mau_forecast.append(round(mau_forecast[-1] * mau_growth_rate))
     
     
-    if research_data.get("success"):
-        churn_score = research_data.get("inactivity_risk_pct") or 0
+    # BP principle: churn/inactivity risk comes only from Markov model.
+    # Do not fabricate churn_score from leave counts — that is not a
+    # predictive method described in the thesis.
+    if research_data.get("success") and research_data.get("inactivity_risk_pct") is not None:
+        churn_score = research_data.get("inactivity_risk_pct")
+        churn_available = True
     else:
-        recent_leaves_3m = leaves_history[-3:] if len(leaves_history) >= 3 else leaves_history
-        total_recent_leaves = sum(recent_leaves_3m) if recent_leaves_3m else 0
-        churn_rate = (total_recent_leaves / max(1, current_members))
-        churn_score = min(round(churn_rate * 100 * 10), 100)
-        if total_recent_leaves == 0: churn_score = 0
+        churn_score = None
+        churn_available = False
     
     
     res_dict = {
@@ -507,19 +518,27 @@ async def get_predictions_data(request: Request, _=Depends(require_auth)):
             "trend": "up" if dau_slope > 0 else "down" if dau_slope < 0 else "stable"
         },
         "mau": {
-            "current": mau,
-            "forecast": mau_forecast,
+            "current": mau if mau_available else None,
+            "available": mau_available,
+            "reason": None if mau_available else "missing_mau_data",
+            "forecast": mau_forecast if mau_available else [],
             "dau_mau_ratio": dau_mau_ratio
         },
         "predictions": {
+            "available": len(activity_history) >= 7,
+            "reason": None if len(activity_history) >= 7 else "insufficient_history",
             "members_30d": predicted_members_30d,
             "members_growth_pct": growth_pct,
             "expected_msgs_tomorrow": expected_msgs_tomorrow,
             "expected_dau": expected_dau,
             "avg_dau": round(avg_dau),
             "churn_risk": churn_score,
+            "churn_available": churn_available,
             "avg_monthly_growth": round(avg_monthly_growth, 1),
-            "current_members": current_members
+            "current_members": current_members,
+            "method": "average_monthly_net_growth",
+            "experimental": True,
+            "validated_prediction": False
         },
         "channels": []
     }
@@ -551,101 +570,7 @@ async def get_predictions_data(request: Request, _=Depends(require_auth)):
         return JSONResponse(res_dict)
 
 
-@router.post("/api/trigger-backfill")
-async def trigger_backfill(request: Request, guild_id: Optional[str] = Form(None), _=Depends(require_admin)):
-    """Trigger manual backfill from dashboard (Admin only)."""
-    await require_csrf(request)
 
-    target_gid = guild_id or request.session.get("guild_id")
-    print(f"DEBUG: trigger_backfill - Form guild_id: {guild_id}, Session guild_id: {request.session.get('guild_id')}, Resolved: {target_gid}")
-
-    if not target_gid:
-         return JSONResponse({"status": "error", "message": "No guild ID found in session or request"}, status_code=400)
-    
-    if target_gid == "demo-guild":
-         return JSONResponse({"status": "error", "message": "Přístup odepřen: Akce není v demo režimu povolena."}, status_code=403)
-
-    
-    import subprocess
-    import sys
-    import os
-    
-    script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "backfill_stats.py"))
-    token_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "config", "bot_token.py"))
-    
-    
-    primary_token = None
-    dashboard_token = None
-    if os.path.exists(token_path):
-        with open(token_path, 'r') as f:
-            for line in f:
-                if line.strip().startswith("TOKEN =") and "None" not in line:
-                    primary_token = line.split("=")[1].strip().strip('"').strip("'")
-                elif line.strip().startswith("DASHBOARD_TOKEN ="):
-                    dashboard_token = line.split("=")[1].strip().strip('"').strip("'")
-    
-    if not primary_token:
-        primary_token = os.getenv("BOT_TOKEN")
-    if not dashboard_token:
-        dashboard_token = os.getenv("DASHBOARD_TOKEN")
-    
-    
-    
-    
-    
-    from ..utils import get_redis_client
-    r = await get_redis_client()
-    
-    
-    primary_guilds = await r.smembers("bot:guilds:primary") or set()
-    dashboard_guilds = await r.smembers("bot:guilds:dashboard") or set()
-    
-    
-    if target_gid in primary_guilds:
-        bot_token_val = primary_token
-    elif target_gid in dashboard_guilds:
-        bot_token_val = dashboard_token
-    else:
-        # Fallback to dashboard token (safe default for new setups)
-        bot_token_val = dashboard_token or primary_token
-    
-    if os.path.exists(script_path) and bot_token_val:
-        cmd = [sys.executable, script_path, "--guild_id", str(target_gid), "--token", bot_token_val]
-        
-        # Log to file for debugging
-        log_path = os.path.join(os.path.dirname(script_path), "backfill.log")
-        
-        try:
-             with open(log_path, 'a') as log_file:
-                 log_file.write(f"\n\n=== Backfill triggered at {datetime.now().isoformat()} for guild {target_gid} ===\n")
-             
-             log_file_handle = open(log_path, 'a')
-             subprocess.Popen(cmd, stdout=log_file_handle, stderr=log_file_handle)
-             return JSONResponse({"status": "ok", "message": f"Backfill started for {target_gid}"})
-        except Exception as e:
-             return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
-    else:
-         return JSONResponse({"status": "error", "message": "Script or Token not found"}, status_code=500)
-
-
-@router.get("/api/backfill-status")
-async def backfill_status(request: Request, _=Depends(require_admin)):
-    """Get the current progress of the backfill process."""
-    guild_id = request.session.get("guild_id")
-    if not guild_id:
-        return JSONResponse({"status": "error", "message": "No guild selected"}, status_code=400)
-    
-    from ..utils import get_redis_client
-    r = await get_redis_client()
-    
-    progress_key = f"backfill:progress:{guild_id}"
-    data = await r.get(progress_key)
-    
-    if not data:
-        return JSONResponse({"status": "inactive"})
-    
-    import json
-    return JSONResponse(json.loads(data))
 
 
 @router.post("/api/delete-server-data")

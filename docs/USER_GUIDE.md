@@ -38,7 +38,7 @@ Vaše data jsou u nás v bezpečí. **Nikdy neukládáme obsah vašich zpráv**,
 ---
 
 ## 4. O botovi
-CommunityMetrics není jen obyčejný bot na statistiky. Je součástí výzkumu v rámci bakalářské práce, který zkoumá, jak se komunity vyvíjejí v čase. Vaše aktivita (anonymizovaná) pomáhá vytvářet přesnější modely pro lepší správu Discord serverů.
+CommunityMetrics není jen obyčejný bot na statistiky. Je součástí výzkumu v rámci bakalářské práce, který zkoumá, jak se komunity vyvíjejí v čase. Vaše aktivita (ukládána jako agregovaná metadata — nikdy ne obsah zpráv) pomáhá vytvářet lepší modely pro správu Discord serverů.
 
 ---
 *Děkujeme, že jste součástí komunity!*

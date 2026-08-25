@@ -2,7 +2,7 @@
 
 # CommunityMetrics
 
-**Discord Community Analytics Engine**
+**Web application for analytics support of Discord and Discourse community administrators**
 
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-00a393.svg)](https://fastapi.tiangolo.com)
@@ -27,20 +27,20 @@ Built with Python, FastAPI, and Redis, it features a modular Service-Oriented Ar
 
 #### 1. Multi-Platform Data Analytics
 - **Discord & Discourse Support:** Event-based real-time ingestion from Discord bots alongside periodic polling via Discourse HTTP API connectors.
-- **Behavioral & Retention Modeling:** Automated calculation of user activity trends, DAU/WAU/MAU estimation via HyperLogLog, and prototype retention modeling (Markov chains & Kaplan-Meier survival curves).
+- **Behavioral & Retention Modeling:** Automated calculation of user activity trends, DAU/WAU/MAU estimation via HyperLogLog, and prototype retention modeling (Markov chains & Kaplan-Meier survival curves) marked as EXPERIMENTAL.
 - **Moderation Workload Tracking:** Moderator Intervention Index (MII) to monitor community safety and mod team burden.
 - **Smart Insights:** Generates actionable feedback for community managers based on shifts in user behavior.
 
 #### 2. High-Performance Infrastructure
-- **Asynchronous Execution:** Handles thousands of events per second (EPS) using native Python `asyncio` coupled with `httpx` for Discord API interactions.
+- **Asynchronous Execution:** Asynchronous event processing using Python `asyncio` coupled with `httpx` for Discord API interactions.
 - **In-Memory Operations:** Leverages Redis advanced data structures. Uses HyperLogLog (`PFADD`, `PFCOUNT`) for efficient unique user counting and Sorted Sets (`ZADD`) for time-series event mapping, keeping memory footprint minimal.
 
 #### 3. Privacy-by-Design
 - **Zero Message Storage:** The platform strictly adheres to data protection standards. Message content is processed and immediately discarded.
-- **Anonymized Aggregation:** User events are aggregated into statistical metadata. Temporary cache keys utilize strict Time-to-Live (TTL) expirations. Detailed events (`events:msg/voice/action`) are retained for a configurable window (default 90 days, `EVENT_RETENTION_DAYS`) and pruned automatically. Derived aggregates and indexes (HyperLogLog counters, hourly/heatmap stats) persist independently until manually cleared.
+- **Metadata-only Aggregation:** User events are aggregated into statistical metadata (Message content is minimized). Temporary cache keys utilize strict Time-to-Live (TTL) expirations. Detailed events (`events:msg/voice/action`) are retained for a configurable window (default 90 days, `EVENT_RETENTION_DAYS`) and pruned automatically. Derived aggregates and indexes (HyperLogLog counters, hourly/heatmap stats) persist independently.
 
-#### 4. Enterprise Architecture
-- **Dependency Injection:** Fully decoupled Repository and Service layers. The underlying data store (Redis) is accessed through a generic `BaseRepository` interface, allowing for seamless technology substitution (e.g., swapping to PostgreSQL) without altering the business logic.
+#### 4. Service-Oriented Architecture
+- **Dependency Injection:** Fully decoupled Repository and Service layers. The implementation separates routing, analytics services and data access to reduce coupling and improve testability. The underlying data store (Redis) is accessed through a generic `BaseRepository` interface.
 - **Extensible API:** FastAPI provides auto-generated OpenAPI documentation, robust Pydantic validation, and clean endpoint routing for seamless integration.
 
 ### Installation
@@ -113,20 +113,20 @@ Platforma je postavena na Pythonu, FastAPI a Redisu. Vyznačuje se modulární s
 
 #### 1. Víceplatformní analytika
 - **Podpora Discordu a Discourse:** Průběžný událostní sběr událostí z Discordu a HTTP API konektor s možností automatické synchronizace pro Discourse fóra.
-- **Modelování chování a retence:** Výpočty trendů aktivity, odhady denně aktivních uživatelů (DAU/WAU/MAU) přes HyperLogLog a prototypy matematických modelů retence (Markovovy řetězce, Kaplan-Meier).
+- **Modelování chování a retence:** Výpočty trendů aktivity, odhady denně aktivních uživatelů (DAU/WAU/MAU) přes HyperLogLog a prototypy matematických modelů retence (Markovovy řetězce, Kaplan-Meier). Tyto modely jsou EXPERIMENTÁLNÍ.
 - **Sledování moderační zátěže:** Ukazatel Moderator Intervention Index (MII) pro dohled nad bezpečností a vytížením moderačního týmu.
 - **Chytré přehledy (Smart Insights):** Generuje doporučení pro administrátory na základě statistických odchylek v aktivitě uživatelů.
 
 #### 2. Vysoce výkonná infrastruktura
-- **Asynchronní běh:** Zvládá zpracovat tisíce událostí za vteřinu (EPS) pomocí nativní knihovny `asyncio` a `httpx` pro komunikaci s Discord API.
+- **Asynchronní běh:** Zpracování událostí pomocí nativní knihovny `asyncio` a `httpx` pro komunikaci s Discord API.
 - **In-Memory operace:** Využívá pokročilé datové struktury Redis. Pro efektivní počítání unikátních uživatelů s minimální spotřebou paměti implementuje HyperLogLog (`PFADD`, `PFCOUNT`) a pro časové řady událostí využívá seřazené množiny (`ZADD`).
 
 #### 3. Ochrana soukromí
 - **Žádné ukládání zpráv:** Platforma splňuje nejpřísnější standardy ochrany dat. Obsah zpráv je strojově zpracován za běhu a okamžitě zahozen.
-- **Anonymizace a agregace:** Veškeré aktivity uživatelů se agregují výhradně do metadat. Dočasné cache klíče podléhají automatické expiraci (TTL). Detailní události (`events:msg/voice/action`) jsou uchovávány po konfigurovatelnou dobu (výchozí 90 dní, `EVENT_RETENTION_DAYS`) a poté automaticky mazány. Odvozené agregáty a indexy (HyperLogLog, hodinové/heatmap statistiky) přetrvávají nezávisle až do ručního smazání.
+- **Minimalizace a agregace dat:** Veškeré aktivity uživatelů se agregují výhradně do metadat. Dočasné cache klíče podléhají automatické expiraci (TTL). Výchozí retence hlavních detailních eventů je 90 dní a je konfigurovatelná (`EVENT_RETENTION_DAYS`), a poté jsou automaticky mazány. Odvozené agregáty a indexy (HyperLogLog, hodinové/heatmap statistiky) přetrvávají nezávisle.
 
-#### 4. Enterprise Architektura
-- **Dependency Injection:** Kompletní oddělení datové (Repository) a logické (Service) vrstvy. Přístup do Redisu probíhá přes generické rozhraní `BaseRepository`. To umožňuje okamžitou výměnu databázové technologie (např. za PostgreSQL) bez jediného zásahu do analytického kódu.
+#### 4. Architektura orientovaná na služby
+- **Dependency Injection:** Kompletní oddělení datové (Repository) a logické (Service) vrstvy. Implementace odděluje routování, analytické služby a přístup k datům pro snížení provázanosti a zlepšení testovatelnosti. Přístup do Redisu probíhá přes generické rozhraní `BaseRepository`.
 - **Rozšiřitelné API:** Backend na FastAPI poskytuje automaticky generovanou OpenAPI dokumentaci, typovou validaci pomocí Pydantic a přehledné routování endpointů.
 
 ### Instalace
@@ -187,7 +187,7 @@ pytest tests/
 ### Jak přispět
 Příspěvky formou Pull Requestů jsou vítány. Před odesláním PR prosím zkontrolujte, že váš kód splňuje formátovací konvence projektu (pomocí `flake8` a `black`).
 
-## Modul Zdraví komunity
+## Modul Engagement Score
 
 Nová stránka `/community-health` rozšiřuje původní objemovou analytiku o kontextové funkce vycházející z dotazníkového šetření mezi správci komunit:
 

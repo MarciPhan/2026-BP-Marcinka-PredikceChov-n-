@@ -1,3 +1,5 @@
+> **Note:** These features (including XP, leveling, and achievements) are additional extensions and are not part of the core functionality evaluated in the bachelor thesis.
+
 # Přehled příkazů
 
 Zde najdete seznam všech dostupných příkazů CommunityMetrics. Všechny funkce vyvoláte pomocí lomítkových příkazů (Slash Commands).

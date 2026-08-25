@@ -1,3 +1,5 @@
+> **Note:** These features (including XP, leveling, and achievements) are additional extensions and are not part of the core functionality evaluated in the bachelor thesis.
+
 ---
 layout: home
 
@@ -37,7 +39,7 @@ features:
 ## Kde začít
 
 ::: info Tip pro nové servery
-Pro přesné predikce doporučujeme nechat bota sbírat data alespoň 7 dní. Pro okamžité výsledky použijte [backfill historických dat](/backfill).
+Pro experimentální predikce (Markov, Kaplan-Meier) doporučujeme nechat bota sbírat data alespoň 30 dní. Základní statistiky jsou dostupné okamžitě. Pro okamžité výsledky použijte [backfill historických dat](/backfill).
 :::
 
 <div class="premium-grid">
@@ -82,7 +84,7 @@ Tato dokumentace je strukturována podle rolí a konkrétních úkolů, které v
 ### Pro moderátory a správce komunit
 CommunityMetrics vám pomůže pochopit dynamiku vašeho serveru a činit rozhodnutí podložená daty.
 - **Řízení aktivity:** Naučte se interpretovat [analytické metriky](/analytics) a spravovat [XP systém](/roles).
-- **Prevence odchodů:** Včas identifikujte krizové signály pomocí [Smart Insights](/insights) a [predikce retence](/predictions).
+- **experimentální agregovaný indikátor:** Včas identifikujte krizové signály pomocí [Smart Insights](/insights) a [predikce retence](/predictions).
 - **Bezpečnost a soukromí:** Nastavte správně [skóre bezpečnosti](/security) a seznamte se s [ochranou osobních údajů](/privacy).
 
 ### Pro vývojáře a technické administrátory

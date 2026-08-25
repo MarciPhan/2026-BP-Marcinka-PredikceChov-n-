@@ -63,7 +63,7 @@ DISCORD_CLIENT_SECRET=abcdefghijklmnopqrstuvwxyz123456
 # Web Dashboard
 DASHBOARD_PORT=8093
 DASHBOARD_SECRET_KEY=           # min 32 znaků (viz generování níže)
-DASHBOARD_ACCESS_TOKEN=         # Bearer token pro REST API
+DASHBOARD_ACCESS_TOKEN=         # API klíč (hashován SHA-256, odesílá se v hlavičce X-API-Key)
 
 # Infrastruktura
 REDIS_URL=redis://localhost:6379/0

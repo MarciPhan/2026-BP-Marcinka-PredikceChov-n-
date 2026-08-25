@@ -1,3 +1,5 @@
+> **Note:** These features (including XP, leveling, and achievements) are additional extensions and are not part of the core functionality evaluated in the bachelor thesis.
+
 # Integrace a webhooky
 
 CommunityMetrics odesílá HTTP notifikace (webhooky) při výskytu definovaných událostí. Tato sekce popisuje formát zpráv a dostupné události.
@@ -54,8 +56,8 @@ def verify_webhook(payload: bytes, signature: str, secret: str) -> bool:
 
 CommunityMetrics podporuje propojení Discord účtů s účty na fóru Discourse:
 
-- **Synchronizace rolí:** Automatické přidělení Discord rolí podle aktivity na fóru.
-- **XP Merge:** Sloučení bodů z obou platforem.
+- **Synchronizace událostí:** Idempotent synchronizace Discourse příspěvků do Redis event streamu.
+- **XP Merge:** *(Plánované rozšíření, není součástí aktuální implementace.)* Sloučení bodů z obou platforem.
 
 Konfigurace v dashboardu:
 

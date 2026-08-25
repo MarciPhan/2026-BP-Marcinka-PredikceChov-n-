@@ -1,4 +1,4 @@
-# Zdraví komunity
+# Engagement Score
 
 ## Principy
 

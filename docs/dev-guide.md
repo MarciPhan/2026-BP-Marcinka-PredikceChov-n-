@@ -49,7 +49,7 @@ DISCORD_CLIENT_SECRET=<OAuth2 Client Secret>
 # Web Dashboard
 DASHBOARD_PORT=8093
 DASHBOARD_SECRET_KEY=<vygenerujte: python3 -c "import secrets; print(secrets.token_hex(32))">
-DASHBOARD_ACCESS_TOKEN=<Bearer token pro API>
+DASHBOARD_ACCESS_TOKEN=<API klíč (hashován SHA-256, odesílá se v hlavičce X-API-Key)>
 
 # Infrastruktura
 REDIS_URL=redis://localhost:6379/0

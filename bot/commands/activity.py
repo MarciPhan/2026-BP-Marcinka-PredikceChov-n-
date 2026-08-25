@@ -149,7 +149,8 @@ class ActivityMonitor(commands.Cog):
         event_data = json.dumps({
             "mid": message.id,
             "len": len(message.content),
-            "reply": message.reference is not None
+            "reply": message.reference is not None,
+            "reaction_count": 0
         })
         
         await self.r.zadd(key, {event_data: ts})
@@ -588,7 +589,7 @@ class ActivityMonitor(commands.Cog):
                         length = len(msg.content)
                         is_reply = (msg.reference is not None)
                         
-                        user_messages[msg.author.id].append((ts, length, is_reply))
+                        user_messages[msg.author.id].append((ts, length, is_reply, msg.id, len(msg.reactions)))
                         msg_count += 1
                         
                         
@@ -600,8 +601,8 @@ class ActivityMonitor(commands.Cog):
                             for uid, messages in user_messages.items():
                                 key = f"events:msg:{gid}:{uid}"
                                 mapping = {}
-                                for ts, length, is_reply in messages:
-                                    event_data = json.dumps({"len": length, "reply": is_reply})
+                                for ts, length, is_reply, mid, reaction_count in messages:
+                                    event_data = json.dumps({"mid": mid, "len": length, "reply": is_reply, "reaction_count": reaction_count})
                                     mapping[event_data] = ts
                                 
                                 if mapping:
@@ -628,8 +629,8 @@ class ActivityMonitor(commands.Cog):
         for uid, messages in user_messages.items():
             key = f"events:msg:{gid}:{uid}"
             mapping = {}
-            for ts, length, is_reply in messages:
-                event_data = json.dumps({"len": length, "reply": is_reply})
+            for ts, length, is_reply, mid, reaction_count in messages:
+                event_data = json.dumps({"mid": mid, "len": length, "reply": is_reply, "reaction_count": reaction_count})
                 mapping[event_data] = ts
             
             if mapping:

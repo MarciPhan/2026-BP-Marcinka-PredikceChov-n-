@@ -282,15 +282,15 @@ class CommunityHealthTracker(commands.Cog):
                 await self.r.sadd(f"health:event:attended:{gid}:{event_id}", str(member.id))
 
 
-    health_group = app_commands.Group(name="health", description="Kontextová analytika zdraví komunity")
+    health_group = app_commands.Group(name="health", description="Kontextová analytika Engagement Score")
 
-    @health_group.command(name="status", description="Zobrazí stav modulů zdraví komunity.")
+    @health_group.command(name="status", description="Zobrazí stav modulů Engagement Score.")
     @app_commands.checks.has_permissions(administrator=True)
     async def health_status(self, interaction: discord.Interaction):
         cfg = await self._config(interaction.guild_id)
         support_count = await self.r.scard(f"cfg:health:support_channels:{interaction.guild_id}")
         await interaction.response.send_message(
-            "**Zdraví komunity**\n"
+            "**Engagement Score**\n"
             f"Typ: `{cfg['community_type']}`\n"
             f"Žádosti o pomoc: `{'zapnuto' if cfg['help_requests_enabled'] else 'vypnuto'}` ({support_count} kanálů)\n"
             f"Kontext moderace: `{'zapnuto' if cfg['moderation_context_enabled'] else 'vypnuto'}`\n"

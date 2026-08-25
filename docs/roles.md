@@ -1,3 +1,5 @@
+> **Note:** These features (including XP, leveling, and achievements) are additional extensions and are not part of the core functionality evaluated in the bachelor thesis.
+
 # XP systém a automatické role
 
 Systém přiděluje zkušenostní body (XP) za aktivitu na serveru. Body se kumulují a určují úroveň uživatele, na jejímž základě bot automaticky přiřazuje Discord role.
@@ -63,7 +65,8 @@ redis-cli HSET config:xp:weights msg_short 1 msg_medium 5 msg_long 15
 
 # Přes REST API
 curl -X POST http://localhost:8093/admin/config/weights \
-  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Cookie: session=YOUR_SESSION_COOKIE" \
   -d '{"msg_short": 1, "msg_medium": 5}'
 ```
 
