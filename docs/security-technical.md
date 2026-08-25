@@ -15,7 +15,7 @@ Jak CommunityMetrics chrání vaše data na infrastrukturní úrovni.
 | :--- | :--- | :--- |
 | **Session Tokeny** | Redis (Keys) | 24 Hodin |
 | **Uživatelské Info** | Redis (Hash) | 7 Dní |
-| **Analytické eventy** | Redis (Sorted Sets) | Neomezeně / Do smazání |
+| **Analytické eventy** | Redis (Sorted Sets) | Konfigurovatelné (výchozí 90 dní, `EVENT_RETENTION_DAYS`), automaticky mazáno |
 
 ## 3. Ochrana proti útokům
 

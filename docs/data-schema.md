@@ -43,7 +43,7 @@ Aby nedošlo k přeplnění operační paměti (RAM), CommunityMetrics uplatňuj
 
 | Kategorie | Retence | Odůvodnění |
 | :--- | :--- | :--- |
-| **Surové eventy** | Neomezeně / Do smazání | Nutné pro výpočet MAU a predikčních modelů. |
+| **Surové eventy** | Konfigurovatelné (výchozí 90 dní, `EVENT_RETENTION_DAYS`) | Automaticky mazáno po uplynutí retence; HLL a agregáty přetrvávají nezávisle. |
 | **HLL Statistiky** | 90 dní | Pro dlouhodobý pohled na unikátní uživatele. |
 | **Uživatelská cache** | 7 dní | Cachování jmen a avatarů z Discord API. |
 | **Runtime status** | 60–300 s | Kritická data pro monitorování stavu bota. |

@@ -37,7 +37,7 @@ Built with Python, FastAPI, and Redis, it features a modular Service-Oriented Ar
 
 #### 3. Privacy-by-Design
 - **Zero Message Storage:** The platform strictly adheres to data protection standards. Message content is processed and immediately discarded.
-- **Anonymized Aggregation:** User events are aggregated into statistical metadata. While temporary cache keys utilize strict Time-to-Live (TTL) expirations, historical analytics events are stored indefinitely until manually deleted.
+- **Anonymized Aggregation:** User events are aggregated into statistical metadata. Temporary cache keys utilize strict Time-to-Live (TTL) expirations. Detailed events (`events:msg/voice/action`) are retained for a configurable window (default 90 days, `EVENT_RETENTION_DAYS`) and pruned automatically. Derived aggregates and indexes (HyperLogLog counters, hourly/heatmap stats) persist independently until manually cleared.
 
 #### 4. Enterprise Architecture
 - **Dependency Injection:** Fully decoupled Repository and Service layers. The underlying data store (Redis) is accessed through a generic `BaseRepository` interface, allowing for seamless technology substitution (e.g., swapping to PostgreSQL) without altering the business logic.
@@ -123,7 +123,7 @@ Platforma je postavena na Pythonu, FastAPI a Redisu. Vyznačuje se modulární s
 
 #### 3. Ochrana soukromí
 - **Žádné ukládání zpráv:** Platforma splňuje nejpřísnější standardy ochrany dat. Obsah zpráv je strojově zpracován za běhu a okamžitě zahozen.
-- **Anonymizace a agregace:** Veškeré aktivity uživatelů se agregují výhradně do metadat. Zatímco dočasné cache klíče podléhají automatické expiraci (TTL), historické analytické události jsou uloženy neomezeně až do jejich smazání administrátorem.
+- **Anonymizace a agregace:** Veškeré aktivity uživatelů se agregují výhradně do metadat. Dočasné cache klíče podléhají automatické expiraci (TTL). Detailní události (`events:msg/voice/action`) jsou uchovávány po konfigurovatelnou dobu (výchozí 90 dní, `EVENT_RETENTION_DAYS`) a poté automaticky mazány. Odvozené agregáty a indexy (HyperLogLog, hodinové/heatmap statistiky) přetrvávají nezávisle až do ručního smazání.
 
 #### 4. Enterprise Architektura
 - **Dependency Injection:** Kompletní oddělení datové (Repository) a logické (Service) vrstvy. Přístup do Redisu probíhá přes generické rozhraní `BaseRepository`. To umožňuje okamžitou výměnu databázové technologie (např. za PostgreSQL) bez jediného zásahu do analytického kódu.

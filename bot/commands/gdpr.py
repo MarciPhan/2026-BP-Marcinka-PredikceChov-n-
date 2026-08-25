@@ -7,6 +7,8 @@ import json
 from datetime import datetime
 from typing import Optional
 
+from shared.config import settings
+
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 
@@ -66,9 +68,9 @@ class GDPRCommands(commands.Cog):
         embed.add_field(
             name="Jak dlouho ukládáme",
             value=(
-                "• **Uživatelské info:** 7 dní (automaticky expiruje)\n"
-                "• **Event data:** Neomezené (až do smazání)\n"
-                "• **Statistiky:** Neomezené (až do smazání)"
+                f"• **Uživatelské info:** 7 dní (automaticky expiruje)\n"
+                f"• **Event data:** {settings.event_retention_days} dní (poté automaticky mazáno), agregace a indexy déle\n"
+                f"• **Statistiky:** HyperLogLog a hodinové agregace nezávisle na retenci eventů"
             ),
             inline=False
         )
