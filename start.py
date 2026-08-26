@@ -114,7 +114,7 @@ def main():
                 k, v = line.strip().split("=", 1)
                 env[k.strip()] = v.strip().strip("'").strip('"')
 
-    if not env.get("DISCOURSE_TOKEN"):
+    if not env.get("DISCOURSE_TOKEN") and not os.getenv("TOKEN_PROMPTED_ALREADY"):
         print("\n" + "="*60)
         print_color(" CHYBA: DISCOURSE_TOKEN není nastaven v .env souboru!", "1;31")
         try:
@@ -125,7 +125,7 @@ def main():
         if not token:
             print_color(" Pokračuji bez tokenu. Synchronizace Discourse nemusí fungovat.", "1;33")
         else:
-            with open(".env", "a") as f:
+            with open(".env", "a", encoding="utf-8") as f:
                 f.write(f"\nDISCOURSE_TOKEN={token}\n")
             
             env["DISCOURSE_TOKEN"] = token

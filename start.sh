@@ -28,7 +28,7 @@ if [ -z "$DISCOURSE_TOKEN" ]; then
     
     trap 'stty echo 2>/dev/null; echo ""; exit 1' INT TERM
     stty -echo 2>/dev/null
-    read USER_TOKEN
+    IFS= read -r USER_TOKEN
     stty echo 2>/dev/null
     trap - INT TERM
     echo ""
@@ -40,12 +40,10 @@ if [ -z "$DISCOURSE_TOKEN" ]; then
             echo " [WARNING] Zadaný text je příliš krátký na to, aby šlo o platný token (omylem stisknutá klávesa?)."
             echo " Pokračuji bez tokenu."
         else
-            echo "" >> .env
-            echo "DISCOURSE_TOKEN=$USER_TOKEN" >> .env
+            printf '\nDISCOURSE_TOKEN=%s\n' "$USER_TOKEN" >> .env
             echo " Token byl úspěšně uložen do .env!"
         fi
     fi
-    export TOKEN_PROMPTED_ALREADY=1
     echo "============================================================"
 fi
 
@@ -57,20 +55,21 @@ if command -v node >/dev/null 2>&1; then
     fi
 fi
 
+USE_DOCKER=0
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-    echo "Docker detected. Starting via docker compose..."
-    
     if docker compose version >/dev/null 2>&1; then
         COMPOSE_CMD="docker compose"
+        USE_DOCKER=1
     elif command -v docker-compose >/dev/null 2>&1; then
         COMPOSE_CMD="docker-compose"
+        USE_DOCKER=1
     else
-        echo ""
-        echo "============================================================"
-        echo "  [ERROR] Docker je dostupný, ale Docker Compose nebyl nalezen!"
-        echo "============================================================"
-        exit 1
+        echo " [WARNING] Docker běží, ale chybí Docker Compose. Přecházím na Python fallback..."
     fi
+fi
+
+if [ "$USE_DOCKER" -eq 1 ]; then
+    echo "Docker a Compose detekováno. Spouštím aplikaci..."
 
     $COMPOSE_CMD up --build -d
     if [ $? -ne 0 ]; then
@@ -82,30 +81,52 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     fi
 
     echo "Ověřuji stav kontejnerů..."
-    sleep 3
-    DOCKER_HEALTHY=1
-
-    $COMPOSE_CMD ps -a >/dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        echo "============================================================"
-        echo "  [WARNING] Nepodařilo se získat stav Docker kontejnerů."
-        echo "============================================================"
-        DOCKER_HEALTHY=0
-    else
-        if $COMPOSE_CMD ps -a | grep -iE "Exit|Dead|Restarting|Created|Paused|unhealthy" >/dev/null 2>&1; then
-            echo "============================================================"
-            echo "  [WARNING] Některé kontejnery nejsou v pořádku!"
-            echo "  Doporučujeme zkontrolovat logy: $COMPOSE_CMD logs"
-            echo "============================================================"
-            DOCKER_HEALTHY=0
+    DOCKER_HEALTHY=0
+    
+    for i in 1 2 3 4 5 6 7 8 9 10; do
+        CONTAINERS=$($COMPOSE_CMD ps -a -q 2>/dev/null)
+        
+        if [ -n "$CONTAINERS" ]; then
+            ALL_READY=1
+            
+            for CONTAINER in $CONTAINERS; do
+                STATUS=$(docker inspect -f '{{.State.Status}}' "$CONTAINER" 2>/dev/null)
+                HEALTH=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$CONTAINER" 2>/dev/null)
+                
+                if [ "$STATUS" != "running" ]; then
+                    ALL_READY=0
+                    break
+                fi
+                
+                if [ "$HEALTH" = "starting" ] || [ "$HEALTH" = "unhealthy" ]; then
+                    ALL_READY=0
+                    break
+                fi
+            done
+            
+            if [ "$ALL_READY" -eq 1 ]; then
+                DOCKER_HEALTHY=1
+                break
+            fi
         fi
+        sleep 2
+    done
+
+    if [ "$DOCKER_HEALTHY" -eq 0 ]; then
+        echo "============================================================"
+        echo "  [WARNING] Některé kontejnery nejsou plně připraveny nebo havarovaly."
+        echo "  Doporučujeme zkontrolovat logy: $COMPOSE_CMD logs"
+        echo "============================================================"
     fi
 
     DOCS_URL=""
     if [ "$NODE_OK" -eq 1 ] && command -v npm >/dev/null 2>&1; then
         echo "Node.js (v22+) a npm detekováno. Starting documentation (VitePress)..."
         if command -v lsof >/dev/null 2>&1; then
-            lsof -t -i:5173 | xargs kill -9 2>/dev/null || true
+            PIDS=$(lsof -t -i:5173 2>/dev/null || true)
+            if [ -n "$PIDS" ]; then
+                kill $PIDS 2>/dev/null || true
+            fi
         fi
         
         npm install --no-audit --no-fund --silent
@@ -113,10 +134,16 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
             echo "[WARNING] npm install selhal. Dokumentace nebude spuštěna."
         else
             npm run docs:dev > docs.log 2>&1 &
-            DOCS_URL="   [DOCS] Dokumentace  : http://localhost:5173"
+            DOCS_PID=$!
+            sleep 1
+            if kill -0 "$DOCS_PID" 2>/dev/null; then
+                DOCS_URL="   [DOCS] Dokumentace  : http://localhost:5173"
+            else
+                echo "[WARNING] Dokumentace (VitePress) nečekaně havarovala při spouštění. Zkontrolujte docs.log."
+            fi
         fi
     else
-        echo " [INFO] Node.js 22+ nenalezen. VitePress dokumentace se nespustí."
+        echo " [INFO] Node.js 22+ a/nebo npm nejsou dostupné. VitePress dokumentace se nespustí."
     fi
 
     echo ""
@@ -143,7 +170,7 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     exit 0
 fi
 
-echo "Docker not running. Checking for Python 3.11+..."
+echo "Docker/Compose není dostupný. Checking for Python 3.11+..."
 
 PYTHON_CMD=""
 
@@ -167,9 +194,16 @@ else
             echo " [ERROR] Chybí curl i wget. Nelze stáhnout Python."
             exit 1
         fi
+        
+        if [ ! -x "$RUNTIME_DIR/bin/uv" ]; then
+            echo " [ERROR] Instalace uv selhala."
+            exit 1
+        fi
     fi
     
     UV="$RUNTIME_DIR/bin/uv"
+    export UV_PYTHON_INSTALL_DIR="$RUNTIME_DIR/python"
+    
     echo "Stahuji Python 3.11 přes uv..."
     "$UV" python install 3.11
     if [ $? -ne 0 ]; then
@@ -177,7 +211,7 @@ else
         exit 1
     fi
     
-    PYTHON_CMD=$("$UV" python find 3.11)
+    PYTHON_CMD=$("$UV" python find --managed-python 3.11)
     if [ -z "$PYTHON_CMD" ]; then
         echo " [ERROR] uv nenalezl nainstalovaný Python."
         exit 1

@@ -1,6 +1,7 @@
 @echo off
 setlocal DisableDelayedExpansion
 cd /d "%~dp0"
+chcp 65001 >nul
 echo Starting CommunityMetrics...
 
 if not exist ".env" (
@@ -32,10 +33,16 @@ set /p INPUT_TOKEN=" Prosim, zadejte svuj Discourse API Token (nebo stisknete En
 if "!INPUT_TOKEN!"=="" (
     echo  Pokracuji bez tokenu. Synchronizace Discourse nemusi fungovat.
 ) else (
-    echo.>> .env
-    echo DISCOURSE_TOKEN=!INPUT_TOKEN!>> .env
-    echo  Token byl uspesne ulozen do .env!
+    if "!INPUT_TOKEN:~30,1!"=="" (
+        echo  [WARNING] Zadany text je prilis kratky na to, aby slo o platny token ^(omylem stisknuta klavesa?^).
+        echo  Pokracuji bez tokenu.
+    ) else (
+        echo.>> .env
+        echo DISCOURSE_TOKEN=!INPUT_TOKEN!>> .env
+        echo  Token byl uspesne ulozen do .env!
+    )
 )
+set "TOKEN_PROMPTED_ALREADY=1"
 echo ============================================================
 
 :npm_check
@@ -102,8 +109,8 @@ if !ERRORLEVEL! neq 0 (
     )
 )
 
-echo  Overuji stav kontejneru...
-timeout /t 3 /nobreak >nul
+echo  Overuji stav kontejneru (cekam na stabilizaci)...
+timeout /t 10 /nobreak >nul
 set "DOCKER_HEALTHY=1"
 
 !COMPOSE_CMD! ps -a
@@ -113,7 +120,7 @@ if !ERRORLEVEL! neq 0 (
     echo ============================================================
     set "DOCKER_HEALTHY=0"
 ) else (
-    !COMPOSE_CMD! ps -a | findstr /i /c:"Exit" /c:"Dead" /c:"Restarting" /c:"Created" /c:"Paused" /c:"unhealthy" >nul
+    !COMPOSE_CMD! ps -a | findstr /i /c:"Exit " /c:"Dead " /c:"unhealthy" >nul
     if !ERRORLEVEL! equ 0 (
         echo ============================================================
         echo  [WARNING] Nektere kontejnery nejsou v poradku!
