@@ -45,6 +45,7 @@ if [ -z "$DISCOURSE_TOKEN" ]; then
         fi
     fi
     echo "============================================================"
+    export TOKEN_PROMPTED_ALREADY=1
 fi
 
 NODE_OK=0

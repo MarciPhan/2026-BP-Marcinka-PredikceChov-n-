@@ -102,6 +102,10 @@ def main():
         kill_processes_on_port(dashboard_port)
         time.sleep(1)
 
+    if has_npm and not check_port_free(5173):
+        kill_processes_on_port(5173)
+        time.sleep(1)
+
     # 5. Launch
     env = os.environ.copy()
     env["PYTHONPATH"] = os.path.abspath(os.path.dirname(__file__))
