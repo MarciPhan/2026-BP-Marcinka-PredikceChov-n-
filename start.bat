@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal enabledelayedexpansion
 echo Starting CommunityMetrics...
 
 if not exist ".env" (
@@ -21,30 +21,30 @@ echo.
 echo ============================================================
 echo  CHYBA: DISCOURSE_TOKEN neni nastaven v .env souboru!
 set /p INPUT_TOKEN=" Prosim, zadejte svuj Discourse API Token (nebo stisknete Enter pro preskoceni): "
-if "%INPUT_TOKEN%"=="" (
+if "!INPUT_TOKEN!"=="" (
     echo  Pokracuji bez tokenu. Synchronizace Discourse nemusi fungovat.
     goto skip_discourse_token_msg
 )
 echo.>> .env
-echo DISCOURSE_TOKEN=%INPUT_TOKEN%>> .env
+echo DISCOURSE_TOKEN=!INPUT_TOKEN!>> .env
 echo  Token byl uspesne ulozen do .env!
 :skip_discourse_token_msg
 echo ============================================================
 :skip_discourse_token
 
 where docker >nul 2>nul
-if %ERRORLEVEL% equ 0 (
+if !ERRORLEVEL! equ 0 (
     docker info >nul 2>nul
-    if %ERRORLEVEL% equ 0 (
+    if !ERRORLEVEL! equ 0 (
         echo Docker detected and running. Starting via docker compose...
         docker compose up --build -d
-        if %ERRORLEVEL% neq 0 (
+        if !ERRORLEVEL! neq 0 (
             docker-compose up --build -d
         )
 
         set DOCS_URL=
         where npm >nul 2>nul
-        if %ERRORLEVEL% equ 0 (
+        if !ERRORLEVEL! equ 0 (
             echo Node.js detected. Starting documentation (VitePress)...
             rem Zabijeme predchozi proces na portu 5173
             for /f "tokens=5" %%a in ('netstat -ano ^| findstr :5173 ^| findstr LISTENING') do taskkill /F /PID %%a >nul 2>&1
@@ -57,8 +57,8 @@ if %ERRORLEVEL% equ 0 (
         echo ============================================================
         echo    [SUCCESS] CommunityMetrics spusteno uspesne (Docker)!          
         echo ============================================================
-        echo    [WEB] Web Dashboard : http://localhost:%DASHBOARD_PORT%
-        if defined DOCS_URL echo %DOCS_URL%
+        echo    [WEB] Web Dashboard : http://localhost:!DASHBOARD_PORT!
+        if defined DOCS_URL echo !DOCS_URL!
         echo    [BOT] Discord Bot    : Bezi (Primary ^& Dashboard Lite)
         echo    [SYNC] Discourse Sync : Bezi v pozadi
         echo    [DB] Redis Cache    : localhost:6379
@@ -73,7 +73,7 @@ if %ERRORLEVEL% equ 0 (
 )
 
 where npm >nul 2>nul
-if %ERRORLEVEL% neq 0 (
+if !ERRORLEVEL! neq 0 (
     echo ============================================================
     echo  [Windows] Systemu chybi Node.js ^(pro dokumentaci^). Skript jej nyni nainstaluje.
     echo ============================================================
@@ -85,21 +85,20 @@ if %ERRORLEVEL% neq 0 (
     
     echo  Instalace Node.js uspesne dokoncena!
     echo ------------------------------------------------------------
-    echo  Nyni se okno zavre a spusti znovu, aby se nacetly nove promenne...
-    timeout /t 3 >nul
-    start "" cmd /c "%~dpnx0"
-    exit /b
+    echo  Aktualizuji promenne prostredi pro tento beh...
+    set "PATH=%PATH%;%ProgramFiles%\nodejs"
+    echo ============================================================
 )
 
 where python >nul 2>nul
-if %ERRORLEVEL% equ 0 (
+if !ERRORLEVEL! equ 0 (
     echo Docker not found or not running. Python detected. Starting via start.py...
     python start.py
     goto end
 )
 
 where py >nul 2>nul
-if %ERRORLEVEL% equ 0 (
+if !ERRORLEVEL! equ 0 (
     echo Docker not found or not running. Python launcher (py) detected. Starting via start.py...
     py start.py
     goto end
@@ -116,10 +115,11 @@ echo  Spoustim tichou instalaci (muze to trvat nekolik minut, pockejte prosim)..
 
 echo  Instalace Pythonu uspesne dokoncena!
 echo ------------------------------------------------------------
-echo  Nyni se okno zavre a spusti znovu, aby se nacetl novy Python...
-timeout /t 3 >nul
-start "" cmd /c "%~dpnx0"
-exit /b
+echo  Aktualizuji promenne prostredi pro tento beh...
+set "PATH=%PATH%;%LocalAppData%\Programs\Python\Python311;%LocalAppData%\Programs\Python\Python311\Scripts;%ProgramFiles%\Python311;%ProgramFiles%\Python311\Scripts"
+echo ============================================================
+python start.py
+goto end
 
 :end
 pause
