@@ -126,7 +126,7 @@ if !ERRORLEVEL! neq 0 (
 set DOCS_URL=
 where npm >nul 2>nul
 if !ERRORLEVEL! equ 0 (
-    echo Node.js detected. Starting documentation (VitePress)...
+    echo Node.js detected. Starting documentation ^(VitePress^)...
     for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":5173 " ^| findstr LISTENING') do taskkill /F /PID %%a >nul 2>&1
     call npm install --no-audit --no-fund --silent
     if !ERRORLEVEL! neq 0 (
@@ -140,7 +140,7 @@ if !ERRORLEVEL! equ 0 (
 echo.
 echo ============================================================
 if "!DOCKER_HEALTHY!"=="1" (
-    echo    [SUCCESS] CommunityMetrics spusteno uspesne (Docker)!
+    echo    [SUCCESS] CommunityMetrics spusteno uspesne ^(Docker^)!
 ) else (
     echo    [WARNING] CommunityMetrics spusteno, ale kontejnery hlasi problem!
 )
@@ -168,7 +168,7 @@ if !ERRORLEVEL! equ 0 (
 
 py --version >nul 2>nul
 if !ERRORLEVEL! equ 0 (
-    echo Docker not found or not running. Python launcher (py) detected. Starting via start.py...
+    echo Docker not found or not running. Python launcher ^(py^) detected. Starting via start.py...
     py start.py
     goto end
 )
@@ -202,7 +202,7 @@ set "INSTALL_RC=!ERRORLEVEL!"
 if not "!INSTALL_RC!"=="0" if not "!INSTALL_RC!"=="3010" (
     echo ============================================================
     echo  [ERROR] Instalace Pythonu se nezdarila nebo byla zrusena! Kod: !INSTALL_RC!
-    echo  Aplikaci nelze spustit (system nema Docker ani Python).
+    echo  Aplikaci nelze spustit ^(system nema Docker ani Python^).
     echo ============================================================
     goto end
 )
