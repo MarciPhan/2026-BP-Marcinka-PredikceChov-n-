@@ -1009,3 +1009,176 @@ class DefaultAnalyticsService(BaseAnalyticsService):
             import traceback
             traceback.print_exc()
             return {"success": False, "error": str(e)}
+
+    async def get_channel_activity(self, guild_id: int, start_date: str = None, end_date: str = None, platform: str = "all", channel_id: str = None, topic_id: str = None):
+        import json
+        from collections import defaultdict
+        
+        r = await self.repo.get_client()
+        
+        if not start_date or not end_date:
+            end_dt = datetime.now()
+            start_dt = end_dt - timedelta(days=30)
+        else:
+            start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+            end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+            
+        ts_start = start_dt.timestamp()
+        ts_end = end_dt.replace(hour=23, minute=59, second=59).timestamp()
+        
+        channel_stats = defaultdict(lambda: {"messages": 0, "reactions": 0, "active_users": set(), "platform": "discord"})
+        
+        # Discord events
+        if platform in ["all", "discord"]:
+            async for key in r.scan_iter(f"events:msg:{guild_id}:*"):
+                if ":discourse" in key:
+                    continue
+                uid = key.split(":")[-1]
+                events = await r.zrangebyscore(key, ts_start, ts_end)
+                for e in events:
+                    try:
+                        data = json.loads(e)
+                        c_id = str(data.get("channel_id"))
+                        if not c_id or c_id == "None":
+                            continue
+                        if channel_id and c_id != channel_id:
+                            continue
+                        channel_stats[c_id]["messages"] += 1
+                        channel_stats[c_id]["reactions"] += int(data.get("reaction_count", 0))
+                        channel_stats[c_id]["active_users"].add(uid)
+                    except:
+                        pass
+        
+        # Discourse events
+        if platform in ["all", "discourse"]:
+            discourse_key = f"events:msg:{guild_id}:discourse"
+            events = await r.zrangebyscore(discourse_key, ts_start, ts_end)
+            for e in events:
+                try:
+                    data = json.loads(e)
+                    tpc_id = str(data.get("id"))
+                    if not tpc_id or tpc_id == "None":
+                        continue
+                    if topic_id and tpc_id != topic_id:
+                        continue
+                    channel_stats[tpc_id]["messages"] += 1
+                    channel_stats[tpc_id]["reactions"] += int(data.get("reaction_count", 0))
+                    channel_stats[tpc_id]["platform"] = "discourse"
+                    
+                except:
+                    pass
+                    
+        result = []
+        for cid, stats in channel_stats.items():
+            result.append({
+                "channel_id": cid,
+                "platform": stats["platform"],
+                "messages": stats["messages"],
+                "reactions": stats["reactions"],
+                "active_users": len(stats["active_users"])
+            })
+            
+        result.sort(key=lambda x: x["messages"], reverse=True)
+        return result
+
+    async def get_community_health_support(self, guild_id: int, days: int = 30):
+        import json
+        r = await self.repo.get_client()
+        
+        end_dt = datetime.now()
+        start_dt = end_dt - timedelta(days=days)
+        ts_start = start_dt.timestamp()
+        ts_end = end_dt.timestamp()
+        
+        cfg_str = await r.get(f"config:settings:{guild_id}")
+        support_channels = []
+        support_mode = "question_only"
+        
+        if cfg_str:
+            try:
+                cfg = json.loads(cfg_str)
+                support_channels = cfg.get("support_channels", [])
+                support_mode = cfg.get("support_detection_mode", "question_only")
+            except:
+                pass
+                
+        # If no config, maybe use a default or empty. We need it to be configurable.
+        # But if empty, we might return empty dict or zeroes.
+        
+        requests = {}
+        replies = []
+        
+        async for key in r.scan_iter(f"events:msg:{guild_id}:*"):
+            if ":discourse" in key:
+                continue
+            uid = key.split(":")[-1]
+            # Fetch even outside of range for replies? Yes, up to now.
+            events = await r.zrangebyscore(key, ts_start, ts_end + (days*86400)) # get future replies too
+            
+            for e, score in await r.zrangebyscore(key, ts_start, ts_end + (30*86400), withscores=True):
+                try:
+                    data = json.loads(e)
+                    mid = data.get("mid")
+                    c_id = str(data.get("channel_id"))
+                    is_reply = data.get("reply")
+                    reply_to = data.get("reply_to_mid")
+                    is_question = data.get("is_question")
+                    reactions = int(data.get("reaction_count", 0))
+                    
+                    if is_reply and reply_to:
+                        replies.append({"mid": mid, "reply_to": reply_to, "ts": score, "author": uid})
+                    
+                    # check if request
+                    if ts_start <= score <= ts_end: # request must be in the window
+                        if not support_channels:
+                            return {"available": False, "reason": "support_channels_not_configured"}
+                        if c_id in support_channels:
+                            is_relevant = True
+                            if support_mode == "question_only" and not is_question:
+                                is_relevant = False
+                            if is_relevant and not is_reply: # Request shouldn't be a reply itself usually, or can be.
+                                requests[mid] = {"ts": score, "author": uid, "first_response_time": None, "reactions": reactions}
+                except:
+                    pass
+        
+        # Evaluate replies
+        # Sort replies by timestamp
+        replies.sort(key=lambda x: x["ts"])
+        
+        for reply in replies:
+            req_id = reply["reply_to"]
+            if req_id in requests:
+                req = requests[req_id]
+                if req["first_response_time"] is None and reply["author"] != req["author"]:
+                    req["first_response_time"] = reply["ts"] - req["ts"]
+                    
+        total_requests = len(requests)
+        answered = 0
+        response_times = []
+        total_reactions = 0
+        
+        for mid, req in requests.items():
+            total_reactions += req["reactions"]
+            if req["first_response_time"] is not None:
+                answered += 1
+                response_times.append(req["first_response_time"])
+                
+        open_reqs = total_requests - answered
+        answered_ratio = answered / total_requests if total_requests > 0 else 0
+        
+        import statistics
+        median_response = statistics.median(response_times) if response_times else None
+        avg_response = statistics.mean(response_times) if response_times else None
+        
+        return {
+            "requests": total_requests,
+            "answered": answered,
+            "open": open_reqs,
+            "answered_ratio": round(answered_ratio, 2),
+            "median_first_response_time": median_response,
+            "average_first_response_time": avg_response,
+            "requests_with_reaction": sum(1 for r in requests.values() if r["reactions"] > 0),
+            "average_reactions": round(total_reactions / total_requests, 2) if total_requests > 0 else 0,
+            "support_channels_configured": len(support_channels) > 0,
+            "support_mode": support_mode
+        }

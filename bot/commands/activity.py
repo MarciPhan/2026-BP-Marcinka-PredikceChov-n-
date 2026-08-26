@@ -148,9 +148,12 @@ class ActivityMonitor(commands.Cog):
         ts = message.created_at.timestamp()
         event_data = json.dumps({
             "mid": message.id,
+            "channel_id": message.channel.id,
             "len": len(message.content),
             "reply": message.reference is not None,
-            "reaction_count": 0
+            "reply_to_mid": message.reference.message_id if message.reference and hasattr(message.reference, 'message_id') else None,
+            "reaction_count": 0,
+            "is_question": message.content.strip().endswith('?') if message.content else False
         })
         
         await self.r.zadd(key, {event_data: ts})
@@ -588,8 +591,10 @@ class ActivityMonitor(commands.Cog):
                         ts = msg.created_at.timestamp()
                         length = len(msg.content)
                         is_reply = (msg.reference is not None)
+                        reply_to_mid = msg.reference.message_id if msg.reference and hasattr(msg.reference, 'message_id') else None
+                        is_question = msg.content.strip().endswith('?') if msg.content else False
                         
-                        user_messages[msg.author.id].append((ts, length, is_reply, msg.id, len(msg.reactions)))
+                        user_messages[msg.author.id].append((ts, length, is_reply, msg.id, len(msg.reactions), channel.id, reply_to_mid, is_question))
                         msg_count += 1
                         
                         
@@ -601,8 +606,16 @@ class ActivityMonitor(commands.Cog):
                             for uid, messages in user_messages.items():
                                 key = f"events:msg:{gid}:{uid}"
                                 mapping = {}
-                                for ts, length, is_reply, mid, reaction_count in messages:
-                                    event_data = json.dumps({"mid": mid, "len": length, "reply": is_reply, "reaction_count": reaction_count})
+                                for ts, length, is_reply, mid, reaction_count, ch_id, reply_to_mid, is_question in messages:
+                                    event_data = json.dumps({
+                                        "mid": mid, 
+                                        "channel_id": ch_id,
+                                        "len": length, 
+                                        "reply": is_reply, 
+                                        "reply_to_mid": reply_to_mid,
+                                        "reaction_count": reaction_count,
+                                        "is_question": is_question
+                                    })
                                     mapping[event_data] = ts
                                 
                                 if mapping:
@@ -629,8 +642,16 @@ class ActivityMonitor(commands.Cog):
         for uid, messages in user_messages.items():
             key = f"events:msg:{gid}:{uid}"
             mapping = {}
-            for ts, length, is_reply, mid, reaction_count in messages:
-                event_data = json.dumps({"mid": mid, "len": length, "reply": is_reply, "reaction_count": reaction_count})
+            for ts, length, is_reply, mid, reaction_count, ch_id, reply_to_mid, is_question in messages:
+                event_data = json.dumps({
+                    "mid": mid, 
+                    "channel_id": ch_id,
+                    "len": length, 
+                    "reply": is_reply, 
+                    "reply_to_mid": reply_to_mid,
+                    "reaction_count": reaction_count,
+                    "is_question": is_question
+                })
                 mapping[event_data] = ts
             
             if mapping:

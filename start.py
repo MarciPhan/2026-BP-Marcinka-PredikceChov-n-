@@ -114,6 +114,24 @@ def main():
                 k, v = line.strip().split("=", 1)
                 env[k.strip()] = v.strip().strip("'").strip('"')
 
+    if not env.get("DISCOURSE_TOKEN"):
+        print("\n" + "="*60)
+        print_color(" CHYBA: DISCOURSE_TOKEN není nastaven v .env souboru!", "1;31")
+        try:
+            token = input(" Prosím, zadejte svůj Discourse API Token (nebo stiskněte Enter pro přeskočení): ").strip()
+        except KeyboardInterrupt:
+            token = ""
+        
+        if not token:
+            print_color(" Pokračuji bez tokenu. Synchronizace Discourse nemusí fungovat.", "1;33")
+        else:
+            with open(".env", "a") as f:
+                f.write(f"\nDISCOURSE_TOKEN={token}\n")
+            
+            env["DISCOURSE_TOKEN"] = token
+            print_color(" Token byl úspěšně uložen do .env!", "1;32")
+        print("="*60 + "\n")
+
     bot_proc = run_service("Discord Bot", [python_bin, "bot/main.py"], env, "bot.log")
     web_proc = run_service("Web Dashboard", [python_bin, "-m", "uvicorn", "web.backend.main:app", "--host", "0.0.0.0", "--port", str(dashboard_port)], env, "web.log")
     docs_proc = None

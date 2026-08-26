@@ -11,6 +11,22 @@ if [ -z "$DASHBOARD_PORT" ]; then
     DASHBOARD_PORT="8093"
 fi
 
+DISCOURSE_TOKEN=$(grep -E '^DISCOURSE_TOKEN=' .env 2>/dev/null | cut -d'=' -f2 | tr -d '\r" ' || true)
+if [ -z "$DISCOURSE_TOKEN" ]; then
+    echo ""
+    echo "============================================================"
+    echo " CHYBA: DISCOURSE_TOKEN není nastaven v .env souboru!"
+    read -p " Prosím, zadejte svůj Discourse API Token (nebo stiskněte Enter pro přeskočení): " USER_TOKEN
+    if [ -z "$USER_TOKEN" ]; then
+        echo " Pokračuji bez tokenu. Synchronizace Discourse nemusí fungovat."
+    else
+        echo "" >> .env
+        echo "DISCOURSE_TOKEN=$USER_TOKEN" >> .env
+        echo " Token byl úspěšně uložen do .env!"
+    fi
+    echo "============================================================"
+fi
+
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     echo "Docker detected. Starting via docker compose..."
     if docker compose version >/dev/null 2>&1; then

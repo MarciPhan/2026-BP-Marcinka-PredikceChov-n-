@@ -8,11 +8,29 @@ if not exist ".env" (
 )
 
 set DASHBOARD_PORT=8093
+set DISCOURSE_TOKEN=
 if exist ".env" (
     for /f "tokens=1,2 delims==" %%a in (.env) do (
         if "%%a"=="DASHBOARD_PORT" set DASHBOARD_PORT=%%b
+        if "%%a"=="DISCOURSE_TOKEN" set DISCOURSE_TOKEN=%%b
     )
 )
+
+if defined DISCOURSE_TOKEN goto skip_discourse_token
+echo.
+echo ============================================================
+echo  CHYBA: DISCOURSE_TOKEN neni nastaven v .env souboru!
+set /p INPUT_TOKEN=" Prosim, zadejte svuj Discourse API Token (nebo stisknete Enter pro preskoceni): "
+if "%INPUT_TOKEN%"=="" (
+    echo  Pokracuji bez tokenu. Synchronizace Discourse nemusi fungovat.
+    goto skip_discourse_token_msg
+)
+echo.>> .env
+echo DISCOURSE_TOKEN=%INPUT_TOKEN%>> .env
+echo  Token byl uspesne ulozen do .env!
+:skip_discourse_token_msg
+echo ============================================================
+:skip_discourse_token
 
 where docker >nul 2>nul
 if %ERRORLEVEL% equ 0 (

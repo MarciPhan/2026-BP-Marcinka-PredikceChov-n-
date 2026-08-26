@@ -35,3 +35,11 @@ class BaseAnalyticsService(ABC):
     @abstractmethod
     async def get_data_quality_score(self, guild_id: int) -> Dict[str, Any]:
         pass
+
+    @abstractmethod
+    async def get_channel_activity(self, guild_id: int, start_date: str = None, end_date: str = None, platform: str = "all", channel_id: str = None, topic_id: str = None):
+        pass
+
+    @abstractmethod
+    async def get_community_health_support(self, guild_id: int, days: int = 30):
+        pass

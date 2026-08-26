@@ -36,6 +36,20 @@
                 {% endfor %}
             </select>
         </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Platforma</label>
+            <select name="platform" id="platformFilter" style="min-width: 140px;">
+                <option value="all" {% if selected_platform=='all' %}selected{% endif %}>Všechny platformy</option>
+                <option value="discord" {% if selected_platform=='discord' %}selected{% endif %}>Discord</option>
+                <option value="discourse" {% if selected_platform=='discourse' %}selected{% endif %}>Discourse</option>
+            </select>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Kanál / Téma</label>
+            <input type="text" name="channel_id" id="channelFilter" value="{{ selected_channel_id|default('') }}" placeholder="ID (volitelně)" style="max-width: 120px;">
+        </div>
+
         <div style="display: flex; flex-direction: column; gap: 4px;">
             <label
                 style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Od</label>
@@ -705,6 +719,11 @@
             if (ed) urlParams.set('end_date', ed.value);
             const rid = document.getElementById('roleFilter');
             if (rid) urlParams.set('role_id', rid.value);
+            const pid = document.getElementById('platformFilter');
+            if (pid) urlParams.set('platform', pid.value);
+            const cid = document.getElementById('channelFilter');
+            if (cid && cid.value) urlParams.set('channel_id', cid.value);
+
         }
         // Always ensure guild_id is passed if present in current URL
         const currentUrlParams = new URLSearchParams(window.location.search);

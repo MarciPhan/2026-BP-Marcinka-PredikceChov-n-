@@ -211,7 +211,7 @@ async def commands_page(request: Request, _=Depends(require_auth)):
 
 
 @router.get("/analytics", response_class=HTMLResponse)
-async def analytics_page(request: Request, start_date: str = None, end_date: str = None, role_id: str = None):
+async def analytics_page(request: Request, start_date: str = None, end_date: str = None, role_id: str = None, platform: str = "all", channel_id: str = None):
     user = request.session.get("discord_user")
     if not user: return RedirectResponse(url="/")
     
@@ -332,7 +332,7 @@ async def analytics_page(request: Request, start_date: str = None, end_date: str
         "user": user,
         "start_date": start_date,
         "end_date": end_date,
-        "selected_role": role_id,
+        "selected_role": role_id, "selected_platform": platform, "selected_channel_id": channel_id,
         "roles": roles_list,
         "has_any_data": has_any_data,
         "widget_order": request.session.get("analytics_order") or request.session.get("dashboard_order", DEFAULT_ORDER),

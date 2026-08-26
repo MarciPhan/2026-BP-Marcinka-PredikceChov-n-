@@ -1300,3 +1300,50 @@ async def api_health_research(request: Request):
             }
         }
     return await get_health_research_data(gid)
+
+
+@router.get("/api/channel-activity")
+async def api_channel_activity(request: Request, start_date: str = None, end_date: str = None, platform: str = "all", channel_id: str = None, topic_id: str = None, _=Depends(require_auth)):
+    if platform == "discourse" and channel_id and not topic_id:
+        topic_id = channel_id
+        channel_id = None
+    guild_id = request.session.get("guild_id")
+    from ..services.analytics_service import DefaultAnalyticsService
+    from ..repositories.redis_repo import RedisRepository
+    repo = RedisRepository()
+    service = DefaultAnalyticsService(repo)
+    data = await service.get_channel_activity(int(guild_id) if guild_id else 0, start_date, end_date, platform, channel_id, topic_id)
+    return {"status": "ok", "data": data}
+
+@router.get("/api/health/support")
+async def api_health_support(request: Request, days: int = 30, _=Depends(require_auth)):
+    guild_id = request.session.get("guild_id")
+    from ..services.analytics_service import DefaultAnalyticsService
+    from ..repositories.redis_repo import RedisRepository
+    repo = RedisRepository()
+    service = DefaultAnalyticsService(repo)
+    data = await service.get_community_health_support(int(guild_id), days)
+    return {"status": "ok", "data": data}
+
+@router.post("/api/admin/support-channels", dependencies=[Depends(require_auth), Depends(require_csrf)])
+async def api_set_support_channels(request: Request):
+    # Simple endpoint to configure support channels
+    guild_id = request.session.get("guild_id")
+    data = await request.json()
+    from ..utils import get_redis
+    import json
+    r = await get_redis()
+    
+    cfg_str = await r.get(f"config:settings:{guild_id}")
+    if cfg_str:
+        cfg = json.loads(cfg_str)
+    else:
+        cfg = {}
+        
+    if "support_channels" in data:
+        cfg["support_channels"] = data["support_channels"]
+    if "support_detection_mode" in data:
+        cfg["support_detection_mode"] = data["support_detection_mode"]
+        
+    await r.set(f"config:settings:{guild_id}", json.dumps(cfg))
+    return {"status": "ok"}
