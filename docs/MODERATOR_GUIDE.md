@@ -28,7 +28,7 @@ CommunityMetrics není jen "další bot na statistiky". Je to analytický ekosys
 
 ###  Engagement Score (0–100)
 Kompozitní index zdraví serveru. Pokud klesne pod **40**, komunita stagnuje. Pokud je nad **80**, server organicky roste.
-- **Složení:** 25% Moderace, 25% Bezpečnost, 25% Zapojení (Engagement), 25% Aktivita týmu.
+- **Složení:** Normalizovaný podíl aktivních uživatelů, objem odeslaných zpráv, počet reakcí a hlasová aktivita.
 
 ###  Stickiness (Lepivost)
 Vzorec: `(DAU / MAU) * 100`. 

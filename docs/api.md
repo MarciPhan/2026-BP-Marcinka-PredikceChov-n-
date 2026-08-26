@@ -8,13 +8,16 @@ Rozhraní API CommunityMetrics umožňuje programový přístup k nasbíraným d
 
 ## Zabezpečení a autentizace
 
-API v současné verzi primárně spoléhá na autentizaci pomocí sezení (Session-based).
+API podporuje dva režimy autentizace: session-based pro webový dashboard a API klíče pro externí klienty.
 
 ### Autentizace pomocí sezení (Session-based)
-Po přihlášení přes Discord systém vytvoří **HTTP-only cookie** se zašifrovanými údaji uživatele. Pro všechny stavové metody (`POST`, `DELETE`) je vyžadován platný **CSRF token**, který systém ověřuje proti timing útokům pomocí kryptograficky bezpečné funkce `secrets.compare_digest`. Zamezuje se tak nežádoucím CSRF útokům.
+Po přihlášení přes Discord OAuth2 systém vytvoří podepsanou session cookie (`itsdangerous`, `SameSite=Lax`). Pro všechny stavové metody (`POST`, `DELETE`) je vyžadován platný **CSRF token**, který systém ověřuje proti timing útokům pomocí kryptograficky bezpečné funkce `secrets.compare_digest` v `web/backend/security.py`.
 
-> [!WARNING]
-> Metoda Bearer Token (statické API klíče pro skripty třetích stran) není v aktuálním produkčním kódu zahrnuta. Systém je optimalizován primárně pro interakci přes webový dashboard.
+### Autentizace pomocí API klíče (X-API-Key)
+Externí klienti mohou přistupovat k REST API pomocí hlavičky `X-API-Key`. Klíče mají prefix `mtr_` a jsou uloženy v Redis jako SHA-256 digest (`shared/community_health.py: api_key_digest`). Generování klíčů je k dispozici v dashboardu.
+
+> [!TIP]
+> Interaktivní OpenAPI dokumentace je dostupná na `/api/docs` (Swagger UI), OpenAPI JSON schéma na `/api/openapi.json`.
 
 ---
 
@@ -71,4 +74,4 @@ Smaže veškerá analytická data (Redis klíče) pro aktuálně vybraný server
 **`POST` /api/delete-server-data**
 
 > [!TIP]
-> Kompletní schéma interního API je k dispozici přímo ve zdrojovém kódu (`web/backend/routers/api.py`), který jakožto FastAPI router standardně nabízí autogenerovanou OpenAPI dokumentaci (obvykle na `/docs`).
+> Kompletní schéma API je k dispozici na `/api/docs` (Swagger UI). FastAPI automaticky generuje OpenAPI dokumentaci ze všech registrovaných routerů (`auth`, `pages`, `api`, `settings`, `community_health`).

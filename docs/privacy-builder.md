@@ -10,9 +10,9 @@ CommunityMetrics sbírá pouze metadata nutná pro výpočet analytických metri
 
 | Typ dat | Konkrétní položky | Účel | TTL |
 | :--- | :--- | :--- | :--- |
-| Metadata zpráv | Čas odeslání, délka textu (počet znaků), příznak Reply | XP systém, Heatmapa, DAU | 30 dní |
-| Voice aktivita | Čas začátku a konce session, délka v sekundách | Voice leaderboard, analytika | 30 dní |
-| Moderátorské akce | Typ akce (ban, kick, timeout, smazání zprávy, změna role), čas | MII index, moderátorský report | 30 dní |
+| Metadata zpráv | Čas odeslání, délka textu (počet znaků), příznak Reply | XP systém, Heatmapa, DAU | 90 dní |
+| Voice aktivita | Čas začátku a konce session, délka v sekundách | Voice leaderboard, analytika | 90 dní |
+| Moderátorské akce | Typ akce (ban, kick, timeout, smazání zprávy, změna role), čas | MII index, moderátorský report | 90 dní |
 | Uživatelský profil | Discord jméno, avatar URL, ID rolí | Dashboard, identifikace | 7 dní |
 | Discord User ID | Číselný identifikátor uživatele | Propojení všech dat | Po dobu uchovávání dat |
 
@@ -38,7 +38,7 @@ Data se zpracovávají výhradně pro:
 
 | Typ dat | Výchozí TTL | Konfigurovatelné |
 | :--- | :--- | :--- |
-| Surové eventy (zprávy, voice, akce) | 30 dní | Ne (pevně nastaveno) |
+| Surové eventy (zprávy, voice, akce) | 90 dní | Ne (pevně nastaveno dle konfigurace) |
 | HyperLogLog statistiky (DAU) | 90 dní | Ne |
 | Uživatelský profil cache | 7 dní | Ne (automatická expirace Redis) |
 | Runtime status (heartbeat) | 60 sekund | Ne |

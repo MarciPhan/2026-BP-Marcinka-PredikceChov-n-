@@ -30,7 +30,7 @@ Engagement Score vyjadřuje úroveň vašeho zapojení do komunity na stupnici 0
 
 Vaše úroveň (Level) roste se získanými zkušenostmi (XP). Pro postup na vyšší úroveň potřebujete stále více XP podle tohoto vzorce:
 
-$$ \text{Potřebné XP} = 50 \cdot (\text{Level})^2 + 150 \cdot (\text{Level}) + 100 $$
+$$ \text{Potřebné XP} = 50 \cdot (\text{Level})^2 + 200 \cdot (\text{Level}) + 100 $$
 
 | Úroveň | Celkové XP | Odhadovaná doba k dosažení |
 | :--- | :--- | :--- |
@@ -53,7 +53,7 @@ Ukládáme pouze metadata, nikoliv obsah vašich zpráv:
 - **Základní profil:** Vaše uživatelské jméno a avatar pro zobrazení v žebříčcích.
 
 ### Jak spravovat svá data?
-Pomocí příkazu `/gdpr help` získáte přístup ke svým datům:
+Příkazy pro správu vašich osobních údajů:
 
-- `/gdpr data_request` - Stáhněte si kompletní JSON soubor se všemi svými daty.
-- `/gdpr forget_me` - Nevratně smažte svůj profil a všechny své záznamy v databázi.
+- `/gdpr export` - Stáhněte si kompletní JSON soubor se všemi svými daty.
+- `/gdpr delete` - Nevratně smažte svůj profil a všechny své záznamy v databázi.

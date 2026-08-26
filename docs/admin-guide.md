@@ -28,11 +28,7 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 | `DASHBOARD_PORT` | `8093` | Port webového dashboardu. |
 | `DISCORD_REDIRECT_URI` | `http://localhost:8093/auth/callback` | OAuth2 callback URL. |
 | `BOT_LITE_MODE` | `0` | `1` pro sekundární instanci bez slash příkazů. |
-| `API_ACCESS_TOKEN` | - | API klíč pro REST API (hashován SHA-256, odesílá se v hlavičce `X-API-Key`). |
-| `SMTP_HOST` | - | SMTP server pro e-mailový OTP. |
-| `SMTP_PORT` | `587` | Port SMTP serveru. |
-| `SMTP_USER` | - | Uživatelské jméno pro SMTP. |
-| `SMTP_PASSWORD` | - | Heslo pro SMTP. |
+| `API_ACCESS_TOKEN` | - | API klíč pro REST API (hash SHA-256, odesílá se v hlavičce `X-API-Key`). |
 
 ::: danger Bezpečnostní upozornění
 Nikdy nahrávejte soubor `.env` do Git repozitáře. Soubor `.gitignore` musí obsahovat řádek `.env`. Kompromitace `BOT_TOKEN` nebo `DASHBOARD_SECRET_KEY` umožňuje útočníkovi plný přístup k vašemu systému a datům uživatelů.
@@ -163,9 +159,11 @@ redis-cli HGETALL config:action_weights
 # Změna váhy banu na 300 sekund
 redis-cli HSET config:action_weights bans 300
 
-# Výchozí váhy (z kódu activity.py):
-# bans: 300, kicks: 180, timeouts: 180, unbans: 120
-# verifications: 120, msg_deleted: 60, role_updates: 30
+# Výchozí váhy MII (Moderation Intervention Index, z shared/analytics_config.py):
+# ban: 50, kick: 30, timeout: 10, msg_delete: 1
+
+# Váhy aktivity (z analytics_service.py):
+# unbans: 120, verifications: 120, role_updates: 30
 # chat_time: 1, voice_time: 1
 ```
 

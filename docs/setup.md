@@ -6,7 +6,7 @@ Tento průvodce vás provede kompletním procesem od přípravy prostředí až 
 
 | Komponenta | Minimum | Doporučeno |
 | :--- | :--- | :--- |
-| **Python** | 3.9 | 3.11+ |
+| **Python** | 3.11 | 3.11+ |
 | **Node.js** | 18 | 20 LTS |
 | **Redis / Valkey** | 6.0 | 7.0+ |
 | **Docker** *(volitelné)* | 20.10 | 24.0+ s Compose v2 |
@@ -125,7 +125,7 @@ docker-compose up -d --build
 docker-compose ps
 ```
 
-Docker Compose spustí 4 kontejnery:
+Docker Compose spustí 5 kontejnerů:
 
 | Kontejner | Funkce |
 | :--- | :--- |
@@ -133,6 +133,7 @@ Docker Compose spustí 4 kontejnery:
 | `discord-bot-primary` | Hlavní bot — příkazy, tracking, backfill |
 | `discord-bot-dashboard` | Lite Mode bot — záložní sběr dat |
 | `web-dashboard` | FastAPI backend s OAuth2 |
+| `discourse-sync` | Periodická synchronizace Discourse fóra |
 
 ## Ověření instalace
 
@@ -156,19 +157,6 @@ Na Discord serveru ověřte, že bot je **online** (zelená tečka). Pokud nerea
 ```
 *sync
 ```
-
-## Nastavení e-mailového ověření (OTP)
-
-Pokud chcete používat dvoufázové ověření přes e-mail pro citlivá nastavení dashboardu:
-
-1.  V `.env` vyplňte SMTP údaje:
-    - `SMTP_HOST`: např. `smtp.gmail.com`
-    - `SMTP_PORT`: `587`
-    - `SMTP_USER`: váš e-mail
-    - `SMTP_PASSWORD`: heslo k aplikaci (App Password)
-
-> [!WARNING]
-> Pro Gmail musíte vygenerovat **App Password** v nastavení Google účtu (Security → 2-Step Verification → App passwords). Běžné heslo neprojde.
 
 ## Další kroky
 

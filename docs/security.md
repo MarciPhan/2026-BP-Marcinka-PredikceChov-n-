@@ -1,20 +1,19 @@
 # Skóre bezpečnosti serveru (Doplňková funkce)
 
-Skóre bezpečnosti ($S$) vyjadřuje doplňkový indikátor odolnosti Discord serveru proti spamu a útokům a míru řešení podpory. Tato metrika je experimentální, stojí mimo hlavní analytické cíle (Engagement, MII) a vypočítává se z nastavení serveru, aktivity moderátorského týmu a míry odpovědí na dotazy.
+Skóre bezpečnosti ($S$) vyjadřuje doplňkový indikátor odolnosti Discord serveru proti spamu a útokům a míru zapojení moderátorů. Tato metrika je experimentální, stojí mimo hlavní analytické cíle (Engagement, MII) a vypočítává se z nastavení serveru, poměru moderátorů, aktivity moderátorského týmu a zapojení uživatelů.
 
 ## Výpočet skóre
 
-Skóre je vážený průměr 5 faktorů v rozsahu 0–100:
+Skóre je vážený průměr **4 komponent** v rozsahu 0–100. Pokud některá komponenta není dostupná (chybí data), její váha se vyřadí ze jmenovatele:
 
-$$S = w_1 \cdot F_{\text{MFA}} + w_2 \cdot F_{\text{verif}} + w_3 \cdot F_{\text{filter}} + w_4 \cdot F_{\text{mod}} + w_5 \cdot F_{\text{reply}}$$
+$$S = \frac{\sum_{k \in \text{available}} w_k \cdot C_k}{\sum_{k \in \text{available}} w_k}$$
 
-| Faktor | Váha (výchozí) | Zdroj dat | Výpočet |
+| Komponenta | Váha (výchozí) | Zdroj dat | Výpočet |
 | :--- | :--- | :--- | :--- |
-| $F_{\text{MFA}}$ (MFA Requirement) | 20 % | `guild.mfa_level` | 100 pokud vyžaduje MFA, jinak 0 |
-| $F_{\text{verif}}$ (Verification Level) | 15 % | `guild.verification_level` | 0 / 25 / 50 / 75 / 100 podle úrovně |
-| $F_{\text{filter}}$ (Content Filter) | 15 % | `guild.explicit_content_filter` | 0 / 50 / 100 podle nastavení |
-| $F_{\text{mod}}$ (Moderator Activity) | 20 % | Audit log | Intenzita moderačních zásahů |
-| $F_{\text{reply}}$ (Reply Ratio) | 30 % | Help Requests | Podíl zodpovězených dotazů v určených kanálech |
+| **Poměr moderátorů** (`mod_ratio`) | 25 % | `presence:total`, `stats:mod_count` | Skóre dle poměru uživatelů na moderátora (ideální rozsah 50–100). |
+| **Zabezpečení serveru** (`security`) | 25 % | `guild:verification_level`, `guild:mfa_level`, `guild:explicit_filter` | Kompozit: verifikace (max 60b), explicitní filtr (max 20b), MFA (20b). |
+| **Zapojení uživatelů** (`engagement`) | 25 % | HLL DAU, Help Requests, Voice events | Kompozit: participation rate (40b), reply ratio (30b), voice hours (30b). |
+| **Zdraví moderace** (`moderation`) | 25 % | `events:action:{gid}:*` | Skóre dle intenzity moderačních zásahů na 100 uživatelů (ideální rozsah 1–5). |
 
 ## Klasifikace
 
@@ -36,10 +35,9 @@ Doporučení pro zvýšení skóre na úroveň Fortress:
 
 ## Dashboard
 
-Skóre se zobrazuje na hlavní stránce dashboardu v karté **Security Score**. Karta obsahuje:
+Skóre se zobrazuje na hlavní stránce dashboardu v kartě **Security Score**. Karta obsahuje:
 - Aktuální skóre a kategorii.
-- Rozpad na jednotlivé faktory s doporučeními.
-- Historický vývoj skóre za posledních 30 dní.
+- Rozpad na jednotlivé komponenty s doporučeními (Smart Insights).
 
 ::: info Ochrana soukromí
 Výpočet skóre využívá pouze metadata nastavení serveru a audit log. Obsah zpráv uživatelů se neanalyzuje.

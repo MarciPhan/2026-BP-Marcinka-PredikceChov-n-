@@ -70,7 +70,7 @@ Systém spočítá přechodovou matici $P$ z pozorovaných přechodů za posledn
 
 $$P_{ij} = \frac{\text{počet přechodů } i \to j}{\text{celkový počet přechodů z } i}$$
 
-Pokud pro stav $i$ neexistují žádná pozorování, model předpokládá setrvání ve stavu: $P_{ii} = 1$.
+Pokud pro stav $i$ neexistují žádná pozorování, řádek matice zůstává nulový — model explicitně nepředpokládá setrvání ve stavu. Predikce pro nepozorovaný stav tak vrátí nulový vektor (nedefinováno), místo aby se fabricovala falešná pravděpodobnost.
 
 Implementace v `shared/models.py`:
 
@@ -86,7 +86,9 @@ def calculate_markov_matrix(transitions, num_states=4):
         if row_sum > 0:
             matrix[i] = matrix[i] / row_sum
         else:
-            matrix[i] = np.zeros(num_states) # Zůstává 0, pokud nepozorováno
+            # BP requirement: Do not fabricate P_ii = 1 for missing data.
+            # Row remains all zeros — prediction yields undefined.
+            pass
     return matrix
 ```
 

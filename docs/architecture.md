@@ -1,64 +1,91 @@
 # Architektura systému
 
-CommunityMetrics je distribuovaný systém navržený pro zpracování milionů událostí v reálném čase. Tato stránka podrobně popisuje všechny komponenty, jejich komunikaci a datový tok.
+CommunityMetrics je distribuovaný systém navržený pro zpracování událostí z komunitních platforem v reálném čase. Tato stránka podrobně popisuje všechny komponenty, jejich komunikaci a datový tok.
 
 ## 1. High-level přehled
 
 ```mermaid
-graph TB
-    subgraph Discord["Discord API"]
-        GW[Gateway WebSocket]
-        REST[REST API]
+flowchart TB
+    subgraph External["Externí platformy"]
+        direction LR
+        DISCORD["Discord\n(server komunity)"]
+        DISCOURSE["Discourse\n(fórum komunity)"]
     end
 
-    subgraph Bot["Bot Process (Python)"]
-        ML[main.py - Event Loop]
-        CMD[Commands Cogs]
-        BG[Background Tasks]
+    subgraph Connectors["Konektory platforem"]
+        direction LR
+        DC["Discord konektor\n(asynchronní bot)\nbot/main.py"]
+        DSC["Discourse konektor\n(periodická synchronizace)\nscripts/discourse_sync.py"]
     end
 
-    subgraph Web["Dashboard (FastAPI)"]
-        API[REST Endpoints]
-        TMPL[Jinja2 Templates]
-        OAUTH[OAuth2 Handler]
+    subgraph DataLayer["Datová vrstva"]
+        REDIS[("Redis\nOperační úložiště\n· HyperLogLog\n· Seřazené množiny\n· Hašovací mapy")]
     end
 
-    subgraph Data["Redis In-Memory DB"]
-        HLL[HyperLogLog - DAU/MAU]
-        ZSET[Sorted Sets - Events]
-        HASH[Hashes - Stats]
-        STR[Strings - Config]
+    subgraph Analytics["Analytická vrstva"]
+        AS["Analytická služba\n(AnalyticsService)\n· DAU / WAU / MAU\n· Odezva komunity\n· Engagement Score\n· MII"]
     end
 
-    subgraph Shared["Shared Module"]
-        KEYS[keys.py - Redis Keys]
-        MODELS[models.py - Math Models]
-        RC[redis_client.py]
+    subgraph WebApp["Webová aplikace"]
+        direction LR
+        API["FastAPI\n· REST API\n· OpenAPI /api/docs\n· Autentizace\n· CSRF ochrana"]
+        DASH["Dashboard\n· Přehledové karty\n· Časové řady\n· Community Health\n· Experimenty"]
     end
 
-    GW -->|Events| ML
-    ML --> CMD
-    ML --> BG
-    CMD -->|Async Write| RC
-    BG -->|Periodic Sync| RC
-    RC --> Data
-    API -->|Read| RC
-    TMPL -->|Render| API
-    OAUTH -->|Discord OAuth2| REST
-    REST -->|Backfill| CMD
+    subgraph Users["Uživatelé"]
+        direction LR
+        ADMIN["Správce komunity\n(webový prohlížeč)"]
+        EXT_CLIENT["Externí klient\n(X-API-Key)"]
+    end
+
+    subgraph Auth["Autentizace"]
+        OAUTH["Discord OAuth2"]
+    end
+
+    %% Sběr dat
+    DISCORD -- "Gateway\n(události: zprávy,\nreakce, hlas,\naudit log)" --> DC
+    DISCOURSE -- "HTTP API\n(/latest.json)" --> DSC
+
+    %% Zápis do Redis
+    DC -- "Zápis událostí\n(Sorted Sets)" --> REDIS
+    DSC -- "Zápis témat\n(Sorted Sets)" --> REDIS
+
+    %% Analytika
+    REDIS -- "Čtení událostí\na agregací" --> AS
+    AS -- "Zápis agregací" --> REDIS
+
+    %% API ↔ Analytika
+    AS -- "Výpočty metrik" --> API
+
+    %% API ↔ Redis
+    API -- "Konfigurace\na relace" --> REDIS
+
+    %% Dashboard ↔ API
+    API -- "REST API\n(Session / CSRF)" --> DASH
+
+    %% Uživatelé
+    ADMIN -- "HTTP" --> DASH
+    EXT_CLIENT -- "REST API\n(X-API-Key)" --> API
+
+    %% Autentizace
+    API -- "OAuth2 flow" --> OAUTH
+    OAUTH -- "Ověření členství\na rolí" --> DISCORD
 ```
 
 ## 2. Technický stack
 
-| Komponenta | Technologie | Účel |
-| :--- | :--- | :--- |
-| **Bot Engine** | Python 3.9+, discord.py 2.6 | Asynchronní zpracování Discord událostí, command handling |
-| **Dashboard Backend** | FastAPI, Uvicorn | High-performance REST API, SSR |
-| **Dashboard Frontend** | VitePress, Chart.js, Vanilla CSS | Responzivní UI, interaktivní grafy, moderní dokumentace |
-| **Datové úložiště** | Redis / Valkey | In-memory databáze pro real-time analytiku, sub-ms latence |
-| **Matematické modely** | NumPy | Markovovy řetězce, Kaplan-Meier, lineární regrese |
-| **Autentizace** | Discord OAuth2, itsdangerous | Bezpečné přihlašování, session management |
-| **Kontejnerizace** | Docker, Docker Compose | Izolace služeb, produkční nasazení |
+| Komponenta | Technologie | Verze | Účel |
+| :--- | :--- | :--- | :--- |
+| **Bot Engine** | Python, discord.py | 3.11, 2.6.4 | Asynchronní zpracování Discord událostí, command handling |
+| **Discourse Sync** | Python, httpx | 3.11, 0.27.2 | Periodická synchronizace témat z Discourse fóra |
+| **Dashboard Backend** | FastAPI, Uvicorn | 0.121.1, 0.35.0 | REST API, server-side rendering, OAuth2 |
+| **Dashboard Frontend** | Jinja2, Chart.js | 3.1.6, – | Serverově renderované HTML šablony, interaktivní grafy |
+| **Datové úložiště** | Redis | alpine (Docker) | In-memory databáze pro real-time analytiku |
+| **Matematické modely** | NumPy | 2.3.2 | Markovovy řetězce, Kaplan-Meier, lineární regrese |
+| **Autentizace** | Discord OAuth2, itsdangerous | –, 2.2.0 | Session cookies, CSRF ochrana |
+| **Validace** | Pydantic, pydantic-settings | 2.12.4, 2.8.0 | Validace dat a konfigurace prostředí |
+| **Kontejnerizace** | Docker, Docker Compose | python:3.11-slim | Izolace služeb, produkční nasazení |
+| **Dokumentace** | VitePress | ^1.0.0 | Moderní dokumentace s MathJax a Mermaid |
 
 ## 3. Adresářová struktura projektu
 
@@ -67,22 +94,49 @@ communitymetrics/
  bot/
     main.py              # Entry point, event loop, background tasks
     commands/
-        activity.py      # Hlavní tracking modul - XP, voice, zprávy
-        stats_hll.py     # HyperLogLog statistiky - DAU/MAU
-        gdpr.py          # GDPR příkazy - export, smazání dat
-        health.py        # Zdravotní check - Redis ping, bot status
+        activity.py      # Hlavní tracking modul — XP, voice, zprávy
+        stats_hll.py     # HyperLogLog statistiky — DAU/MAU
+        gdpr.py          # GDPR příkazy — export, smazání dat
+        health.py        # Zdravotní check — Redis ping, bot status
+        help.py          # Interaktivní nápověda
+        ping.py          # Měření latence k Discord API
+        community_health.py    # Community Health příkazy
         analytics_tracking.py  # Event tracking pro dashboard
  web/
     backend/
-       main.py          # FastAPI routes - Dashboard API
-       utils.py         # Analytické výpočty - Engagement, predikce
-       hydrate_users.py # Synchronizace uživatelských dat
-    docs-site/           # Tato dokumentace (VitePress)
+       main.py           # FastAPI app — middleware, routery, error handling
+       security.py       # CSRF ochrana (require_csrf)
+       utils.py          # Analytické výpočty — Engagement, predikce
+       hydrate_users.py  # Synchronizace uživatelských dat
+       routers/
+           auth.py       # Discord OAuth2, demo login
+           pages.py      # Server-side rendered HTML stránky
+           api.py        # REST API endpointy (JSON)
+           settings.py   # Konfigurace dashboardu
+           community_health.py  # Community Health stránky
+       services/
+           analytics_service.py       # AnalyticsService — metriky
+           community_health_service.py # CommunityHealthService
+       repositories/
+           redis_repo.py  # Repository pattern pro Redis
+    frontend/
+       templates/         # Jinja2 HTML šablony (22 souborů)
+       static/            # CSS, JS, obrázky
  shared/
-    keys.py              # Redis klíčová schéma
-    models.py            # Matematické modely - Markov, Kaplan-Meier
-    redis_client.py      # Singleton Redis klient
+    keys.py              # Redis klíčová schéma (centrální definice)
+    models.py            # Matematické modely — Markov, Kaplan-Meier
+    redis_client.py      # Redis connection pool (async + sync)
+    config.py            # Pydantic Settings — prostředí, retence
+    community_health.py  # Helper funkce pro Community Health
+    analytics_config.py  # Výchozí váhy MII
+ scripts/
+    discourse_sync.py    # Konektor pro Discourse fórum
  config/                  # Konfigurace a tajemství
+ docker-compose.yml       # Produkční nasazení (5 kontejnerů)
+ Dockerfile               # Container image (python:3.11-slim)
+ start.sh                 # Lokální spouštěč
+ requirements.txt         # Python závislosti
+ .env.example             # Šablona konfigurace
 ```
 
 ## 4. Detailní datový tok (Event-Driven Flow)
@@ -103,12 +157,15 @@ Pro minimalizaci latence bot používá Redis Pipeline:
 PIPELINE:
   PFADD hll:dau:{gid}:{date} {uid}
   HINCRBY stats:hourly:{gid}:{date} {hour} 1
-  ZADD events:msg:{gid}:{uid} {now} {now}
-  EXPIRE events:msg:{gid}:{uid} 2592000 (30 dní)
+  ZADD events:msg:{gid}:{uid} {now} {json_metadata}
 ```
 :::
 
-## 5. Redis Schéma - Deep Dive
+::: info D. Discourse synchronizace
+Discourse konektor (`scripts/discourse_sync.py`) každých 300 sekund dotazuje Discourse API (`/latest.json`), idempotně ukládá nová témata do Redis Sorted Setů a automaticky aplikuje retenci dle `EVENT_RETENTION_DAYS`.
+:::
+
+## 5. Redis Schéma — Deep Dive
 
 CommunityMetrics využívá pokročilé datové struktury Redis pro maximální efektivitu.
 
@@ -117,26 +174,48 @@ Umožňuje sledovat unikátní uživatele (DAU/MAU) s fixní paměťovou nároč
 
 | Struktura | Klíč (Shared Keys) | Použití |
 | :--- | :--- | :--- |
-| **Sorted Set (ZSET)** | `events:msg:{gid}:{uid}` | Score = Timestamp. Umožňuje `ZRANGEBYSCORE` pro analýzu stability aktivity. |
-| **Hash (HASH)** | `stats:heatmap:{gid}` | Agregovaná aktivita pro heatmapu. |
+| **HyperLogLog** | `hll:dau:{gid}:{YYYYMMDD}` | Unikátní denní aktivní uživatelé (12 KB fixní). |
+| **Sorted Set (ZSET)** | `events:msg:{gid}:{uid}` | Score = Timestamp. Metadata zpráv. |
+| **Sorted Set (ZSET)** | `events:voice:{gid}:{uid}` | Voice sezení (hodnota = délka v sekundách). |
+| **Sorted Set (ZSET)** | `events:action:{gid}:{uid}` | Moderátorské akce (typ, timestamp). |
+| **Hash (HASH)** | `stats:hourly:{gid}:{YYYYMMDD}` | Počty zpráv po hodinách (klíče "0"–"23"). |
+| **Hash (HASH)** | `stats:heatmap:{gid}` | Matice aktivity (klíč "den:hodina"). |
+| **Hash (HASH)** | `stats:msglen:{gid}` | Distribuce délek zpráv do bucketů. |
+| **Hash (HASH)** | `discourse:conf:{gid}` | Konfigurace Discourse (url, api_key, api_user). |
+| **String** | `bot:heartbeat` (TTL 60s) | Timestamp posledního cyklu bota. |
 | **Set (SET)** | `bot:guilds` | Globální seznam aktivních serverů. |
+| **String** | `presence:online:{gid}` (TTL 300s) | Počet online členů. |
 
-## 6. Background Workers & Microservices
+### Retence dat
 
-Projekt je rozdělen do několika izolovaných procesů:
-- **Bot-Primary:** Sběr událostí z Discord Gateway.
-- **Bot-Dashboard-Syncer:** Synchronizace rolí a metadat v intervalu 1 hodina.
-- **FastAPI Backend:** Čtení dat z Redisu a provádí matematické transformace on-the-fly.
+| Kategorie | Retence | Zdroj |
+| :--- | :--- | :--- |
+| Surové eventy | Konfigurovatelné (výchozí **90 dní**, `EVENT_RETENTION_DAYS`) | `shared/config.py` |
+| HLL statistiky | **90 dní** | Přetrvávají nezávisle na eventech |
+| Uživatelská cache | **7 dní** | TTL na `user:info:{uid}` |
+| Runtime status | **60–300 s** | TTL na `bot:heartbeat`, `presence:*` |
+
+## 6. Background Workers & Kontejnery
+
+Projekt je rozdělen do 5 izolovaných kontejnerů v Docker síti `botnet`:
+
+| Kontejner | Obraz | Příkaz | Port | Funkce |
+| :--- | :--- | :--- | :--- | :--- |
+| `discord-redis` | `redis:alpine` | výchozí Redis | interní | In-memory databáze |
+| `discord-bot-primary` | `python:3.11-slim` | `python bot/main.py` | — | Sběr událostí z Discord Gateway, příkazy |
+| `discord-bot-dashboard` | `python:3.11-slim` | `python bot/main.py` (LITE) | — | Záložní sběr dat bez slash příkazů |
+| `web-dashboard` | `python:3.11-slim` | `uvicorn web.backend.main:app` | **8093** | FastAPI backend s OAuth2 a REST API |
+| `discourse-sync` | `python:3.11-slim` | `python -m scripts.discourse_sync` | — | Periodická synchronizace Discourse fóra |
 
 ::: tip Optimalizace výkonu
 Náročné maticové operace pro Markovovy řetězce jsou prováděny pomocí `NumPy` v C-extension, což je o 2 řády rychlejší než čistý Python.
 :::
 
-## 6. Životní cyklus události (Pipeline Step-by-Step)
+## 7. Životní cyklus události (Pipeline Step-by-Step)
 
 Každá zpráva na Discordu projde následujícím řetězcem zpracování:
 
-1.  **Ingesce:** Gateway WebSocket bota přijme událost `GUILD_CREATE_MESSAGE`.
+1.  **Ingesce:** Gateway WebSocket bota přijme událost `MESSAGE_CREATE`.
 2.  **Validace:** Bot ověří, zda zpráva nepochází od jiného bota a zda má CommunityMetrics přístup k obsahu zprávy (Message Intent).
 3.  **Extrakce metadat:** Získá se `user_id`, `guild_id`, timestamp a délka zprávy.
 4.  **Asynchronní zápis:** Bot odešle data do Redis pipeline. Akce nezamyká hlavní vlákno bota, což zajišťuje plynulý chod.
@@ -144,20 +223,10 @@ Každá zpráva na Discordu projde následujícím řetězcem zpracování:
 6.  **Výpočet XP:** Bot vypočítá XP na základě délky zprávy a cooldownu. Pokud je vše v pořádku, inkrementuje XP v Redis Hashi daného uživatele.
 7.  **Zobrazení:** Dashboard při dalším načtení vytáhne čerstvá data z Redisu, provede transformaci pomocí NumPy a vykreslí aktualizované grafy.
 
-## 7. Škálovatelnost a Vysoká dostupnost (HA)
+## 8. Nginx jako reverzní proxy
 
-CommunityMetrics je navržen tak, aby dokázal obsloužit desetitisíce Discord serverů současně.
-
-### A. Horizontální škálování botů (Sharding)
-Discord API omezuje jeden WebSocket na cca 2500 serverů. CommunityMetrics implementuje **Discord Sharding**, kde lze spustit více instancí bota, přičemž každá instance zpracovává pouze svou část (shard) celkového provozu. Díky Redisu jako centrálnímu úložišti sdílejí všechny shardy stejná data.
-
-### B. Redis Cluster & Sentinel
-Pro kritické nasazení podporuje CommunityMetrics:
-- **Redis Sentinel:** Zajišťuje automatický failover. Pokud hlavní Redis selže, Sentinel automaticky povýší repliku na mastera a bot se k němu během několika sekund připojí.
-- **Redis Cluster:** Umožňuje horizontální dělení dat (Sharding) napříč více servery, což eliminuje omezení paměti RAM na jediném stroji a zvyšuje výkon zápisu.
-
-### C. Nginx jako Load Balancer
 V produkčním prostředí běží FastAPI backend za proxy serverem Nginx. Nginx zajišťuje:
 - **SSL Termination:** Šifrování HTTPS komunikace směrem k uživateli.
 - **VitePress Caching:** Rychlé servírování statické dokumentace bez zatěžování backendu.
-- **Load Balancing:** Rozdělování požadavků mezi více instancí FastAPI běžících v Docker kontejnerech.
+
+Vzorová konfigurace je k dispozici v souboru `config/nginx-reverse-proxy.conf`.

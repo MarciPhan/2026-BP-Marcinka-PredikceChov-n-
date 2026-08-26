@@ -53,7 +53,7 @@ Ano. Příkaz `/gdpr export` vám vygeneruje JSON soubor, který obsahuje komple
 :::
 
 ::: details Jak dlouho se data uchovávají?
-Surové eventy (zprávy, voice) se uchovávají **30 dní**, HyperLogLog statistiky **90 dní** a uživatelské profily **7 dní**. Po uplynutí TTL Redis klíče automaticky smaže. Podrobnosti viz [Privacy Builder](/privacy-builder).
+Surové eventy (zprávy, voice) se uchovávají dle konfigurovatelné retence (výchozí **90 dní**, parametr `EVENT_RETENTION_DAYS`). HyperLogLog statistiky **90 dní** a uživatelské profily **7 dní**. Po uplynutí TTL Redis klíče automaticky smaže. Podrobnosti viz [Privacy Builder](/privacy-builder).
 :::
 
 ## Technické otázky

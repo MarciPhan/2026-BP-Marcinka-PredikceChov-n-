@@ -5,17 +5,18 @@ Jak CommunityMetrics chrání vaše data na infrastrukturní úrovni.
 ## 1. Autentizace a Autorizace
 
 - **Discord OAuth2:** Přihlašování probíhá výhradně přes oficiální bránu Discordu. Generuje se unikátní stavový parametr (State) pro zamezení CSRF útoků při přihlašování.
-- **Stateful Sessions:** Sezení jsou uložena v Redisu a klientské prohlížeče dostávají pouze podepsané `HttpOnly` a `SameSite=Lax` cookies.
-- **CSRF Ochrana:** Všechny stavotvorné požadavky API (`POST`, `DELETE`) vyžadují předložení kryptograficky bezpečného CSRF tokenu (`secrets.token_urlsafe(32)`), který je kontrolován proti timing útokům pomocí `secrets.compare_digest`.
+- **Cookie-based Sessions:** Sezení jsou uložena v podepsaných cookie pomocí `itsdangerous` (`SameSite=Lax`). V produkci se nastavuje `https_only=True`. Expirace je konfigurována přes `SESSION_EXPIRY_HOURS`.
+- **CSRF Ochrana:** Všechny stavotvorné požadavky API (`POST`, `DELETE`) vyžadují předložení kryptograficky bezpečného CSRF tokenu, který je kontrolován proti timing útokům pomocí `secrets.compare_digest` v `web/backend/security.py`. Token se předává v hlavičce `X-CSRF-Token` nebo jako pole `csrf_token` ve formuláři.
+- **X-API-Key Autentizace:** Pro externí klienty existuje autentizace pomocí API klíčů (prefix `mtr_`), validovaných přes SHA-256 digest.
 - **Role-Based Access (RBAC):** Backend striktně kontroluje oprávnění `Manage Server` před jakýmkoliv čtením či zápisem dat konkrétní komunity.
 
 ## 2. Životní cyklus dat
 
 | Typ dat | Uložení | Expirace |
 | :--- | :--- | :--- |
-| **Session Tokeny** | Redis (Keys) | 24 Hodin |
-| **Uživatelské Info** | Redis (Hash) | 7 Dní |
-| **Analytické eventy** | Redis (Sorted Sets) | Konfigurovatelné (výchozí 90 dní, `EVENT_RETENTION_DAYS`), automaticky mazáno |
+| **Session data** | Podepsané cookie (`itsdangerous`) | `SESSION_EXPIRY_HOURS` (výchozí 24h) |
+| **Uživatelské Info** | Redis (Hash `user:info:{uid}`) | 7 Dní |
+| **Analytické eventy** | Redis (Sorted Sets) | Konfigurovatelné (výchozí 90 dní, `EVENT_RETENTION_DAYS`) |
 
 ## 3. Ochrana proti útokům
 

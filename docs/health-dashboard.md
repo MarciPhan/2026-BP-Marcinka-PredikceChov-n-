@@ -38,8 +38,9 @@ redis-cli DBSIZE
 | :--- | :--- | :--- | :--- |
 | `redis` | 6379 | In-memory databáze | `redis-cli ping` |
 | `discord-bot-primary` | - | Sběr událostí, příkazy | `bot:heartbeat` v Redis |
-| `discord-bot-dashboard` | - | Lite Mode, dashboard sync | `bot:heartbeat:lite` |
-| `web-dashboard` | 8093 | FastAPI backend | `curl localhost:8093/health` |
+| `discord-bot-dashboard` | - | Lite Mode, záložní sběr | `bot:heartbeat` v Redis |
+| `web-dashboard` | 8093 | FastAPI backend | `curl localhost:8093` |
+| `discourse-sync` | - | Discourse synchronizace | Logy kontejneru |
 
 ## Kontrola Docker kontejnerů
 

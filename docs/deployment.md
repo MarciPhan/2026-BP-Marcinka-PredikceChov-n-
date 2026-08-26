@@ -11,7 +11,7 @@ Před instalací ověřte, zda váš server splňuje tyto minimální a doporuč
 | **OS** | Linux (libovolná distribuce) | Ubuntu 22.04 LTS / Fedora 39+ |
 | **CPU** | 1 jádro | 2+ jádra (pro servery s 10k+ členy) |
 | **RAM** | 1 GB | 2+ GB (Redis je in-memory) |
-| **Python** | 3.9 | 3.11+ |
+| **Python** | 3.11 | 3.11+ |
 | **Redis / Valkey** | 6.0 | 7.0+ (pro podporu ACL) |
 | **Docker** | 20.10 | 24.0+ s Compose v2 |
 
@@ -39,7 +39,7 @@ python3 -c "import secrets; print(secrets.token_urlsafe(48))"
 
 ## Nasazení pomocí Docker Compose (Doporučeno)
 
-Docker Compose automaticky spustí a propojí všechny potřebné služby: Redis, hlavního bota, dashboard a analytický engine.
+Docker Compose automaticky spustí a propojí všechny potřebné služby: Redis, hlavního bota, dashboard bota, webový dashboard a Discourse synchronizátor.
 
 1.  Klonujte repozitář: `git clone https://github.com/MarciPhan/2026-BP-Marcinka-PredikceChov-n-`
 2.  Vytvořte konfigurační soubor: `cp .env.example .env`

@@ -38,11 +38,11 @@ CommunityMetrics je postaven na moderních technologiích optimalizovaných pro 
 
 | Technologie | Verze | Účel |
 | :--- | :--- | :--- |
-| **Python** | 3.9+ | discord.py 2.6, FastAPI, NumPy |
-| **Redis / Valkey** | 6.0+ | In-memory databáze, sub-ms latence |
+| **Python** | 3.11 | discord.py 2.6.4, FastAPI 0.121.1, NumPy 2.3.2 |
+| **Redis** | alpine (Docker) | In-memory databáze |
 | **Chart.js** | 4.x | Interaktivní grafy a vizualizace |
-| **VitePress** | 1.x | Moderní dokumentace |
-| **Docker** | 20.10+ | Kontejnerizované nasazení |
+| **VitePress** | ^1.0.0 | Moderní dokumentace |
+| **Docker** | python:3.11-slim | Kontejnerizované nasazení |
 
 ## Začněte za 5 minut
 

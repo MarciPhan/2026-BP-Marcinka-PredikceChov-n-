@@ -8,7 +8,7 @@ Před začátkem se ujistěte, že máte nainstalované:
 
 | Komponenta | Účel | Ověření |
 | :--- | :--- | :--- |
-| **Python 3.9+** | Jádro bota a backendu | `python3 --version` |
+| **Python 3.11** | Jádro bota a backendu | `python3 --version` |
 | **Node.js 18+ & npm** | VitePress dokumentace | `node --version` |
 | **Redis (nebo Valkey)** | In-memory databáze | `redis-cli ping` → `PONG` |
 | **Git** | Verzování | `git --version` |
@@ -27,8 +27,8 @@ source .venv/bin/activate
 # 3. Instalace Python závislostí
 pip install -r requirements.txt
 
-# 4. Instalace Node.js závislostí pro dokumentaci
-cd docs && npm install && cd ..
+# 4. Instalace Node.js závislostí
+npm install
 ```
 
 ## Konfigurace prostředí
@@ -106,20 +106,40 @@ communitymetrics/
         gdpr.py          # GDPR příkazy — export, smazání dat
         health.py        # Zdravotní check — Redis ping, bot status
         help.py          # Interaktivní nápověda
+        ping.py          # Měření latence k Discord API
+        community_health.py    # Community Health příkazy
         analytics_tracking.py  # Event tracking pro dashboard
  web/
     backend/
-        main.py          # FastAPI routes — Dashboard API
+        main.py          # FastAPI app — middleware, routery, error handling
+        security.py      # CSRF ochrana (require_csrf)
         utils.py         # Analytické výpočty — Engagement, predikce
         hydrate_users.py # Synchronizace uživatelských dat
+        routers/
+            auth.py       # Discord OAuth2, demo login
+            pages.py      # Server-side rendered HTML stránky
+            api.py        # REST API endpointy (JSON)
+            settings.py   # Konfigurace dashboardu
+            community_health.py  # Community Health stránky
+        services/
+            analytics_service.py       # AnalyticsService — metriky
+            community_health_service.py # CommunityHealthService
+    frontend/
+        templates/         # Jinja2 HTML šablony (22 souborů)
+        static/            # CSS, JS, obrázky
  shared/
     keys.py              # Redis klíčová schéma (centrální definice)
     models.py            # Matematické modely — Markov, Kaplan-Meier
-    redis_client.py      # Singleton Redis klient
+    redis_client.py      # Redis connection pool (async + sync)
+    config.py            # Pydantic Settings — prostředí, retence
+    community_health.py  # Helper funkce pro Community Health
+    analytics_config.py  # Výchozí váhy MII
+ scripts/
+    discourse_sync.py    # Konektor pro Discourse fórum
  docs/                    # Tato dokumentace (VitePress)
  config/                  # Konfigurace a tajemství
- docker-compose.yml       # Produkční nasazení
- Dockerfile               # Container image
+ docker-compose.yml       # Produkční nasazení (5 kontejnerů)
+ Dockerfile               # Container image (python:3.11-slim)
  start.sh                 # Lokální spouštěč
  requirements.txt         # Python závislosti
  .env.example             # Šablona konfigurace
@@ -180,14 +200,15 @@ npm run docs:build
 Všechny Redis klíče jsou definovány centrálně v `shared/keys.py`. Nikdy nepoužívejte hardcoded stringy:
 
 ```python
-from shared.redis_client import redis_client
-from shared.keys import Keys
+from shared.redis_client import get_redis
+from shared.keys import K_DAU, day_key
 
-# Správně
-await redis_client.pfadd(Keys.hll_dau(guild_id, date), user_id)
+# Správně — použijte funkce z shared/keys.py
+r = await get_redis()
+await r.pfadd(K_DAU(guild_id, day_key(datetime.now())), user_id)
 
-# Špatně — nepoužívejte
-await redis_client.pfadd(f"hll:dau:{guild_id}:{date}", user_id)
+# Špatně — nepoužívejte hardcoded stringy
+await r.pfadd(f"hll:dau:{guild_id}:{date}", user_id)
 ```
 
 ## Řešení potíží

@@ -31,7 +31,7 @@ docker-compose ps
 
 ```bash
 # Ověřte Python verzi
-python3 --version  # Vyžaduje 3.9+
+python3 --version  # Vyžaduje 3.11+
 
 # Přeinstalujte závislosti
 pip install -r requirements.txt
@@ -153,7 +153,6 @@ docker-compose logs --tail=50 web-dashboard
 | `ERR_DISCORD_429` | Narazili jste na Discord rate limit. | Snižte frekvenci backfillu nebo omezte počet kanálů. |
 | `ERR_ML_MATRIX` | Matice přechodu je singulární. | Nedostatek uživatelů — zkuste delší časový rozsah. |
 | `ERR_OAUTH_FAIL` | OAuth2 selhala. | Ověřte `DISCORD_CLIENT_SECRET` a Redirect URI. |
-| `ERR_SMTP_FAIL` | Nelze odeslat OTP e-mail. | Ověřte SMTP údaje v `.env`. |
 
 ## Diagnostika Docker prostředí
 
