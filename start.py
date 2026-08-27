@@ -118,6 +118,29 @@ def main():
                 k, v = line.strip().split("=", 1)
                 env[k.strip()] = v.strip().strip("'").strip('"')
 
+    if not env.get("BOT_TOKEN") and not os.getenv("TOKEN_PROMPTED_ALREADY"):
+        print("\n" + "="*60)
+        print_color(" CHYBA: BOT_TOKEN není nastaven v .env souboru!", "1;31")
+        try:
+            token = input(" Prosím, zadejte svůj Discord Bot Token (nebo stiskněte Enter pro přeskočení): ").strip()
+        except KeyboardInterrupt:
+            token = ""
+        
+        if not token:
+            print_color(" Pokračuji bez tokenu. Discord bot nemusí fungovat.", "1;33")
+        else:
+            if len(token) < 50:
+                print_color(" [WARNING] Zadaný text je příliš krátký na to, aby šlo o platný Discord token.", "1;33")
+                print_color(" Pokračuji bez tokenu.", "1;33")
+            else:
+                with open(".env", "a", encoding="utf-8") as f:
+                    f.write(f"\nBOT_TOKEN={token}\n")
+                
+                env["BOT_TOKEN"] = token
+                print_color(" Token byl úspěšně uložen do .env!", "1;32")
+        print("="*60)
+        os.environ["TOKEN_PROMPTED_ALREADY"] = "1"
+
     if not env.get("DISCOURSE_TOKEN") and not os.getenv("TOKEN_PROMPTED_ALREADY"):
         print("\n" + "="*60)
         print_color(" CHYBA: DISCOURSE_TOKEN není nastaven v .env souboru!", "1;31")

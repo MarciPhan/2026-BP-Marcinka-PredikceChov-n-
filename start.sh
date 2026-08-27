@@ -16,7 +16,36 @@ fi
 
 DASHBOARD_PORT=$(grep -E '^DASHBOARD_PORT=' .env 2>/dev/null | cut -d'=' -f2- | tr -d '\r" ' || true)
 if [ -z "$DASHBOARD_PORT" ]; then
-    DASHBOARD_PORT="8093"
+DASHBOARD_PORT="8093"
+fi
+
+BOT_TOKEN=$(grep -E '^BOT_TOKEN=' .env 2>/dev/null | cut -d'=' -f2- | tr -d '\r" ' || true)
+if [ -z "$BOT_TOKEN" ]; then
+    echo ""
+    echo "============================================================"
+    echo " CHYBA: BOT_TOKEN není nastaven v .env souboru!"
+    printf " Prosím, zadejte svůj Discord Bot Token (nebo stiskněte Enter pro přeskočení): "
+    
+    trap 'stty echo 2>/dev/null; echo ""; exit 1' INT TERM
+    stty -echo 2>/dev/null
+    IFS= read -r USER_BOT_TOKEN
+    stty echo 2>/dev/null
+    trap - INT TERM
+    echo ""
+    
+    if [ -z "$USER_BOT_TOKEN" ]; then
+        echo " Pokračuji bez tokenu. Discord bot nemusí fungovat."
+    else
+        if [ "${#USER_BOT_TOKEN}" -lt 50 ]; then
+            echo " [WARNING] Zadaný text je příliš krátký na to, aby šlo o platný Discord token."
+            echo " Pokračuji bez tokenu."
+        else
+            printf '\nBOT_TOKEN=%s\n' "$USER_BOT_TOKEN" >> .env
+            echo " Token byl úspěšně uložen do .env!"
+        fi
+    fi
+    echo "============================================================"
+    export TOKEN_PROMPTED_ALREADY=1
 fi
 
 DISCOURSE_TOKEN=$(grep -E '^DISCOURSE_TOKEN=' .env 2>/dev/null | cut -d'=' -f2- | tr -d '\r" ' || true)

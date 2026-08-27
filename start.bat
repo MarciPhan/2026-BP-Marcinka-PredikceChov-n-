@@ -15,15 +15,39 @@ if not exist ".env" (
 
 set DASHBOARD_PORT=8093
 set DISCOURSE_TOKEN=
+set BOT_TOKEN=
 if exist ".env" (
     for /f "usebackq eol=# tokens=1* delims==" %%a in (".env") do (
         if "%%a"=="DASHBOARD_PORT" set "DASHBOARD_PORT=%%b"
         if "%%a"=="DISCOURSE_TOKEN" set "DISCOURSE_TOKEN=%%b"
+        if "%%a"=="BOT_TOKEN" set "BOT_TOKEN=%%b"
     )
 )
 
 setlocal EnableDelayedExpansion
 
+if defined BOT_TOKEN goto discourse_check
+echo.
+echo ============================================================
+echo  CHYBA: BOT_TOKEN neni nastaven v .env souboru!
+set "INPUT_BOT_TOKEN="
+set /p INPUT_BOT_TOKEN=" Prosim, zadejte svuj Discord Bot Token (nebo stisknete Enter pro preskoceni): "
+if "!INPUT_BOT_TOKEN!"=="" (
+    echo  Pokracuji bez tokenu. Discord bot nemusi fungovat.
+) else (
+    if "!INPUT_BOT_TOKEN:~50,1!"=="" (
+        echo  [WARNING] Zadany text je prilis kratky na to, aby slo o platny token.
+        echo  Pokracuji bez tokenu.
+    ) else (
+        echo.>> .env
+        echo BOT_TOKEN=!INPUT_BOT_TOKEN!>> .env
+        echo  Token byl uspesne ulozen do .env!
+    )
+)
+set "TOKEN_PROMPTED_ALREADY=1"
+echo ============================================================
+
+:discourse_check
 if defined DISCOURSE_TOKEN goto npm_check
 echo.
 echo ============================================================
