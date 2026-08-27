@@ -49,6 +49,10 @@ try:
         DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_REDIRECT_URI,
         ADMIN_USER_IDS, BOT_TOKEN
     )
+    if not SECRET_KEY:
+        SECRET_KEY = secrets.token_urlsafe(32)
+    if not ACCESS_TOKEN:
+        ACCESS_TOKEN = secrets.token_urlsafe(32)
 except ImportError:
     # fallback to generated secrets for dev
     SECRET_KEY = secrets.token_urlsafe(32)
