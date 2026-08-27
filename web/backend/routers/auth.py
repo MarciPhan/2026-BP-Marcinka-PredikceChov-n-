@@ -20,9 +20,9 @@ try:
         DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_REDIRECT_URI, ADMIN_USER_IDS
     )
 except ImportError:
-    DISCORD_CLIENT_ID = ""
-    DISCORD_CLIENT_SECRET = ""
-    DISCORD_REDIRECT_URI = "http://localhost:8093/auth/callback"
+    DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID", "")
+    DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET", "")
+    DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", "http://localhost:8093/auth/callback")
     ADMIN_USER_IDS = []
 
 DISCORD_AUTH_URL = "https://discord.com/api/oauth2/authorize"

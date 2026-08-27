@@ -55,14 +55,14 @@ try:
         ACCESS_TOKEN = secrets.token_urlsafe(32)
 except ImportError:
     # fallback to generated secrets for dev
-    SECRET_KEY = secrets.token_urlsafe(32)
-    ACCESS_TOKEN = secrets.token_urlsafe(32)
+    SECRET_KEY = os.getenv("DASHBOARD_SECRET_KEY") or secrets.token_urlsafe(32)
+    ACCESS_TOKEN = os.getenv("DASHBOARD_ACCESS_TOKEN") or secrets.token_urlsafe(32)
     SESSION_EXPIRY_HOURS = 24
-    DISCORD_CLIENT_ID = ""
-    DISCORD_CLIENT_SECRET = ""
-    DISCORD_REDIRECT_URI = "http://localhost:8093/auth/callback"
+    DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID", "")
+    DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET", "")
+    DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", "http://localhost:8093/auth/callback")
     ADMIN_USER_IDS = []
-    BOT_TOKEN = ""
+    BOT_TOKEN = os.getenv("BOT_TOKEN", "")
     print("VAROVÁNÍ: Používají se generované klíče (dev mode).")
 
 
