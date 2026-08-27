@@ -16,17 +16,21 @@ if not exist ".env" (
 set DASHBOARD_PORT=8093
 set DISCOURSE_TOKEN=
 set BOT_TOKEN=
+set DISCORD_CLIENT_ID=
+set DISCORD_CLIENT_SECRET=
 if exist ".env" (
     for /f "usebackq eol=# tokens=1* delims==" %%a in (".env") do (
         if "%%a"=="DASHBOARD_PORT" set "DASHBOARD_PORT=%%b"
         if "%%a"=="DISCOURSE_TOKEN" set "DISCOURSE_TOKEN=%%b"
         if "%%a"=="BOT_TOKEN" set "BOT_TOKEN=%%b"
+        if "%%a"=="DISCORD_CLIENT_ID" set "DISCORD_CLIENT_ID=%%b"
+        if "%%a"=="DISCORD_CLIENT_SECRET" set "DISCORD_CLIENT_SECRET=%%b"
     )
 )
 
 setlocal EnableDelayedExpansion
 
-if defined BOT_TOKEN goto discourse_check
+if defined BOT_TOKEN goto client_id_check
 echo.
 echo ============================================================
 echo  CHYBA: BOT_TOKEN neni nastaven v .env souboru!
@@ -43,6 +47,40 @@ if "!INPUT_BOT_TOKEN!"=="" (
         echo BOT_TOKEN=!INPUT_BOT_TOKEN!>> .env
         echo  Token byl uspesne ulozen do .env!
     )
+)
+set "TOKEN_PROMPTED_ALREADY=1"
+echo ============================================================
+
+:client_id_check
+if defined DISCORD_CLIENT_ID goto client_secret_check
+echo.
+echo ============================================================
+echo  CHYBA: DISCORD_CLIENT_ID neni nastaven v .env souboru!
+set "INPUT_CLIENT_ID="
+set /p INPUT_CLIENT_ID=" Prosim, zadejte svuj Discord OAuth2 Client ID (nebo stisknete Enter pro preskoceni): "
+if "!INPUT_CLIENT_ID!"=="" (
+    echo  Pokracuji bez Client ID. Discord prihlasovani nemusi fungovat.
+) else (
+    echo.>> .env
+    echo DISCORD_CLIENT_ID=!INPUT_CLIENT_ID!>> .env
+    echo  Client ID bylo uspesne ulozeno do .env!
+)
+set "TOKEN_PROMPTED_ALREADY=1"
+echo ============================================================
+
+:client_secret_check
+if defined DISCORD_CLIENT_SECRET goto discourse_check
+echo.
+echo ============================================================
+echo  CHYBA: DISCORD_CLIENT_SECRET neni nastaven v .env souboru!
+set "INPUT_CLIENT_SECRET="
+set /p INPUT_CLIENT_SECRET=" Prosim, zadejte svuj Discord OAuth2 Client Secret (nebo stisknete Enter pro preskoceni): "
+if "!INPUT_CLIENT_SECRET!"=="" (
+    echo  Pokracuji bez Client Secret. Discord prihlasovani nemusi fungovat.
+) else (
+    echo.>> .env
+    echo DISCORD_CLIENT_SECRET=!INPUT_CLIENT_SECRET!>> .env
+    echo  Client Secret byl uspesne ulozen do .env!
 )
 set "TOKEN_PROMPTED_ALREADY=1"
 echo ============================================================

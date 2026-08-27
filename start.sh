@@ -48,6 +48,50 @@ if [ -z "$BOT_TOKEN" ]; then
     export TOKEN_PROMPTED_ALREADY=1
 fi
 
+DISCORD_CLIENT_ID=$(grep -E '^DISCORD_CLIENT_ID=' .env 2>/dev/null | cut -d'=' -f2- | tr -d '\r" ' || true)
+if [ -z "$DISCORD_CLIENT_ID" ]; then
+    echo ""
+    echo "============================================================"
+    echo " CHYBA: DISCORD_CLIENT_ID není nastaven v .env souboru!"
+    printf " Prosím, zadejte svůj Discord OAuth2 Client ID (nebo stiskněte Enter pro přeskočení): "
+    
+    IFS= read -r USER_CLIENT_ID
+    echo ""
+    
+    if [ -z "$USER_CLIENT_ID" ]; then
+        echo " Pokračuji bez Client ID. Discord přihlašování nemusí fungovat."
+    else
+        printf '\nDISCORD_CLIENT_ID=%s\n' "$USER_CLIENT_ID" >> .env
+        echo " Client ID bylo úspěšně uloženo do .env!"
+    fi
+    echo "============================================================"
+    export TOKEN_PROMPTED_ALREADY=1
+fi
+
+DISCORD_CLIENT_SECRET=$(grep -E '^DISCORD_CLIENT_SECRET=' .env 2>/dev/null | cut -d'=' -f2- | tr -d '\r" ' || true)
+if [ -z "$DISCORD_CLIENT_SECRET" ]; then
+    echo ""
+    echo "============================================================"
+    echo " CHYBA: DISCORD_CLIENT_SECRET není nastaven v .env souboru!"
+    printf " Prosím, zadejte svůj Discord OAuth2 Client Secret (nebo stiskněte Enter pro přeskočení): "
+    
+    trap 'stty echo 2>/dev/null; echo ""; exit 1' INT TERM
+    stty -echo 2>/dev/null
+    IFS= read -r USER_CLIENT_SECRET
+    stty echo 2>/dev/null
+    trap - INT TERM
+    echo ""
+    
+    if [ -z "$USER_CLIENT_SECRET" ]; then
+        echo " Pokračuji bez Client Secret. Discord přihlašování nemusí fungovat."
+    else
+        printf '\nDISCORD_CLIENT_SECRET=%s\n' "$USER_CLIENT_SECRET" >> .env
+        echo " Client Secret byl úspěšně uložen do .env!"
+    fi
+    echo "============================================================"
+    export TOKEN_PROMPTED_ALREADY=1
+fi
+
 DISCOURSE_TOKEN=$(grep -E '^DISCOURSE_TOKEN=' .env 2>/dev/null | cut -d'=' -f2- | tr -d '\r" ' || true)
 if [ -z "$DISCOURSE_TOKEN" ]; then
     echo ""

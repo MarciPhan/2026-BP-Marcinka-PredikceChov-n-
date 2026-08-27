@@ -141,6 +141,44 @@ def main():
         print("="*60)
         os.environ["TOKEN_PROMPTED_ALREADY"] = "1"
 
+    if not env.get("DISCORD_CLIENT_ID") and not os.getenv("TOKEN_PROMPTED_ALREADY"):
+        print("\n" + "="*60)
+        print_color(" CHYBA: DISCORD_CLIENT_ID není nastaven v .env souboru!", "1;31")
+        try:
+            client_id = input(" Prosím, zadejte svůj Discord OAuth2 Client ID (nebo stiskněte Enter pro přeskočení): ").strip()
+        except KeyboardInterrupt:
+            client_id = ""
+        
+        if not client_id:
+            print_color(" Pokračuji bez Client ID. Discord přihlašování nemusí fungovat.", "1;33")
+        else:
+            with open(".env", "a", encoding="utf-8") as f:
+                f.write(f"\nDISCORD_CLIENT_ID={client_id}\n")
+            
+            env["DISCORD_CLIENT_ID"] = client_id
+            print_color(" Client ID bylo úspěšně uloženo do .env!", "1;32")
+        print("="*60)
+        os.environ["TOKEN_PROMPTED_ALREADY"] = "1"
+
+    if not env.get("DISCORD_CLIENT_SECRET") and not os.getenv("TOKEN_PROMPTED_ALREADY"):
+        print("\n" + "="*60)
+        print_color(" CHYBA: DISCORD_CLIENT_SECRET není nastaven v .env souboru!", "1;31")
+        try:
+            client_secret = input(" Prosím, zadejte svůj Discord OAuth2 Client Secret (nebo stiskněte Enter pro přeskočení): ").strip()
+        except KeyboardInterrupt:
+            client_secret = ""
+        
+        if not client_secret:
+            print_color(" Pokračuji bez Client Secret. Discord přihlašování nemusí fungovat.", "1;33")
+        else:
+            with open(".env", "a", encoding="utf-8") as f:
+                f.write(f"\nDISCORD_CLIENT_SECRET={client_secret}\n")
+            
+            env["DISCORD_CLIENT_SECRET"] = client_secret
+            print_color(" Client Secret byl úspěšně uložen do .env!", "1;32")
+        print("="*60)
+        os.environ["TOKEN_PROMPTED_ALREADY"] = "1"
+
     if not env.get("DISCOURSE_TOKEN") and not os.getenv("TOKEN_PROMPTED_ALREADY"):
         print("\n" + "="*60)
         print_color(" CHYBA: DISCOURSE_TOKEN není nastaven v .env souboru!", "1;31")
