@@ -40,7 +40,8 @@ if [ -z "$BOT_TOKEN" ]; then
             echo " [WARNING] Zadaný text je příliš krátký na to, aby šlo o platný Discord token."
             echo " Pokračuji bez tokenu."
         else
-            printf '\nBOT_TOKEN=%s\n' "$USER_BOT_TOKEN" >> .env
+            grep -v "^BOT_TOKEN=" .env > .env.tmp && mv .env.tmp .env
+            echo "BOT_TOKEN=$USER_BOT_TOKEN" >> .env
             echo " Token byl úspěšně uložen do .env!"
         fi
     fi
@@ -61,7 +62,8 @@ if [ -z "$DISCORD_CLIENT_ID" ]; then
     if [ -z "$USER_CLIENT_ID" ]; then
         echo " Pokračuji bez Client ID. Discord přihlašování nemusí fungovat."
     else
-        printf '\nDISCORD_CLIENT_ID=%s\n' "$USER_CLIENT_ID" >> .env
+        grep -v "^DISCORD_CLIENT_ID=" .env > .env.tmp && mv .env.tmp .env
+        echo "DISCORD_CLIENT_ID=$USER_CLIENT_ID" >> .env
         echo " Client ID bylo úspěšně uloženo do .env!"
     fi
     echo "============================================================"
@@ -85,7 +87,8 @@ if [ -z "$DISCORD_CLIENT_SECRET" ]; then
     if [ -z "$USER_CLIENT_SECRET" ]; then
         echo " Pokračuji bez Client Secret. Discord přihlašování nemusí fungovat."
     else
-        printf '\nDISCORD_CLIENT_SECRET=%s\n' "$USER_CLIENT_SECRET" >> .env
+        grep -v "^DISCORD_CLIENT_SECRET=" .env > .env.tmp && mv .env.tmp .env
+        echo "DISCORD_CLIENT_SECRET=$USER_CLIENT_SECRET" >> .env
         echo " Client Secret byl úspěšně uložen do .env!"
     fi
     echo "============================================================"
@@ -113,7 +116,8 @@ if [ -z "$DISCOURSE_TOKEN" ]; then
             echo " [WARNING] Zadaný text je příliš krátký na to, aby šlo o platný token (omylem stisknutá klávesa?)."
             echo " Pokračuji bez tokenu."
         else
-            printf '\nDISCOURSE_TOKEN=%s\n' "$USER_TOKEN" >> .env
+            grep -v "^DISCOURSE_TOKEN=" .env > .env.tmp && mv .env.tmp .env
+            echo "DISCOURSE_TOKEN=$USER_TOKEN" >> .env
             echo " Token byl úspěšně uložen do .env!"
         fi
     fi

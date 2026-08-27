@@ -43,7 +43,8 @@ if "!INPUT_BOT_TOKEN!"=="" (
         echo  [WARNING] Zadany text je prilis kratky na to, aby slo o platny token.
         echo  Pokracuji bez tokenu.
     ) else (
-        echo.>> .env
+        findstr /v /b /c:"BOT_TOKEN=" .env > .env.tmp
+        move /y .env.tmp .env >nul
         echo BOT_TOKEN=!INPUT_BOT_TOKEN!>> .env
         echo  Token byl uspesne ulozen do .env!
     )
@@ -61,7 +62,8 @@ set /p INPUT_CLIENT_ID=" Prosim, zadejte svuj Discord OAuth2 Client ID (nebo sti
 if "!INPUT_CLIENT_ID!"=="" (
     echo  Pokracuji bez Client ID. Discord prihlasovani nemusi fungovat.
 ) else (
-    echo.>> .env
+    findstr /v /b /c:"DISCORD_CLIENT_ID=" .env > .env.tmp
+    move /y .env.tmp .env >nul
     echo DISCORD_CLIENT_ID=!INPUT_CLIENT_ID!>> .env
     echo  Client ID bylo uspesne ulozeno do .env!
 )
@@ -78,7 +80,8 @@ set /p INPUT_CLIENT_SECRET=" Prosim, zadejte svuj Discord OAuth2 Client Secret (
 if "!INPUT_CLIENT_SECRET!"=="" (
     echo  Pokracuji bez Client Secret. Discord prihlasovani nemusi fungovat.
 ) else (
-    echo.>> .env
+    findstr /v /b /c:"DISCORD_CLIENT_SECRET=" .env > .env.tmp
+    move /y .env.tmp .env >nul
     echo DISCORD_CLIENT_SECRET=!INPUT_CLIENT_SECRET!>> .env
     echo  Client Secret byl uspesne ulozen do .env!
 )
@@ -99,7 +102,8 @@ if "!INPUT_TOKEN!"=="" (
         echo  [WARNING] Zadany text je prilis kratky na to, aby slo o platny token ^(omylem stisknuta klavesa?^).
         echo  Pokracuji bez tokenu.
     ) else (
-        echo.>> .env
+        findstr /v /b /c:"DISCOURSE_TOKEN=" .env > .env.tmp
+        move /y .env.tmp .env >nul
         echo DISCOURSE_TOKEN=!INPUT_TOKEN!>> .env
         echo  Token byl uspesne ulozen do .env!
     )

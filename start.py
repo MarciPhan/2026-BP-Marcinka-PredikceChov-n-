@@ -118,6 +118,17 @@ def main():
                 k, v = line.strip().split("=", 1)
                 env[k.strip()] = v.strip().strip("'").strip('"')
 
+    def update_env_file(key, value):
+        lines = []
+        if os.path.exists(".env"):
+            with open(".env", "r", encoding="utf-8") as f:
+                lines = f.readlines()
+        with open(".env", "w", encoding="utf-8") as f:
+            for line in lines:
+                if not line.startswith(f"{key}="):
+                    f.write(line)
+            f.write(f"{key}={value}\n")
+
     if not env.get("BOT_TOKEN") and not os.getenv("TOKEN_PROMPTED_ALREADY"):
         print("\n" + "="*60)
         print_color(" CHYBA: BOT_TOKEN není nastaven v .env souboru!", "1;31")
@@ -133,8 +144,7 @@ def main():
                 print_color(" [WARNING] Zadaný text je příliš krátký na to, aby šlo o platný Discord token.", "1;33")
                 print_color(" Pokračuji bez tokenu.", "1;33")
             else:
-                with open(".env", "a", encoding="utf-8") as f:
-                    f.write(f"\nBOT_TOKEN={token}\n")
+                update_env_file("BOT_TOKEN", token)
                 
                 env["BOT_TOKEN"] = token
                 print_color(" Token byl úspěšně uložen do .env!", "1;32")
@@ -152,8 +162,7 @@ def main():
         if not client_id:
             print_color(" Pokračuji bez Client ID. Discord přihlašování nemusí fungovat.", "1;33")
         else:
-            with open(".env", "a", encoding="utf-8") as f:
-                f.write(f"\nDISCORD_CLIENT_ID={client_id}\n")
+            update_env_file("DISCORD_CLIENT_ID", client_id)
             
             env["DISCORD_CLIENT_ID"] = client_id
             print_color(" Client ID bylo úspěšně uloženo do .env!", "1;32")
@@ -171,8 +180,7 @@ def main():
         if not client_secret:
             print_color(" Pokračuji bez Client Secret. Discord přihlašování nemusí fungovat.", "1;33")
         else:
-            with open(".env", "a", encoding="utf-8") as f:
-                f.write(f"\nDISCORD_CLIENT_SECRET={client_secret}\n")
+            update_env_file("DISCORD_CLIENT_SECRET", client_secret)
             
             env["DISCORD_CLIENT_SECRET"] = client_secret
             print_color(" Client Secret byl úspěšně uložen do .env!", "1;32")
@@ -190,8 +198,7 @@ def main():
         if not token:
             print_color(" Pokračuji bez tokenu. Synchronizace Discourse nemusí fungovat.", "1;33")
         else:
-            with open(".env", "a", encoding="utf-8") as f:
-                f.write(f"\nDISCOURSE_TOKEN={token}\n")
+            update_env_file("DISCOURSE_TOKEN", token)
             
             env["DISCOURSE_TOKEN"] = token
             print_color(" Token byl úspěšně uložen do .env!", "1;32")
