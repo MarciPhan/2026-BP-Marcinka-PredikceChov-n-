@@ -34,6 +34,9 @@ if defined BOT_TOKEN goto client_id_check
 echo.
 echo ============================================================
 echo  CHYBA: BOT_TOKEN neni nastaven v .env souboru!
+echo  [INFO] Nezapomente v Discord Developer Portalu (zalozka Bot) povolit vsechna 3
+echo         Privileged Gateway Intents (Presence, Server Members, Message Content).
+echo         Jinak bot po spusteni okamzite spadne!
 set "INPUT_BOT_TOKEN="
 set /p INPUT_BOT_TOKEN=" Prosim, zadejte svuj Discord Bot Token (nebo stisknete Enter pro preskoceni): "
 if "!INPUT_BOT_TOKEN!"=="" (
@@ -237,9 +240,17 @@ echo.
 goto end
 
 :python_check
+echo.
+echo ============================================================
+echo  [WARNING] Docker/Compose neni dostupny! Prechazim na cisty Python.
+echo  [!] Pro ostry provoz MUSITE mit v systemu nainstalovany Redis.
+echo      (Pro Windows stahnete napr. Memurai nebo Redis for Windows)
+echo      Bez nej pobezi aplikace v omezenem 'FakeRedis' rezimu a
+echo      Web Dashboard neuvidi data z Discord Bota!
+echo ============================================================
 python --version >nul 2>nul
 if !ERRORLEVEL! equ 0 (
-    echo Docker not found or not running. Python detected. Starting via start.py...
+    echo Python detected. Starting via start.py...
     python start.py
     goto end
 )

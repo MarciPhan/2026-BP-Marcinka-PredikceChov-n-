@@ -24,6 +24,9 @@ if [ -z "$BOT_TOKEN" ]; then
     echo ""
     echo "============================================================"
     echo " CHYBA: BOT_TOKEN není nastaven v .env souboru!"
+    echo " [INFO] Nezapomeňte v Discord Developer Portalu (záložka Bot) povolit všechna 3"
+    echo "        Privileged Gateway Intents (Presence, Server Members, Message Content)."
+    echo "        Jinak bot po spuštění okamžitě spadne!"
     printf " Prosím, zadejte svůj Discord Bot Token (nebo stiskněte Enter pro přeskočení): "
     
     trap 'stty echo 2>/dev/null; echo ""; exit 1' INT TERM
@@ -253,7 +256,15 @@ if [ "$USE_DOCKER" -eq 1 ]; then
     exit 0
 fi
 
-echo "Docker/Compose není dostupný. Checking for Python 3.11+..."
+echo ""
+echo "============================================================"
+echo " [WARNING] Docker/Compose není dostupný. Přecházím na čistý Python."
+echo " [!] Pro ostrý provoz MUSÍTE mít v systému nainstalovaný Redis."
+echo "     (např. 'sudo apt install redis-server')"
+echo "     Bez něj poběží aplikace v omezeném 'FakeRedis' režimu a"
+echo "     Web Dashboard neuvidí data z Discord Bota!"
+echo "============================================================"
+echo "Checking for Python 3.11+..."
 
 PYTHON_CMD=""
 

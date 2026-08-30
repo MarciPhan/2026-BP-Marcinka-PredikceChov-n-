@@ -92,7 +92,12 @@ def main():
     # 3. Redis check
     redis_running = not check_port_free(6379)
     if not redis_running:
-        print_color("Warning: Redis on port 6379 not detected. CommunityMetrics will fallback to FakeRedis.", "1;33")
+        print("\n" + "="*60)
+        print_color(" [CRITICAL WARNING] Redis na portu 6379 nenalezen!", "1;31")
+        print_color(" CommunityMetrics přechází na FakeRedis (dočasná paměť).", "1;33")
+        print_color(" WEB DASHBOARD NEUVIDÍ DATA OD BOTA BEZ SKUTEČNÉHO REDISU!", "1;33")
+        print_color(" Prosím nainstalujte Redis (např. 'sudo apt install redis-server').", "1;33")
+        print("="*60 + "\n")
         os.environ["USE_FAKEREDIS"] = "true"
     else:
         print_color("Redis detected.", "1;32")
@@ -133,6 +138,9 @@ def main():
     if not env.get("BOT_TOKEN") and not os.getenv("TOKEN_PROMPTED_ALREADY"):
         print("\n" + "="*60)
         print_color(" CHYBA: BOT_TOKEN není nastaven v .env souboru!", "1;31")
+        print_color(" [INFO] Nezapomeňte v Discord Developer Portalu (záložka Bot) povolit všechna 3", "1;33")
+        print_color("        Privileged Gateway Intents (Presence, Server Members, Message Content).", "1;33")
+        print_color("        Jinak bot po spuštění okamžitě spadne!", "1;33")
         try:
             token = input(" Prosím, zadejte svůj Discord Bot Token (nebo stiskněte Enter pro přeskočení): ").strip()
         except KeyboardInterrupt:
