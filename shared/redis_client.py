@@ -41,7 +41,7 @@ async def get_redis() -> redis.Redis:
     try:
         await client.ping()
         return client
-    except (redis.exceptions.ConnectionError, ConnectionRefusedError) as e:
+    except (redis_sync.exceptions.ConnectionError, ConnectionRefusedError) as e:
         logger.error(f"Redis connection failed at {settings.redis_url}")
         raise RuntimeError(f"Service Unavailable: Redis connection failed. {e}")
 

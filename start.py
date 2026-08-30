@@ -93,6 +93,7 @@ def main():
     redis_running = not check_port_free(6379)
     if not redis_running:
         print_color("Warning: Redis on port 6379 not detected. CommunityMetrics will fallback to FakeRedis.", "1;33")
+        os.environ["USE_FAKEREDIS"] = "true"
     else:
         print_color("Redis detected.", "1;32")
 
