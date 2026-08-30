@@ -148,7 +148,9 @@ async def auth_callback(request: Request, code: str = None, error: str = None, s
     except httpx.RequestError as exc:
         return templates.TemplateResponse("login.html", {"request": request, "error": "Chyba sítě při komunikaci s Discordem."})
     except Exception as exc:
-        return templates.TemplateResponse("login.html", {"request": request, "error": "Interní chyba při přihlášení."})
+        import traceback
+        traceback.print_exc()
+        return templates.TemplateResponse("login.html", {"request": request, "error": f"Interní chyba při přihlášení: {str(exc)}"})
 
 @router.get("/logout")
 async def logout(request: Request):

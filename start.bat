@@ -57,6 +57,9 @@ if defined DISCORD_CLIENT_ID goto client_secret_check
 echo.
 echo ============================================================
 echo  CHYBA: DISCORD_CLIENT_ID neni nastaven v .env souboru!
+echo  [INFO] Nezapomente v Discord Developer Portalu (OAuth2 -^> Redirects) pridat URI:
+echo         http://localhost:!DASHBOARD_PORT!/auth/callback
+echo         Jinak uvidite chybu 'Invalid OAuth2 redirect_uri'.
 set "INPUT_CLIENT_ID="
 set /p INPUT_CLIENT_ID=" Prosim, zadejte svuj Discord OAuth2 Client ID (nebo stisknete Enter pro preskoceni): "
 if "!INPUT_CLIENT_ID!"=="" (
@@ -223,6 +226,8 @@ if defined DOCS_URL echo !DOCS_URL!
 echo    [BOT] Discord Bot    : Bezi (Primary ^& Dashboard Lite)
 echo    [SYNC] Discourse Sync : Bezi v pozadi
 echo    [DB] Redis Cache    : localhost:6379
+echo ------------------------------------------------------------
+echo    [OAUTH2] Discord Redirect URI: http://localhost:!DASHBOARD_PORT!/auth/callback
 echo ------------------------------------------------------------
 echo    [INFO] Uzitecne prikazy:
 echo       Sledovani logu:  !COMPOSE_CMD! logs -f

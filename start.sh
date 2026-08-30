@@ -54,6 +54,9 @@ if [ -z "$DISCORD_CLIENT_ID" ]; then
     echo ""
     echo "============================================================"
     echo " CHYBA: DISCORD_CLIENT_ID není nastaven v .env souboru!"
+    echo " [INFO] Nezapomeňte v Discord Developer Portalu (OAuth2 -> Redirects) přidat URI:"
+    echo "        http://localhost:${DASHBOARD_PORT}/auth/callback"
+    echo "        Jinak uvidíte chybu 'Invalid OAuth2 redirect_uri'."
     printf " Prosím, zadejte svůj Discord OAuth2 Client ID (nebo stiskněte Enter pro přeskočení): "
     
     IFS= read -r USER_CLIENT_ID
@@ -239,6 +242,8 @@ if [ "$USE_DOCKER" -eq 1 ]; then
     echo "   [BOT] Discord Bot    : Běží (Primary & Dashboard Lite)"
     echo "   [SYNC] Discourse Sync : Běží v pozadí"
     echo "   [DB] Redis Cache    : localhost:6379"
+    echo "------------------------------------------------------------"
+    echo "   [OAUTH2] Discord Redirect URI: http://localhost:${DASHBOARD_PORT}/auth/callback"
     echo "------------------------------------------------------------"
     echo "   [INFO] Užitečné příkazy:"
     echo "      Sledování logů:  $COMPOSE_CMD logs -f"
