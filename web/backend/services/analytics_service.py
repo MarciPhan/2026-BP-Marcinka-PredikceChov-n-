@@ -728,7 +728,7 @@ class DefaultAnalyticsService(BaseAnalyticsService):
         from shared.analytics_config import DEFAULT_MII_WEIGHTS
         return DEFAULT_MII_WEIGHTS
 
-    async def get_action_weights(self) -> dict:
+    async def get_action_weights(self, *args, **kwargs) -> dict:
         """Fetch action weights from Redis or use defaults."""
         
         from shared.analytics_config import DEFAULT_MII_WEIGHTS

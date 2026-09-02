@@ -2,6 +2,7 @@ import redis.asyncio as redis
 from typing import Dict, Any, List
 import json
 from datetime import datetime, timedelta
+from collections import defaultdict, Counter
 import httpx
 import os
 from pathlib import Path
@@ -210,7 +211,7 @@ class RedisRepository(BaseRepository):
             ts_start = start_dt.timestamp()
             ts_end = end_dt.timestamp()
             
-            
+            from ..utils import get_action_weights
             weights = await get_action_weights(r)
             
             
@@ -319,7 +320,7 @@ class RedisRepository(BaseRepository):
             
             
             
-            roles_data = await get_cached_roles(guild_id)
+            roles_data = await self.get_cached_roles(guild_id)
 
             all_roles = {str(r["id"]): r["name"] for r in roles_data}
             
@@ -399,17 +400,17 @@ class RedisRepository(BaseRepository):
                 d_str = d.strftime("%Y%m%d")
                 
                 # WAU (last 7 days)
-                wau_keys = [K_DAU(guild_id, (d - timedelta(days=i)).strftime("%Y%m%d")) for i in range(7)]
+                wau_keys = [f"hll:dau:{guild_id}:{(d - timedelta(days=i)).strftime('%Y%m%d')}" for i in range(7)]
                 wau_val = await r.pfcount(*wau_keys)
                 wau_data.append(wau_val)
                 
                 # MAU (last 30 days)
-                mau_keys = [K_DAU(guild_id, (d - timedelta(days=i)).strftime("%Y%m%d")) for i in range(30)]
+                mau_keys = [f"hll:dau:{guild_id}:{(d - timedelta(days=i)).strftime('%Y%m%d')}" for i in range(30)]
                 mau_val = await r.pfcount(*mau_keys)
                 mau_data.append(mau_val)
                 
                 # DAU for this day
-                dau_val = await r.pfcount(K_DAU(guild_id, d_str))
+                dau_val = await r.pfcount(f"hll:dau:{guild_id}:{d_str}")
                 
                 dau_wau_ratio.append(round((dau_val / max(1, wau_val)) * 100, 1))
                 dau_mau_ratio.append(round((dau_val / max(1, mau_val)) * 100, 1))
