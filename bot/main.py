@@ -24,7 +24,8 @@ if os.path.exists(env_path):
             line = line.strip()
             if line and not line.startswith("#") and "=" in line:
                 key, val = line.split("=", 1)
-                os.environ[key] = val.strip('"').strip("'")
+                if key not in os.environ:
+                    os.environ[key] = val.strip('"').strip("'")
 
 import discord
 

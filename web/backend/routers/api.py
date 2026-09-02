@@ -618,6 +618,76 @@ async def delete_server_data(request: Request, _=Depends(require_admin)):
     })
 
 
+@router.post("/api/trigger-backfill")
+async def trigger_backfill(request: Request, _=Depends(require_admin)):
+    """Trigger backfill process."""
+    try:
+        await require_csrf(request)
+    except HTTPException:
+        return JSONResponse({"status": "error", "message": "Neplatný CSRF token"}, status_code=403)
+
+    guild_id = request.session.get("guild_id")
+    if not guild_id:
+        return JSONResponse({"status": "error", "message": "No guild selected"}, status_code=400)
+    
+    if guild_id == "demo-guild":
+        return JSONResponse({"status": "error", "message": "Tato akce není v demu povolena."}, status_code=403)
+    
+    from ..utils import get_redis_client
+    r = await get_redis_client()
+    
+    await r.hset(f"backfill:status:{guild_id}", mapping={
+        "status": "processing",
+        "total_messages": 0,
+        "current_channel": "inicializace"
+    })
+    
+    import subprocess
+    import sys
+    import os
+    
+    script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "backfill_stats.py"))
+    
+    # Extract bot token from config or .env
+    bot_token = os.environ.get("BOT_TOKEN")
+    if not bot_token:
+        try:
+            from ....config.dashboard_secrets import BOT_TOKEN
+            bot_token = BOT_TOKEN
+        except:
+            pass
+            
+    if bot_token:
+        cmd = [sys.executable, script_path, "--guild_id", str(guild_id), "--token", bot_token, "--days", "30"]
+        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    else:
+        await r.hset(f"backfill:status:{guild_id}", mapping={
+            "status": "error",
+            "message": "Bot token not found"
+        })
+    
+    return JSONResponse({"status": "ok", "message": "Backfill spuštěn."})
+
+@router.get("/api/backfill-status")
+async def backfill_status(request: Request, _=Depends(require_admin)):
+    """Get backfill status."""
+    guild_id = request.session.get("guild_id")
+    if not guild_id:
+        return JSONResponse({"status": "error", "message": "No guild selected"}, status_code=400)
+        
+    from ..utils import get_redis_client
+    r = await get_redis_client()
+    status = await r.hgetall(f"backfill:status:{guild_id}")
+    
+    if not status:
+        return JSONResponse({"status": "none"})
+        
+    return JSONResponse({
+        "status": status.get("status", "error"),
+        "total_messages": int(status.get("total_messages", 0)),
+        "current_channel": status.get("current_channel", "")
+    })
+
 @router.post("/api/leave-server")
 async def leave_server(request: Request, _=Depends(require_admin)):
     """Remove bot from current server (Admin only)."""
