@@ -118,7 +118,10 @@ async def api_add_discourse(
         # Add to global list
         await r.sadd("discourse:ids", guild_id)
         
-        return JSONResponse({"success": True, "guild_id": str(guild_id)})
+        # Add to backfill queue so that discourse_sync.py will download its history
+        await r.lpush("discourse:backfill_queue", guild_id)
+        
+        return JSONResponse({"status": "ok", "guild_id": str(guild_id)})
         
     except Exception as e:
         return JSONResponse({"error": f"Database error: {str(e)}"}, status_code=500)

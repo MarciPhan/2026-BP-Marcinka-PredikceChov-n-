@@ -269,12 +269,26 @@ if __name__ == "__main__":
         async def main_loop():
             syncer = DiscourseSync()
             print("[DiscourseSync] Služba pro synchronizaci Discourse fór byla spuštěna.")
+            r = await get_redis()
             while True:
+                queue_item = None
                 try:
-                    await syncer.sync_all()
+                    # Check for backfill queue
+                    queue_item = await r.rpop("discourse:backfill_queue")
+                    if queue_item:
+                        print(f"[DiscourseSync] Nalezen nový požadavek na backfill fóra: {queue_item}")
+                        await syncer.backfill_guild(queue_item)
+                    else:
+                        await syncer.sync_all()
                 except Exception as e:
                     print(f"[DiscourseSync] Chyba v cyklu synchronizace: {e}")
-                await asyncio.sleep(300)
+                
+                # Sleep if no queue items, otherwise process next immediately
+                if not queue_item:
+                    await asyncio.sleep(300)
+                else:
+                    await asyncio.sleep(5)
 
         asyncio.run(main_loop())
+
 
