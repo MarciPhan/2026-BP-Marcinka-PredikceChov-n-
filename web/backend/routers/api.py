@@ -646,7 +646,7 @@ async def trigger_backfill(request: Request, _=Depends(require_admin)):
     import sys
     import os
     
-    script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "backfill_stats.py"))
+    script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "scripts", "backfill_stats.py"))
     
     # Extract bot token from config or .env
     bot_token = os.environ.get("BOT_TOKEN")
@@ -658,7 +658,8 @@ async def trigger_backfill(request: Request, _=Depends(require_admin)):
             pass
             
     if bot_token:
-        cmd = [sys.executable, script_path, "--guild_id", str(guild_id), "--token", bot_token, "--days", "30"]
+        # User requested complete history (set days to 10 years to cover everything)
+        cmd = [sys.executable, script_path, "--guild_id", str(guild_id), "--token", bot_token, "--days", "3650"]
         subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     else:
         await r.hset(f"backfill:status:{guild_id}", mapping={
