@@ -805,6 +805,10 @@ async def get_analytics_tools(request: Request, start_date: Optional[str] = None
         service = DefaultAnalyticsService(repo)
         dqs = await service.get_data_quality_score(int(guild_id)) if str(guild_id).isdigit() else None
         
+        # Add retention to engagement payload
+        member_stats = await load_member_stats(guild_id, start_date=start_date, end_date=end_date)
+        engagement["retention"] = member_stats.get("retention_rate", 0.0) if member_stats else 0.0
+
         return JSONResponse({
             "status": "ok",
             "trends": trends,

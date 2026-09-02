@@ -954,3 +954,44 @@ def get_guild_id(request: Request, guild_id: Optional[str] = None) -> Union[int,
         return int(gid)
     except (ValueError, TypeError):
         return gid
+
+import httpx
+from typing import Any
+import os
+
+async def get_discord_channels(guild_id: Any):
+    if guild_id == "demo-guild":
+        return [
+            {"id": "1", "name": "obecné"},
+            {"id": "2", "name": "hry"},
+            {"id": "3", "name": "pokec"}
+        ]
+    # Check if negative -> Discourse
+    try:
+        if int(guild_id) < 0:
+            r = await get_redis()
+            # Try to fetch channel info from redis
+            keys = await r.keys("channel:info:*")
+            channels = []
+            for k in keys:
+                info = await r.hgetall(k)
+                if info.get("guild_id") == str(guild_id):
+                    channels.append({"id": k.split(":")[-1], "name": info.get("name", f"Kategorie {k.split(':')[-1]}")})
+            return channels
+    except ValueError:
+        pass
+        
+    bot_token = os.environ.get("BOT_TOKEN")
+    if not bot_token:
+        try:
+            from config.dashboard_secrets import BOT_TOKEN
+            bot_token = BOT_TOKEN
+        except:
+            bot_token = ""
+            
+    url = f"https://discord.com/api/v10/guilds/{guild_id}/channels"
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(url, headers={"Authorization": f"Bot {bot_token}"})
+        if resp.status_code == 200:
+            return resp.json()
+    return []

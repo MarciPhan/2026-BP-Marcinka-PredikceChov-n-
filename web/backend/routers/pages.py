@@ -1110,6 +1110,12 @@ async def _dashboard_logic(request: Request, start_date: str = None, end_date: s
     sidebar_ctx = await get_sidebar_context(request)
     context.update(sidebar_ctx)
     
+    with open("/tmp/dashboard_debug.log", "w") as f:
+        f.write(f"GUILD_ID: {guild_id}\n")
+        f.write(f"HAS_ANY_DATA: {has_any_data}\n")
+        f.write(f"TOTAL_MEMBERS: {context.get('total_members')}\n")
+        f.write(f"SUMMARY_STATS: {summary_stats}\n")
+        
     return templates.TemplateResponse("index.html", context)
 
 

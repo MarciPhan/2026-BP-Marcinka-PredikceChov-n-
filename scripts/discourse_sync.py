@@ -96,6 +96,17 @@ class DiscourseSync:
             }
             
             async with httpx.AsyncClient() as client:
+                try:
+                    about_resp = await client.get(f"{url}/about.json", headers=headers)
+                    if about_resp.status_code == 200:
+                        about_data = about_resp.json()
+                        users_count = about_data.get("about", {}).get("stats", {}).get("users_count")
+                        if users_count:
+                            await r.set(f"presence:total:{guild_id}", users_count)
+                            await r.set(f"stats:total_members:{guild_id}", users_count)
+                except Exception as e:
+                    print(f"Nepodařilo se získat počet členů z about.json: {e}")
+
                 # Načtení topics (latest)
                 topics_resp = await client.get(f"{url}/latest.json", headers=headers)
                 if topics_resp.status_code != 200:
@@ -161,6 +172,17 @@ class DiscourseSync:
             headers = {"Api-Key": api_key, "Api-Username": api_user}
             
             async with httpx.AsyncClient(timeout=30.0) as client:
+                try:
+                    about_resp = await client.get(f"{url}/about.json", headers=headers)
+                    if about_resp.status_code == 200:
+                        about_data = about_resp.json()
+                        users_count = about_data.get("about", {}).get("stats", {}).get("users_count")
+                        if users_count:
+                            await r.set(f"presence:total:{guild_id}", users_count)
+                            await r.set(f"stats:total_members:{guild_id}", users_count)
+                except Exception as e:
+                    print(f"Nepodařilo se získat počet členů z about.json: {e}")
+
                 page = 0
                 total_processed = 0
                 synced_set_key = f"discourse:synced_topics:{guild_id}"

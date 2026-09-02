@@ -359,20 +359,7 @@ def get_guild_id(request: Request, guild_id: Optional[str] = None) -> Union[int,
         return gid
 
 
-async def get_discord_channels(guild_id: Any):
-    if guild_id == "demo-guild":
-        return [
-            {"id": "1", "name": "obecné"},
-            {"id": "2", "name": "hry"},
-            {"id": "3", "name": "pokec"}
-        ]
-    """Fetch channels from Discord API."""
-    url = f"https://discord.com/api/v10/guilds/{guild_id}/channels"
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(url, headers={"Authorization": f"Bot {BOT_TOKEN}"})
-        if resp.status_code == 200:
-            return resp.json()
-    return []
+
 
 
 
