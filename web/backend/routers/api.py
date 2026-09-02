@@ -646,26 +646,37 @@ async def trigger_backfill(request: Request, _=Depends(require_admin)):
     import sys
     import os
     
-    script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "scripts", "backfill_stats.py"))
-    
-    # Extract bot token from config or .env
-    bot_token = os.environ.get("BOT_TOKEN")
-    if not bot_token:
-        try:
-            from ....config.dashboard_secrets import BOT_TOKEN
-            bot_token = BOT_TOKEN
-        except:
-            pass
-            
-    if bot_token:
-        # User requested complete history (set days to 10 years to cover everything)
-        cmd = [sys.executable, script_path, "--guild_id", str(guild_id), "--token", bot_token, "--days", "3650"]
+    is_discourse = False
+    try:
+        is_discourse = int(guild_id) < 0
+    except ValueError:
+        pass
+
+    if is_discourse:
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "scripts", "discourse_sync.py"))
+        cmd = [sys.executable, script_path, "--guild_id", str(guild_id), "--backfill"]
         subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     else:
-        await r.hset(f"backfill:status:{guild_id}", mapping={
-            "status": "error",
-            "message": "Bot token not found"
-        })
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "scripts", "backfill_stats.py"))
+        
+        # Extract bot token from config or .env
+        bot_token = os.environ.get("BOT_TOKEN")
+        if not bot_token:
+            try:
+                from ....config.dashboard_secrets import BOT_TOKEN
+                bot_token = BOT_TOKEN
+            except:
+                pass
+                
+        if bot_token:
+            # User requested complete history (set days to 10 years to cover everything)
+            cmd = [sys.executable, script_path, "--guild_id", str(guild_id), "--token", bot_token, "--days", "3650"]
+            subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
+            await r.hset(f"backfill:status:{guild_id}", mapping={
+                "status": "error",
+                "message": "Bot token not found"
+            })
     
     return JSONResponse({"status": "ok", "message": "Backfill spuštěn."})
 
@@ -686,7 +697,8 @@ async def backfill_status(request: Request, _=Depends(require_admin)):
     return JSONResponse({
         "status": status.get("status", "error"),
         "total_messages": int(status.get("total_messages", 0)),
-        "current_channel": status.get("current_channel", "")
+        "current_channel": status.get("current_channel", ""),
+        "message": status.get("message", "Neznámá chyba")
     })
 
 @router.post("/api/leave-server")
@@ -835,7 +847,7 @@ async def get_extended_stats(request: Request, start_date: str = None, end_date:
     try:
         
         
-        deep = await get_deep_stats_redis(guild_id, start_date=start_date, end_date=end_date, days=30)
+        deep = await get_deep_stats_redis(guild_id, start_date=start_date, end_date=end_date)
         dash = await get_redis_dashboard_stats(guild_id, start_date=start_date, end_date=end_date)
         growth = await load_member_stats(guild_id, start_date=start_date, end_date=end_date)
         

@@ -609,7 +609,8 @@ class DefaultAnalyticsService(BaseAnalyticsService):
                 insights.append({"type": "neutral", "text": "💬 Lidé píší, ale málo mluví. Zkuste vytvořit 'Chill' voice room."})
                 
             
-            cmd_stats = await self.repo.get_command_stats(guild_id, limit=1)
+            from ..utils import get_command_stats
+            cmd_stats = await get_command_stats(guild_id, limit=1)
             if cmd_stats:
                 top_cmd = cmd_stats[0]
                 insights.append({"type": "neutral", "text": f"🤖 Nejoblíbenější příkaz je '/{top_cmd['name']}' ({top_cmd['count']}x)."})
