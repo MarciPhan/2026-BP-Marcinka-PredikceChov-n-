@@ -157,48 +157,22 @@ async def test_api_filters_and_auth():
     from fastapi.testclient import TestClient
     from web.backend.main import app
     from unittest.mock import patch
+    from web.backend.routers.api import require_auth
     
-    client = TestClient(app)
+    # We disable redirects so we can see the exact status code returned by require_csrf (403)
+    # Note: TestClient in newer starlette uses follow_redirects, older uses allow_redirects.
+    try:
+        client = TestClient(app, follow_redirects=False)
+    except TypeError:
+        client = TestClient(app, allow_redirects=False)
+        
     app.dependency_overrides.clear()
+    
+    # Override auth dependency to allow request and test CSRF
+    app.dependency_overrides[require_auth] = lambda: True
+    
     # Check CSRF on admin endpoint
     resp_no_csrf = client.post("/api/admin/support-channels", json={"support_channels": []}, headers={"Cookie": "session=dummy;"})
-    # Since require_auth will fail on dummy session without valid mock, let's just assert it doesn't return 200 OK without CSRF
-    pass
-    
-    # Test v1 auth logic is separated from internal api
-    # If there is a v1 endpoint, it should require X-API-Key (e.g. /api/v1/health-research which might exist)
-    # We can just verify the newly added internal API route doesn't have /v1/ prefix
-    assert client.get("/api/v1/channel-activity").status_code == 404
-    
-    # We test the topic_id vs channel_id translation logic using service mock
-    with patch("web.backend.services.analytics_service.DefaultAnalyticsService.get_channel_activity", new_callable=AsyncMock) as mock_activity:
-        mock_activity.return_value = []
-        
-        # Override auth dependency to allow request
-        from web.backend.routers.api import require_auth
-        app.dependency_overrides[require_auth] = lambda: True
-        
-        client.get("/api/channel-activity?platform=discourse&channel_id=123", cookies={"session": "dummy"})
-        mock_activity.assert_called_once()
-        # kwargs check
-        args, kwargs = mock_activity.call_args
-        # Should have translated channel_id to topic_id=123, channel_id=None
-        assert args[4] == None # channel_id
-        assert args[5] == "123" # topic_id
-        
-        app.dependency_overrides.clear()
-
-@pytest.mark.asyncio
-async def test_api_filters_and_auth():
-    from fastapi.testclient import TestClient
-    from web.backend.main import app
-    from unittest.mock import patch
-    
-    client = TestClient(app)
-    app.dependency_overrides.clear()
-    # Check CSRF on admin endpoint
-    resp_no_csrf = client.post("/api/admin/support-channels", json={"support_channels": []}, headers={"Cookie": "session=dummy;"})
-    # Since require_auth will fail on dummy session without valid mock, let's just assert it doesn't return 200 OK without CSRF
     assert resp_no_csrf.status_code in [401, 403]
     
     # Test v1 auth logic is separated from internal api
@@ -209,10 +183,6 @@ async def test_api_filters_and_auth():
     # We test the topic_id vs channel_id translation logic using service mock
     with patch("web.backend.services.analytics_service.DefaultAnalyticsService.get_channel_activity", new_callable=AsyncMock) as mock_activity:
         mock_activity.return_value = []
-        
-        # Override auth dependency to allow request
-        from web.backend.routers.api import require_auth
-        app.dependency_overrides[require_auth] = lambda: True
         
         client.get("/api/channel-activity?platform=discourse&channel_id=123", cookies={"session": "dummy"})
         mock_activity.assert_called_once()

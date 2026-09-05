@@ -10,6 +10,10 @@ class TestDiscourseSync(unittest.IsolatedAsyncioTestCase):
     async def test_sync_guild_success(self, mock_get, mock_get_redis):
         # Setup Redis mock
         mock_redis = AsyncMock()
+        mock_pipe = MagicMock()
+        mock_pipe.execute = AsyncMock(return_value=[])
+        mock_redis.pipeline = MagicMock(return_value=mock_pipe)
+        
         mock_redis.hgetall.return_value = {
             "url": "https://forum.example.com",
             "api_key": "test_key",
@@ -37,9 +41,9 @@ class TestDiscourseSync(unittest.IsolatedAsyncioTestCase):
         res = await syncer.sync_guild("guild123")
     
         self.assertTrue(res)
-        mock_redis.incrby.assert_called_with("stats:total_msgs:guild123", 2)
-        mock_redis.sadd.assert_any_call("discourse:synced_topics:guild123", "1")
-        mock_redis.sadd.assert_any_call("discourse:synced_topics:guild123", "2")
+        mock_pipe.incr.assert_any_call("stats:total_msgs:guild123")
+        mock_pipe.sadd.assert_any_call("discourse:synced_topics:guild123", "1")
+        mock_pipe.sadd.assert_any_call("discourse:synced_topics:guild123", "2")
 
     @patch("scripts.discourse_sync.get_redis")
     async def test_sync_guild_missing_config(self, mock_get_redis):
