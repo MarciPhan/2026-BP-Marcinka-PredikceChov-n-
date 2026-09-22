@@ -916,11 +916,15 @@ async def get_sidebar_context(request: Request) -> Dict[str, Any]:
     
     
 
+    if "csrf_token" not in request.session:
+        import secrets
+        request.session["csrf_token"] = secrets.token_urlsafe(32)
+
     return {
         "sidebar_guild_id": guild_id,
         "sidebar_guild_name": final_name,
         "sidebar_guild_icon": final_icon,
-        
+        "csrf_token": request.session["csrf_token"],
     }
 
 

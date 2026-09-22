@@ -4,10 +4,14 @@ from fastapi import Request, HTTPException, status
 async def require_csrf(request: Request) -> None:
     session_csrf = request.session.get("csrf_token")
     if not session_csrf:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Missing session CSRF token"
-        )
+        if request.session.get("authenticated") or "discord_user" in request.session:
+            session_csrf = secrets.token_urlsafe(32)
+            request.session["csrf_token"] = session_csrf
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Missing session CSRF token"
+            )
         
     client_csrf = request.headers.get("X-CSRF-Token")
     

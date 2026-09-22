@@ -1,118 +1,12 @@
 {% extends "base.html" %}
 {% from "components/layout_editor.html" import layout_controls, layout_drawer, layout_scripts %}
-{% from "components/layout_editor.html" import layout_controls, layout_drawer, layout_scripts %}
+
 {% block content %}
-<style>
-    /* Premium Predictions Design */
-    .title-gradient {
-        background: linear-gradient(135deg, #fff, #9ca3af);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 800;
-        letter-spacing: -0.5px;
-    }
-    
-    .card {
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease;
-        border: 1px solid var(--glass-border);
-        background: linear-gradient(145deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.9) 100%);
-        backdrop-filter: blur(12px);
-    }
-    
-    .card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 30px -10px rgba(139, 92, 246, 0.15);
-        border-color: rgba(139, 92, 246, 0.3);
-    }
-
-    .stat-value {
-        font-family: 'Inter', sans-serif;
-        font-weight: 800;
-        background: linear-gradient(to right, #f8fafc, #cbd5e1);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    }
-
-    .stat-diff.diff-positive {
-        background: rgba(16, 185, 129, 0.15);
-        color: #34d399;
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-weight: 600;
-        box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
-    }
-
-    .stat-diff.diff-negative {
-        background: rgba(239, 68, 68, 0.15);
-        color: #f87171;
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-weight: 600;
-        box-shadow: 0 0 10px rgba(239, 68, 68, 0.1);
-    }
-
-    /* Animated abstract background */
-    .predictions-bg {
-        position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        z-index: -1;
-        overflow: hidden;
-        pointer-events: none;
-    }
-    
-    .predictions-bg::before, .predictions-bg::after {
-        content: '';
-        position: absolute;
-        width: 600px;
-        height: 600px;
-        border-radius: 50%;
-        filter: blur(120px);
-        opacity: 0.15;
-        animation: float 20s infinite alternate cubic-bezier(0.5, 0, 0.5, 1);
-    }
-    
-    .predictions-bg::before {
-        background: #8b5cf6;
-        top: -200px;
-        left: -100px;
-    }
-    
-    .predictions-bg::after {
-        background: #ec4899;
-        bottom: -200px;
-        right: -100px;
-        animation-delay: -10s;
-    }
-    
-    @keyframes float {
-        0% { transform: translate(0, 0) scale(1); }
-        100% { transform: translate(100px, 50px) scale(1.2); }
-    }
-    
-    /* Modern Grid Layout */
-    #predictions-grid {
-        gap: 24px;
-    }
-</style>
-
-<div class="predictions-bg"></div>
 
 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
     <div>
-        <h1 class="title title-gradient">Experimenty a prototypy</h1>
-        <p class="subtitle" style="color: var(--text-secondary); max-width: 600px;">
-            Prediktivní a analytické prototypy na této obrazovce mají experimentální charakter. 
-        </p>
-    </div>
-    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-left: 4px solid #ef4444; border-radius: 6px; padding: 16px; margin-bottom: 24px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <i class="fas fa-exclamation-triangle" style="color: #ef4444; font-size: 20px;"></i>
-            <div>
-                <strong style="color: #ef4444;">Upozornění k metodice:</strong> Prototypové výstupy (Markov, Kaplan-Meier) jsou dostupné jako experimentální rozšíření pro výzkumné účely. Není doporučeno na jejich základě činit okamžitá produkční rozhodnutí.
-            </div>
-        </div>
-        <p style="color: var(--text-secondary); margin-top: 8px;">Prototypové analytické modely na základě historických dat serveru. 
+        <h1 class="title title-gradient">Predikce a trendy</h1>
+        <p style="color: var(--text-secondary); margin-top: 8px;">Prediktivní analytické modely chování komunity, odhady retence a survival analýza.
             <a href="/docs/predictions" style="color: var(--accent); text-decoration: none; margin-left: 8px; font-size: 13px; font-weight: 600; transition: color 0.2s;">
                 <i class="fas fa-question-circle"></i> Jak to funguje?
             </a>
@@ -126,26 +20,34 @@
 
 {{ layout_drawer() }}
 
+<div style="background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.2); border-left: 4px solid var(--accent); border-radius: 12px; padding: 14px 18px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px;">
+    <i class="fas fa-brain" style="color: var(--accent); font-size: 18px; flex-shrink: 0;"></i>
+    <div style="font-size: 13px; line-height: 1.5; color: var(--text-secondary);">
+        <strong style="color: var(--text-primary);">Metodika predikcí:</strong> Matematické modely (Markovovy řetězce chování, Kaplan-Meierova analýza přežití) počítají pravděpodobnosti setrvání v aktivitě a odhady růstu z reálných historických dat komunity.
+    </div>
+</div>
 
 {% macro render_widget(id) %}
 {% if id == 'card_pred_members' %}
-<div class="card" data-id="card_pred_members">
-    <h3 style="color: var(--text-secondary); font-size: 14px; margin-bottom: 8px;">Očekávaný počet členů za 30 dní
-    </h3>
+<div class="card stat-card" data-id="card_pred_members">
+    <div class="stat-label">
+        Očekávaný počet členů (30 dní)
+        <span class="info-icon dash-tooltip">? <span class="dash-tooltip-text">Statistický odhad růstu počtu členů na základě 30denního vývoje.</span></span>
+    </div>
     <div class="stat-value" id="pred-members">--</div>
     <div class="stat-diff" id="pred-members-diff">Počítám...</div>
-    <div
-        style="font-size: 11px; color: var(--text-tertiary); margin-top: 8px; border-top: 1px solid var(--glass-border); padding-top: 8px;">
-        Průměrný měsíční růst: <strong id="avg-growth">--</strong> členů | Aktuálně: <strong
-            id="current-members">--</strong>
+    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px; border-top: 1px solid var(--glass-border); padding-top: 8px;">
+        Průměrný měsíční růst: <strong id="avg-growth" style="color: var(--text-primary);">--</strong> členů | Aktuálně: <strong id="current-members" style="color: var(--text-primary);">--</strong>
     </div>
 </div>
 {% elif id == 'card_pred_msgs' %}
-<div class="card" data-id="card_pred_msgs">
-    <h3 style="color: var(--text-secondary); font-size: 14px; margin-bottom: 8px;">Odhad zpráv (Zítra)</h3>
-    <div class="stat-value" id="pred-msgs">--</div>
-    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">dle 30denního trendu a sezónnosti
+<div class="card stat-card" data-id="card_pred_msgs">
+    <div class="stat-label">
+        Odhad zpráv (Zítra)
+        <span class="info-icon dash-tooltip">? <span class="dash-tooltip-text">Očekávaný objem zpráv na zítřejší den podle týdenní sezónnosti a trendu.</span></span>
     </div>
+    <div class="stat-value" id="pred-msgs">--</div>
+    <div class="stat-diff diff-neutral">Dle 30denního trendu a sezónnosti</div>
 </div>
 {% elif id == 'chart_main_pred' %}
 <div class="card" data-id="chart_main_pred" style="min-height: 350px;">
@@ -170,11 +72,11 @@
 <div class="card" data-id="widget_mau">
     <h3 style="margin-bottom: 16px;">Predikce MAU (3 měsíce)</h3>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-        <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; text-align: center;">
             <div style="font-size: 24px; font-weight: 700; color: #3b82f6;" id="mau-value">--</div>
             <div style="font-size: 12px; color: var(--text-secondary);">MAU (tento měsíc)</div>
         </div>
-        <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; text-align: center;">
             <div style="font-size: 24px; font-weight: 700; color: #10b981;" id="stickiness-value">--%</div>
             <div style="font-size: 12px; color: var(--text-secondary);">DAU/MAU Ratio</div>
         </div>
@@ -183,16 +85,16 @@
 </div>
 {% elif id == 'widget_research' %}
 <div class="card" data-id="widget_research">
-    <h3 style="margin-bottom: 16px;">Analýza a Výzkum</h3>
+    <h3 style="margin-bottom: 16px;">Modelování chování a retence</h3>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-        <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; text-align: center;">
             <div style="font-size: 24px; font-weight: 700; color: #8b5cf6;" id="res-retention">--%</div>
             <div style="font-size: 11px; color: var(--text-secondary);">
                 Markov: Setrvání v aktivitě
                 <span class="info-icon dash-tooltip" style="margin-left: 4px;">? <span class="dash-tooltip-text">Pravděpodobnost namodelovaná pomocí Markovových řetězců (stavy New, Active, atd.), že si uživatel zachová aktivní stav (nikoli trvalé členství).</span></span>
             </div>
         </div>
-        <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; text-align: center;">
             <div style="font-size: 24px; font-weight: 700; color: #ec4899;" id="res-life">-- d</div>
             <div style="font-size: 11px; color: var(--text-secondary);">
                 Survival: Setrvání v pozorované aktivitě
@@ -201,14 +103,14 @@
         </div>
     </div>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-        <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; text-align: center;">
             <div style="font-size: 20px; font-weight: 700; color: #10b981;" id="res-tox">--</div>
             <div style="font-size: 11px; color: var(--text-secondary);">
                 Moderation Intervention Index (MII)
                 <span class="info-icon dash-tooltip" style="margin-left: 4px;">? <span class="dash-tooltip-text">MII (Moderator Intervention Index) - poměr mezi moderační zátěží a celkovým objemem komunikace.</span></span>
             </div>
         </div>
-        <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; text-align: center;">
             <div style="font-size: 20px; font-weight: 700; color: #10b981;" id="res-median">--</div>
             <div style="font-size: 11px; color: var(--text-secondary);">
                 Medián setrvání v aktivitě
@@ -231,18 +133,18 @@
 </div>
 {% elif id == 'widget_stability' %}
 <div class="card" data-id="widget_stability">
-    <h3 style="margin-bottom: 16px;">Analýza stability</h3>
+    <h3 style="margin-bottom: 16px;">Predikce stability a rizika odchodů</h3>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
-        <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; text-align: center;">
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); padding: 16px; border-radius: 12px; text-align: center;">
             <div style="font-size: 24px; font-weight: 700; color: var(--success);" id="churn-risk-val">--%</div>
             <div style="font-size: 12px; color: var(--text-secondary);">Riziko inaktivity</div>
         </div>
-        <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; text-align: center;">
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); padding: 16px; border-radius: 12px; text-align: center;">
             <div style="font-size: 24px; font-weight: 700;" id="leaves-3m">--</div>
             <div style="font-size: 12px; color: var(--text-secondary);">Odchodů (3 měsíce)</div>
         </div>
     </div>
-    <div id="risk-details" style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px;">
+    <div id="risk-details" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); padding: 16px; border-radius: 12px;">
         <div style="font-weight: 600; margin-bottom: 8px;" id="risk-title">Markovův model</div>
         <p id="risk-explanation" style="font-size: 13px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
             Načítám data...</p>
@@ -266,11 +168,11 @@
 <div class="card" data-id="chart_engagement">
     <h3 style="margin-bottom: 16px;">Predikce engagementu</h3>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-        <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; text-align: center;">
             <div style="font-size: 20px; font-weight: 700; color: #8b5cf6;" id="eng-current">--</div>
             <div style="font-size: 11px; color: var(--text-secondary);">Aktuální</div>
         </div>
-        <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; text-align: center;">
             <div style="font-size: 20px; font-weight: 700; color: #ec4899;" id="eng-predicted">--</div>
             <div style="font-size: 11px; color: var(--text-secondary);">Za 7 dní</div>
         </div>

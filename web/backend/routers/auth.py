@@ -45,6 +45,7 @@ async def demo_login(request: Request):
     request.session["guild_id"] = "demo-guild"
     request.session["guild_name"] = "Demo Server"
     request.session["role"] = "demo"
+    request.session["csrf_token"] = secrets.token_urlsafe(32)
     request.session["login_time"] = datetime.now().isoformat()
     return RedirectResponse(url="/", status_code=303)
 
@@ -180,6 +181,7 @@ async def auth_callback(request: Request, code: str = None, error: str = None, s
             "avatar": user_data.get("avatar")
         }
         request.session["role"] = "admin" if is_admin else "user"
+        request.session["csrf_token"] = secrets.token_urlsafe(32)
         request.session["login_time"] = datetime.now().isoformat()
         request.session["guilds_count"] = len(managed_guilds)
         
