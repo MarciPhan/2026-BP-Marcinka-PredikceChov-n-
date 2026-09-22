@@ -123,3 +123,15 @@ async def test_csrf_missing_session():
     with pytest.raises(HTTPException) as excinfo:
         await require_csrf(request)
     assert excinfo.value.status_code == 403
+
+def test_effective_redirect_uri_fallback(monkeypatch):
+    from web.backend.routers.auth import get_effective_redirect_uri
+    monkeypatch.delenv("DISCORD_REDIRECT_URI", raising=False)
+    monkeypatch.setenv("DASHBOARD_PORT", "8095")
+    assert get_effective_redirect_uri() == "http://localhost:8095/auth/callback"
+
+def test_effective_redirect_uri_custom(monkeypatch):
+    from web.backend.routers.auth import get_effective_redirect_uri
+    monkeypatch.setenv("DISCORD_REDIRECT_URI", "https://example.com/auth/callback")
+    assert get_effective_redirect_uri() == "https://example.com/auth/callback"
+

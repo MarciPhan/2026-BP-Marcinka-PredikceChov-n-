@@ -17,7 +17,7 @@ def check_port_free(port):
         return s.connect_ex(('localhost', port)) != 0
 
 def kill_processes_on_port(port):
-    print(f"Cleaning up port {port}...")
+    print(f"Checking port {port}...")
     try:
         if platform.system() == "Windows":
             result = subprocess.run(["netstat", "-ano"], capture_output=True, text=True)
@@ -27,17 +27,27 @@ def kill_processes_on_port(port):
                     pid = parts[-1]
                     subprocess.run(["taskkill", "/F", "/PID", pid], capture_output=True)
         else:
-            # lsof works on Mac and Linux
-            subprocess.run(["lsof", "-t", "-i", f":{port}", "-s", "TCP:LISTEN"], 
-                           stdout=subprocess.PIPE).stdout.decode('utf-8')
-            os.system(f"lsof -t -i:{port} | xargs kill -9 2>/dev/null")
+            pids = subprocess.run(["lsof", "-t", f"-i:{port}"], capture_output=True, text=True).stdout.strip()
+            if pids:
+                for pid in pids.split():
+                    try:
+                        os.kill(int(pid), 9)
+                    except ProcessLookupError:
+                        pass
+            if not check_port_free(port):
+                subprocess.run(["fuser", "-k", f"{port}/tcp"], capture_output=True)
+        
+        # Wait up to 2 seconds for port to clear
+        for _ in range(10):
+            if check_port_free(port):
+                break
+            time.sleep(0.2)
     except Exception as e:
-        print(f"Cleanup error (ignoring): {e}")
+        print(f"Cleanup error on port {port} (ignoring): {e}")
 
 def run_service(name, cmd_args, env, log_file):
     print_color(f"Starting {name}...", "1;34")
     with open(log_file, "w") as f:
-        # We don't wait for it to finish, it runs in background
         proc = subprocess.Popen(
             cmd_args, 
             env=env, 
@@ -49,7 +59,23 @@ def run_service(name, cmd_args, env, log_file):
 
 def main():
     print_color("Starting CommunityMetrics (Cross-Platform)...", "1;32")
-    
+
+    def update_env_file(key, value):
+        lines = []
+        if os.path.exists(".env"):
+            with open(".env", "r", encoding="utf-8") as f:
+                lines = f.readlines()
+        found = False
+        with open(".env", "w", encoding="utf-8") as f:
+            for line in lines:
+                if line.startswith(f"{key}="):
+                    f.write(f"{key}={value}\n")
+                    found = True
+                else:
+                    f.write(line)
+            if not found:
+                f.write(f"{key}={value}\n")
+
     # 1. Env & Deps
     venv_dir = os.path.abspath(".venv")
     if not os.path.exists(venv_dir):
@@ -62,7 +88,6 @@ def main():
         python_bin = os.path.join(venv_dir, "bin", "python3")
 
     if not os.path.exists(python_bin):
-        # Fallback to python
         python_bin = os.path.join(venv_dir, "bin", "python")
 
     print("Installing dependencies...")
@@ -78,7 +103,7 @@ def main():
         has_npm = False
         print_color("Warning: Node.js (npm) not found. VitePress documentation will not start.", "1;33")
 
-    # 2. Config check
+    # 2. Config check & load
     if not os.path.exists(".env"):
         if os.path.exists(".env.example"):
             import shutil
@@ -88,6 +113,47 @@ def main():
         else:
             print_color("Error: Both .env and .env.example are missing.", "1;31")
             sys.exit(1)
+
+    # Load .env into os.environ early so that DASHBOARD_PORT and all settings take effect
+    with open(".env", "r", encoding="utf-8") as f:
+        for line in f:
+            if "=" in line and not line.strip().startswith("#"):
+                k, v = line.strip().split("=", 1)
+                k = k.strip()
+                v = v.strip().strip("'").strip('"')
+                if k:
+                    os.environ[k] = v
+
+    # Validate DASHBOARD_PORT
+    raw_port = os.getenv("DASHBOARD_PORT", "8092").strip()
+    try:
+        dashboard_port = int(raw_port)
+        if not (1024 <= dashboard_port <= 65535):
+            raise ValueError()
+    except Exception:
+        print_color(f" [WARNING] Neplatný DASHBOARD_PORT '{raw_port}', nastaven výchozí 8092.", "1;33")
+        dashboard_port = 8092
+        os.environ["DASHBOARD_PORT"] = "8092"
+        update_env_file("DASHBOARD_PORT", "8092")
+
+    # Kontrola a automatická oprava DISCORD_REDIRECT_URI vůči DASHBOARD_PORT
+    redirect_uri = os.getenv("DISCORD_REDIRECT_URI", "").strip()
+    expected_redirect = f"http://localhost:{dashboard_port}/auth/callback"
+    if not redirect_uri:
+        update_env_file("DISCORD_REDIRECT_URI", expected_redirect)
+        os.environ["DISCORD_REDIRECT_URI"] = expected_redirect
+    elif "localhost" in redirect_uri or "127.0.0.1" in redirect_uri:
+        import urllib.parse
+        parsed = urllib.parse.urlparse(redirect_uri)
+        if parsed.port and parsed.port != dashboard_port:
+            print("\n" + "="*60)
+            print_color(" [AUTO-FIX] Zjištěna neshoda portů v konfiguraci!", "1;33")
+            print_color(f" DASHBOARD_PORT je nastaven na: {dashboard_port}", "1;33")
+            print_color(f" DISCORD_REDIRECT_URI měl port: {parsed.port}", "1;33")
+            print_color(f" -> Automaticky synchronizuji DISCORD_REDIRECT_URI v .env na: {expected_redirect}", "1;32")
+            print("="*60 + "\n")
+            update_env_file("DISCORD_REDIRECT_URI", expected_redirect)
+            os.environ["DISCORD_REDIRECT_URI"] = expected_redirect
 
     # 3. Redis check
     redis_running = not check_port_free(6379)
@@ -102,38 +168,20 @@ def main():
     else:
         print_color("Redis detected.", "1;32")
 
-    # 4. Port prep
-    dashboard_port = int(os.getenv("DASHBOARD_PORT", "8093"))
-    if not check_port_free(dashboard_port):
-        kill_processes_on_port(dashboard_port)
-        time.sleep(1)
+    # 4. Port prep: Vyčistit aktivní port i případné staré porty z předchozího běhu
+    ports_to_clean = {dashboard_port, 8092, 8093}
+    for p in ports_to_clean:
+        if not check_port_free(p):
+            kill_processes_on_port(p)
 
     if has_npm and not check_port_free(5173):
         kill_processes_on_port(5173)
-        time.sleep(1)
 
     # 5. Launch
     env = os.environ.copy()
     env["PYTHONPATH"] = os.path.abspath(os.path.dirname(__file__))
     env["DASHBOARD_PORT"] = str(dashboard_port)
-
-    # Load .env manually for child processes just in case
-    with open(".env") as f:
-        for line in f:
-            if "=" in line and not line.startswith("#"):
-                k, v = line.strip().split("=", 1)
-                env[k.strip()] = v.strip().strip("'").strip('"')
-
-    def update_env_file(key, value):
-        lines = []
-        if os.path.exists(".env"):
-            with open(".env", "r", encoding="utf-8") as f:
-                lines = f.readlines()
-        with open(".env", "w", encoding="utf-8") as f:
-            for line in lines:
-                if not line.startswith(f"{key}="):
-                    f.write(line)
-            f.write(f"{key}={value}\n")
+    env["DISCORD_REDIRECT_URI"] = os.environ.get("DISCORD_REDIRECT_URI", expected_redirect)
 
     if not env.get("BOT_TOKEN") and not os.getenv("TOKEN_PROMPTED_ALREADY"):
         print("\n" + "="*60)
@@ -229,6 +277,10 @@ def main():
             print_color("   [DOCS] Dokumentace  : http://localhost:5173", "1;36")
         print_color("   [BOT] Discord Bot    : Běží (bot/main.py)", "1;36")
         print_color(f"   [DB] Redis Cache    : {'localhost:6379' if redis_running else 'FakeRedis (in-memory)'}", "1;36")
+        print("-" * 60)
+        print_color("   [DISCORD OAUTH2 POKYNY]:", "1;33")
+        print("   V Discord Developer Portal -> OAuth2 -> Redirects musíte mít:")
+        print_color(f"   -> http://localhost:{dashboard_port}/auth/callback", "1;32")
         print("-" * 60)
         print_color("   [INFO] Soubory s logy:", "1;33")
         print("      Web Dashboard : web.log")

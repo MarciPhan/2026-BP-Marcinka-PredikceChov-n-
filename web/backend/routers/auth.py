@@ -50,21 +50,43 @@ async def demo_login(request: Request):
 
 
 
+def get_effective_redirect_uri(request: Request = None) -> str:
+    uri = os.getenv("DISCORD_REDIRECT_URI", "").strip()
+    if uri:
+        return uri
+    port = os.getenv("DASHBOARD_PORT", "8092").strip()
+    return f"http://localhost:{port}/auth/callback"
+
 @router.get("/login")
 async def login_page(request: Request):
     """Přesměrování na Discord OAuth."""
-    if not DISCORD_CLIENT_ID or DISCORD_CLIENT_ID == "YOUR_CLIENT_ID_HERE":
+    client_id = os.getenv("DISCORD_CLIENT_ID", DISCORD_CLIENT_ID).strip()
+    if not client_id or client_id == "YOUR_CLIENT_ID_HERE":
         return templates.TemplateResponse("login.html", {
             "request": request, 
-            "error": "Discord OAuth není nakonfigurován. Kontaktujte administrátora."
+            "error": "Discord OAuth není nakonfigurován (chybí DISCORD_CLIENT_ID v .env). Kontaktujte administrátora."
         })
     
+    redirect_uri = get_effective_redirect_uri(request)
+    
+    # Blbovzdornost: Pokud uživatel přistoupil přes 127.0.0.1 nebo jiný port než redirect_uri,
+    # přesměrujeme na správný host/port, aby session cookie fungovala spolehlivě
+    try:
+        parsed_target = urllib.parse.urlparse(redirect_uri)
+        req_host = request.url.hostname
+        req_port = request.url.port
+        if parsed_target.hostname in ("localhost", "127.0.0.1") and req_host in ("localhost", "127.0.0.1"):
+            if req_host != parsed_target.hostname or (parsed_target.port and req_port != parsed_target.port):
+                return RedirectResponse(url=f"{parsed_target.scheme}://{parsed_target.netloc}/login")
+    except Exception:
+        pass
+
     state_str = secrets.token_urlsafe(32)
     request.session["oauth_state"] = state_str
     
     params = {
-        "client_id": DISCORD_CLIENT_ID,
-        "redirect_uri": DISCORD_REDIRECT_URI,
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
         "response_type": "code",
         "scope": "identify guilds",
         "state": state_str
@@ -76,7 +98,10 @@ async def login_page(request: Request):
 async def auth_callback(request: Request, code: str = None, error: str = None, state: str = None):
     """Zpracování návratu z Discord OAuth."""
     if error:
-        return templates.TemplateResponse("login.html", {"request": request, "error": f"Discord error: {error}"})
+        err_msg = f"Discord vrátil chybu: {error}"
+        if error == "access_denied":
+            err_msg = "Přihlášení přes Discord bylo zrušeno."
+        return templates.TemplateResponse("login.html", {"request": request, "error": err_msg})
     if not code:
         return RedirectResponse(url="/login")
         
@@ -85,20 +110,35 @@ async def auth_callback(request: Request, code: str = None, error: str = None, s
         del request.session["oauth_state"]
         
     if not state or not saved_state or not secrets.compare_digest(str(state), str(saved_state)):
-        return templates.TemplateResponse("login.html", {"request": request, "error": "Chyba zabezpečení: Neplatný stavový kód (možný CSRF útok). Zkuste se přihlásit znovu."})
+        return templates.TemplateResponse("login.html", {
+            "request": request, 
+            "error": "Platnost přihlašovací relace vypršela nebo nastala chyba stavu (CSRF token). Zkuste se přihlásit znovu."
+        })
     
+    redirect_uri = get_effective_redirect_uri(request)
+    client_id = os.getenv("DISCORD_CLIENT_ID", DISCORD_CLIENT_ID).strip()
+    client_secret = os.getenv("DISCORD_CLIENT_SECRET", DISCORD_CLIENT_SECRET).strip()
+
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             token_resp = await client.post(DISCORD_TOKEN_URL, data={
-                "client_id": DISCORD_CLIENT_ID,
-                "client_secret": DISCORD_CLIENT_SECRET,
+                "client_id": client_id,
+                "client_secret": client_secret,
                 "grant_type": "authorization_code",
                 "code": code,
-                "redirect_uri": DISCORD_REDIRECT_URI
+                "redirect_uri": redirect_uri
             })
             
             if token_resp.status_code != 200:
-                return templates.TemplateResponse("login.html", {"request": request, "error": "Ověření s Discordem selhalo."})
+                err_detail = "Ověření s Discordem selhalo."
+                try:
+                    err_json = token_resp.json()
+                    desc = err_json.get("error_description") or err_json.get("error") or err_json.get("message")
+                    if desc:
+                        err_detail += f" ({desc})"
+                except Exception:
+                    err_detail += f" (HTTP {token_resp.status_code})"
+                return templates.TemplateResponse("login.html", {"request": request, "error": err_detail})
             
             token_data = token_resp.json()
             access_token = token_data["access_token"]
