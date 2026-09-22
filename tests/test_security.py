@@ -135,3 +135,50 @@ def test_effective_redirect_uri_custom(monkeypatch):
     monkeypatch.setenv("DISCORD_REDIRECT_URI", "https://example.com/auth/callback")
     assert get_effective_redirect_uri() == "https://example.com/auth/callback"
 
+
+@pytest.mark.asyncio
+async def test_dashboard_layout_save_and_reset():
+    import json
+    import secrets
+    from web.backend.routers.settings import update_dashboard_layout, reset_dashboard_layout
+    
+    token = secrets.token_urlsafe(32)
+    request = MagicMock()
+    request.session = {
+        "authenticated": True,
+        "role": "admin",
+        "csrf_token": token,
+        "discord_user": {"id": "123", "username": "Admin"}
+    }
+    request.headers = {
+        "X-CSRF-Token": token,
+        "X-Requested-With": "XMLHttpRequest"
+    }
+    request.form = MagicMock(return_value={})
+
+    # Test save layout
+    order_json = json.dumps(["card_pred_msgs", "card_pred_members"])
+    spans_json = json.dumps({"card_pred_msgs": 2})
+    
+    resp = await update_dashboard_layout(
+        request=request,
+        widget_order=order_json,
+        widget_spans=spans_json,
+        page="predictions",
+        _=None
+    )
+    assert resp.status_code == 200
+    assert request.session["predictions_order"] == ["card_pred_msgs", "card_pred_members"]
+    assert request.session["dashboard_spans"]["card_pred_msgs"] == 2
+
+    # Test reset layout
+    resp_reset = await reset_dashboard_layout(
+        request=request,
+        page="predictions",
+        _=None
+    )
+    assert resp_reset.status_code == 200
+    assert "predictions_order" not in request.session
+    assert "dashboard_spans" not in request.session
+
+

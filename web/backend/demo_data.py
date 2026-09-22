@@ -306,7 +306,8 @@ def get_demo_predictions_data() -> Dict[str, Any]:
             "expected_msgs_tomorrow": 950,
             "expected_dau": 340,
             "avg_dau": 315,
-            "churn_risk": 5,
+            "churn_risk": 14.0,
+            "churn_available": True,
             "avg_monthly_growth": 30.5,
             "current_members": 1250
         },

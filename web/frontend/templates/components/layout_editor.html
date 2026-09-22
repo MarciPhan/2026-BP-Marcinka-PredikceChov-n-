@@ -91,13 +91,23 @@
         }
     }
 
+    function getCsrfToken() {
+        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || (window.CSRF_TOKEN || '');
+    }
+
     window.resetLayout = async function(pageName) {
         if (!confirm('Opravdu chcete resetovat rozložení na výchozí hodnoty?')) return;
+        const csrfToken = getCsrfToken();
         const formData = new FormData();
         formData.append('page', pageName);
+        if (csrfToken) formData.append('csrf_token', csrfToken);
         try {
             const resp = await fetch('/settings/dashboard/reset', {
                 method: 'POST',
+                headers: {
+                    'X-CSRF-Token': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 body: formData
             });
             if (resp.ok) {
@@ -129,14 +139,20 @@
             }
         });
 
+        const csrfToken = getCsrfToken();
         const formData = new FormData();
         formData.append('widget_order', JSON.stringify(visibleOrder));
         formData.append('widget_spans', JSON.stringify(spans));
         formData.append('page', pageName);
+        if (csrfToken) formData.append('csrf_token', csrfToken);
 
         try {
             const resp = await fetch('/settings/dashboard', {
                 method: 'POST',
+                headers: {
+                    'X-CSRF-Token': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 body: formData
             });
             if (resp.ok) {

@@ -333,6 +333,9 @@ async def update_dashboard_layout(
     elif page == "predictions": redirect_url = "/predictions"
     elif page == "health": redirect_url = "/community-health"
     elif page == "activity": redirect_url = "/activity"
+
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest" or "application/json" in request.headers.get("accept", ""):
+        return JSONResponse({"status": "ok", "redirect": redirect_url})
     return RedirectResponse(url=redirect_url, status_code=303)
 
 
@@ -372,6 +375,8 @@ async def reset_dashboard_layout(
     elif page == "health": redirect_url = "/community-health"
     elif page == "activity": redirect_url = "/activity"
     
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest" or "application/json" in request.headers.get("accept", ""):
+        return JSONResponse({"status": "ok", "redirect": redirect_url})
     return RedirectResponse(url=redirect_url, status_code=303)
 
 

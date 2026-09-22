@@ -616,15 +616,33 @@
         }
     }
 
-    async function resetLayout() {
+    function getAnalyticsCsrfToken() {
+        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || (window.CSRF_TOKEN || '');
+    }
+
+    async function resetLayout(pageName) {
         if (!confirm('Opravdu chcete resetovat rozložení na výchozí hodnoty?')) return;
+        const csrfToken = getAnalyticsCsrfToken();
         const formData = new FormData();
-        formData.append('page', 'analytics');
+        formData.append('page', pageName || 'analytics');
+        if (csrfToken) formData.append('csrf_token', csrfToken);
         try {
-            await fetch('/settings/dashboard/reset', { method: 'POST', body: formData });
-            window.location.reload();
+            const resp = await fetch('/settings/dashboard/reset', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-Token': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+            if (resp.ok) {
+                window.location.reload();
+            } else {
+                alert('Chyba při resetování rozložení');
+            }
         } catch (e) { alert('Chyba při resetování: ' + e); }
     }
+    window.resetLayout = resetLayout;
 
     // --- Robust Resize Logic ---
     grid.addEventListener('mousedown', (e) => {
@@ -659,7 +677,7 @@
         }
     });
 
-    async function saveLayout() {
+    async function saveLayout(gridId, pageName) {
         if (!sortableMain) return;
         const wrappers = document.querySelectorAll('#analytics-grid .widget-wrapper');
         const visibleOrder = [];
@@ -667,20 +685,37 @@
 
         wrappers.forEach(w => {
             const id = w.dataset.id;
-            visibleOrder.push(id);
-            spans[id] = parseInt(w.dataset.span || 1);
+            if (id) {
+                visibleOrder.push(id);
+                spans[id] = parseInt(w.dataset.span || 1);
+            }
         });
 
+        const csrfToken = getAnalyticsCsrfToken();
         const formData = new FormData();
         formData.append('widget_order', JSON.stringify(visibleOrder));
         formData.append('widget_spans', JSON.stringify(spans));
-        formData.append('page', 'analytics');
+        formData.append('page', pageName || 'analytics');
+        if (csrfToken) formData.append('csrf_token', csrfToken);
 
         try {
-            await fetch('/settings/dashboard', { method: 'POST', body: formData });
-            window.location.reload();
+            const resp = await fetch('/settings/dashboard', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-Token': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+            if (resp.ok) {
+                window.location.reload();
+            } else {
+                alert('Chyba při ukládání rozložení');
+            }
         } catch (e) { alert('Chyba při ukládání: ' + e); }
     }
+    window.saveLayout = saveLayout;
+    window.toggleEditMode = toggleEditMode;
 </script>
 
 <style>

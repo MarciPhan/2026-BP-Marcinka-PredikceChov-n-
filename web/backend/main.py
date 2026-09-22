@@ -216,7 +216,7 @@ async def redirect_to_login_handler(request: Request, exc: StarletteHTTPExceptio
 
 @app.exception_handler(StarletteHTTPException)
 async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
-    if request.url.path.startswith("/api/"):
+    if request.url.path.startswith("/api/") or request.headers.get("X-Requested-With") == "XMLHttpRequest" or "application/json" in request.headers.get("accept", ""):
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
         
     is_demo = request.session.get("role") == "demo"

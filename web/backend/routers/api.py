@@ -1360,12 +1360,16 @@ async def api_health_research(request: Request):
         return {
             "success": True,
             "activity_rate_pct": 14.5,
-            "mii_pct": 0.8,
+            "mii": 0.048,
+            "mii_pct": 4.8,
             "rec_mods": 4,
             "retention_pct": 82.3,
-            "churn_risk_pct": 17.7,
+            "churn_risk_pct": 14.0,
+            "inactivity_risk_pct": 14.0,
             "life_expectancy_days": 42.5,
+            "activity_survival_expectancy_days": 42.5,
             "median_survival_days": 29.3,
+            "median_activity_survival_days": 29.3,
             "survival_curve": {
                 "0": 1.0,
                 "7": 0.95,
@@ -1383,10 +1387,10 @@ async def api_health_research(request: Request):
                 "inactive": 80
             },
             "predicted_distribution": {
-                "new": 140,
-                "active": 330,
-                "passive": 180,
-                "inactive": 110
+                "new": 0.18,
+                "active": 0.44,
+                "passive": 0.24,
+                "inactive": 0.14
             }
         }
     return await get_health_research_data(gid)

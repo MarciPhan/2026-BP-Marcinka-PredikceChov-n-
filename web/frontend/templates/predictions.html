@@ -20,11 +20,18 @@
 
 {{ layout_drawer() }}
 
-<div style="background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.2); border-left: 4px solid var(--accent); border-radius: 12px; padding: 14px 18px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px;">
-    <i class="fas fa-brain" style="color: var(--accent); font-size: 18px; flex-shrink: 0;"></i>
-    <div style="font-size: 13px; line-height: 1.5; color: var(--text-secondary);">
-        <strong style="color: var(--text-primary);">Metodika predikcí:</strong> Matematické modely (Markovovy řetězce chování, Kaplan-Meierova analýza přežití) počítají pravděpodobnosti setrvání v aktivitě a odhady růstu z reálných historických dat komunity.
+<div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-left: 4px solid #ef4444; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <i class="fas fa-exclamation-triangle" style="color: #ef4444; font-size: 20px; flex-shrink: 0;"></i>
+        <div>
+            <strong style="color: #ef4444;">Upozornění k metodice:</strong> Prototypové výstupy (Markov, Kaplan-Meier) jsou dostupné jako experimentální rozšíření pro výzkumné účely. Není doporučeno na jejich základě činit okamžitá produkční rozhodnutí.
+        </div>
     </div>
+    <p style="color: var(--text-secondary); margin-top: 8px; font-size: 13px; margin-bottom: 0;">Prototypové analytické modely na základě historických dat serveru. 
+        <a href="/docs/predictions" style="color: var(--accent); text-decoration: none; margin-left: 8px; font-size: 13px; font-weight: 600; transition: color 0.2s;">
+            <i class="fas fa-question-circle"></i> Jak to funguje?
+        </a>
+    </p>
 </div>
 
 {% macro render_widget(id) %}
