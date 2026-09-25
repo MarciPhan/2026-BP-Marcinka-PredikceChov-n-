@@ -10,7 +10,7 @@ from discord.ext import commands
 from discord import app_commands
 import redis.asyncio as redis
 
-from shared.community_health import is_probable_question, normalise_config
+from shared.community_health import is_probable_question, keys as health_keys, normalise_config
 from shared.config import settings
 
 REDIS_URL = __import__("os").getenv("REDIS_URL", "redis://localhost:6379/0")
@@ -59,17 +59,17 @@ class CommunityHealthTracker(commands.Cog):
             "is_question": "1" if is_probable_question(message.content) else "0",
             "reaction_count": str(sum(reaction.count for reaction in message.reactions)),
         }
-        key = f"health:message:{gid}:{mid}"
+        key = health_keys.message(gid, mid)
         async with self.r.pipeline() as pipe:
             pipe.hset(key, mapping=mapping)
             pipe.expire(key, settings.event_retention_days * 86400)
             pipe.hset(f"channel:info:{message.channel.id}", mapping={"name": getattr(message.channel, "name", str(message.channel.id)), "guild_id": str(gid)})
-            pipe.zadd(f"health:messages:{gid}", {str(mid): message.created_at.timestamp()})
-            pipe.zadd(f"health:user_messages:{gid}:{message.author.id}", {str(mid): message.created_at.timestamp()})
+            pipe.zadd(health_keys.messages_index(gid), {str(mid): message.created_at.timestamp()})
+            pipe.zadd(health_keys.user_messages(gid, message.author.id), {str(mid): message.created_at.timestamp()})
             await pipe.execute()
 
     async def _mark_help_answered(self, guild_id: int, parent_id: int, responder_id: int, response_id: int) -> None:
-        key = f"health:help:{guild_id}:{parent_id}"
+        key = health_keys.help_item(guild_id, parent_id)
         if not await self.r.exists(key):
             return
         now = time.time()
@@ -84,8 +84,8 @@ class CommunityHealthTracker(commands.Cog):
                 "response_id": str(response_id),
                 "response_seconds": str(max(0, int(now - created))),
             })
-            pipe.zrem(f"health:help:open:{guild_id}", str(parent_id))
-            pipe.zadd(f"health:help:answered:{guild_id}", {str(parent_id): now})
+            pipe.zrem(health_keys.help_open(guild_id), str(parent_id))
+            pipe.zadd(health_keys.help_answered(guild_id), {str(parent_id): now})
             await pipe.execute()
 
     @commands.Cog.listener()
@@ -109,7 +109,7 @@ class CommunityHealthTracker(commands.Cog):
         if cfg["question_mode"] == "heuristic" and not is_probable_question(message.content):
             return
 
-        key = f"health:help:{gid}:{message.id}"
+        key = health_keys.help_item(gid, message.id)
         mapping = {
             "message_id": str(message.id),
             "author_id": str(message.author.id),
@@ -125,19 +125,19 @@ class CommunityHealthTracker(commands.Cog):
         async with self.r.pipeline() as pipe:
             pipe.hset(key, mapping=mapping)
             pipe.expire(key, settings.event_retention_days * 86400)
-            pipe.zadd(f"health:help:all:{gid}", {str(message.id): message.created_at.timestamp()})
-            pipe.zadd(f"health:help:open:{gid}", {str(message.id): message.created_at.timestamp()})
-            pipe.zadd(f"health:help:user:{gid}:{message.author.id}", {str(message.id): message.created_at.timestamp()})
+            pipe.zadd(health_keys.help_all(gid), {str(message.id): message.created_at.timestamp()})
+            pipe.zadd(health_keys.help_open(gid), {str(message.id): message.created_at.timestamp()})
+            pipe.zadd(health_keys.help_user(gid, message.author.id), {str(message.id): message.created_at.timestamp()})
             await pipe.execute()
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if not payload.guild_id or not payload.user_id or payload.user_id == getattr(self.bot.user, "id", None):
             return
-        message_key = f"health:message:{payload.guild_id}:{payload.message_id}"
+        message_key = health_keys.message(payload.guild_id, payload.message_id)
         if await self.r.exists(message_key):
             await self.r.hincrby(message_key, "reaction_count", 1)
-        help_key = f"health:help:{payload.guild_id}:{payload.message_id}"
+        help_key = health_keys.help_item(payload.guild_id, payload.message_id)
         if await self.r.exists(help_key):
             author_id = await self.r.hget(help_key, "author_id")
             if str(payload.user_id) != str(author_id):
@@ -172,7 +172,7 @@ class CommunityHealthTracker(commands.Cog):
         channel_id = getattr(channel_id, "id", None)
         ts = entry.created_at.timestamp()
         gid = entry.guild.id
-        event_key = f"health:mod_event:{gid}:{entry.id}"
+        event_key = health_keys.mod_event(gid, entry.id)
         mapping = {
             "event_id": str(entry.id),
             "moderator_id": str(entry.user.id),
@@ -185,11 +185,11 @@ class CommunityHealthTracker(commands.Cog):
         async with self.r.pipeline() as pipe:
             pipe.hset(event_key, mapping=mapping)
             pipe.expire(event_key, settings.event_retention_days * 86400)
-            pipe.zadd(f"health:mod_events:{gid}", {str(entry.id): ts})
-            pipe.zadd(f"health:mod_events:moderator:{gid}:{entry.user.id}", {str(entry.id): ts})
+            pipe.zadd(health_keys.mod_events(gid), {str(entry.id): ts})
+            pipe.zadd(health_keys.mod_events_moderator(gid, entry.user.id), {str(entry.id): ts})
             if target_id:
-                pipe.zadd(f"health:mod_events:target:{gid}:{target_id}", {str(entry.id): ts})
-                pipe.zadd(f"health:mod_pair:{gid}:{target_id}:{entry.user.id}", {str(entry.id): ts})
+                pipe.zadd(health_keys.mod_events_target(gid, target_id), {str(entry.id): ts})
+                pipe.zadd(health_keys.mod_pair(gid, target_id, entry.user.id), {str(entry.id): ts})
             await pipe.execute()
 
     @commands.Cog.listener()
@@ -202,16 +202,16 @@ class CommunityHealthTracker(commands.Cog):
             return
         now = time.time()
         lookback = now - 30 * 86400
-        mod_count = await self.r.zcount(f"health:mod_events:target:{gid}:{uid}", lookback, now)
-        recent_help_ids = await self.r.zrangebyscore(f"health:help:user:{gid}:{uid}", lookback, now)
+        mod_count = await self.r.zcount(health_keys.mod_events_target(gid, uid), lookback, now)
+        recent_help_ids = await self.r.zrangebyscore(health_keys.help_user(gid, uid), lookback, now)
         open_help = 0
         for help_id in recent_help_ids:
-            if await self.r.hget(f"health:help:{gid}:{help_id}", "status") == "open":
+            if await self.r.hget(health_keys.help_item(gid, help_id), "status") == "open":
                 open_help += 1
-        last_messages = await self.r.zrevrangebyscore(f"health:user_messages:{gid}:{uid}", now, 0, start=0, num=1, withscores=True)
+        last_messages = await self.r.zrevrangebyscore(health_keys.user_messages(gid, uid), now, 0, start=0, num=1, withscores=True)
         last_message_at = last_messages[0][1] if last_messages else ""
         departure_id = f"{uid}:{int(now)}"
-        key = f"health:departure:{gid}:{departure_id}"
+        key = health_keys.departure(gid, departure_id)
         mapping = {
             "departure_id": departure_id,
             "user_id": str(uid),
@@ -224,7 +224,7 @@ class CommunityHealthTracker(commands.Cog):
         async with self.r.pipeline() as pipe:
             pipe.hset(key, mapping=mapping)
             pipe.expire(key, settings.event_retention_days * 86400)
-            pipe.zadd(f"health:departures:{gid}", {departure_id: now})
+            pipe.zadd(health_keys.departures(gid), {departure_id: now})
             await pipe.execute()
 
 
@@ -238,12 +238,12 @@ class CommunityHealthTracker(commands.Cog):
 
     @commands.Cog.listener()
     async def on_scheduled_event_user_add(self, event: discord.ScheduledEvent, user: discord.User):
-        await self.r.sadd(f"health:event:interested:{event.guild_id}:{event.id}", str(user.id))
+        await self.r.sadd(health_keys.event_interested(event.guild_id, event.id), str(user.id))
         await self._store_event(event)
 
     @commands.Cog.listener()
     async def on_scheduled_event_user_remove(self, event: discord.ScheduledEvent, user: discord.User):
-        await self.r.srem(f"health:event:interested:{event.guild_id}:{event.id}", str(user.id))
+        await self.r.srem(health_keys.event_interested(event.guild_id, event.id), str(user.id))
 
     @commands.Cog.listener()
     async def on_scheduled_event_update(self, before: discord.ScheduledEvent, after: discord.ScheduledEvent):
@@ -259,8 +259,8 @@ class CommunityHealthTracker(commands.Cog):
             "scheduled_end": str(event.end_time.timestamp() if event.end_time else ""),
             "status": str(event.status),
         }
-        await self.r.hset(f"health:event:{event.guild_id}:{event.id}", mapping=mapping)
-        await self.r.sadd(f"health:events:{event.guild_id}", str(event.id))
+        await self.r.hset(health_keys.event(event.guild_id, event.id), mapping=mapping)
+        await self.r.sadd(health_keys.events_index(event.guild_id), str(event.id))
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
@@ -270,16 +270,16 @@ class CommunityHealthTracker(commands.Cog):
         cfg = await self._config(gid)
         if not cfg["event_conversion_enabled"]:
             return
-        event_ids = await self.r.smembers(f"health:events:{gid}")
+        event_ids = await self.r.smembers(health_keys.events_index(gid))
         now = time.time()
         for event_id in event_ids:
-            data = await self.r.hgetall(f"health:event:{gid}:{event_id}")
+            data = await self.r.hgetall(health_keys.event(gid, event_id))
             if not data or data.get("channel_id") != str(after.channel.id):
                 continue
             start = float(data.get("scheduled_start") or 0)
             end = float(data.get("scheduled_end") or (start + 6 * 3600))
             if start - 30 * 60 <= now <= end + 30 * 60:
-                await self.r.sadd(f"health:event:attended:{gid}:{event_id}", str(member.id))
+                await self.r.sadd(health_keys.event_attended(gid, event_id), str(member.id))
 
 
     health_group = app_commands.Group(name="health", description="Kontextová analytika Engagement Score")
@@ -325,7 +325,7 @@ class CommunityHealthTracker(commands.Cog):
                         replies += 1
                     if cfg["help_requests_enabled"] and str(channel.id) in support_ids:
                         if cfg["question_mode"] == "all" or is_probable_question(message.content):
-                            key = f"health:help:{guild.id}:{message.id}"
+                            key = health_keys.help_item(guild.id, message.id)
                             if not await self.r.exists(key):
                                 await self.r.hset(key, mapping={
                                     "message_id": str(message.id), "author_id": str(message.author.id),
@@ -333,9 +333,9 @@ class CommunityHealthTracker(commands.Cog):
                                     "status": "open", "answered_at": "", "responder_id": "",
                                     "response_id": "", "response_seconds": "", "acknowledged_by_reaction": "0",
                                 })
-                                await self.r.zadd(f"health:help:all:{guild.id}", {str(message.id): message.created_at.timestamp()})
-                                await self.r.zadd(f"health:help:open:{guild.id}", {str(message.id): message.created_at.timestamp()})
-                                await self.r.zadd(f"health:help:user:{guild.id}:{message.author.id}", {str(message.id): message.created_at.timestamp()})
+                                await self.r.zadd(health_keys.help_all(guild.id), {str(message.id): message.created_at.timestamp()})
+                                await self.r.zadd(health_keys.help_open(guild.id), {str(message.id): message.created_at.timestamp()})
+                                await self.r.zadd(health_keys.help_user(guild.id, message.author.id), {str(message.id): message.created_at.timestamp()})
                                 questions += 1
             except (discord.Forbidden, discord.HTTPException):
                 continue
@@ -343,9 +343,9 @@ class CommunityHealthTracker(commands.Cog):
         if cfg["moderation_context_enabled"]:
             try:
                 async for entry in guild.audit_logs(limit=None, after=after, oldest_first=True):
-                    before = await self.r.exists(f"health:mod_event:{guild.id}:{entry.id}")
+                    before = await self.r.exists(health_keys.mod_event(guild.id, entry.id))
                     await self.on_audit_log_entry_create(entry)
-                    after_exists = await self.r.exists(f"health:mod_event:{guild.id}:{entry.id}")
+                    after_exists = await self.r.exists(health_keys.mod_event(guild.id, entry.id))
                     if after_exists and not before:
                         audits += 1
             except (discord.Forbidden, discord.HTTPException):

@@ -17,6 +17,13 @@ def require_auth(request: Request):
 
 # ... missing imports (get_sidebar_context etc will be added later or imported from utils)
 from ..utils import *
+
+async def render_permission_denied(request: Request, message: str) -> HTMLResponse:
+    """Render the shared 'no permission' page for a view_stats-gated route."""
+    sidebar_ctx = await get_sidebar_context(request)
+    ctx = {"request": request, "message": message}
+    ctx.update(sidebar_ctx)
+    return templates.TemplateResponse("activity_restricted.html", ctx)
 import os
 from ..demo_data import get_demo_stats, get_demo_user_activity
 from collections import defaultdict
@@ -210,13 +217,7 @@ async def analytics_page(request: Request, start_date: str = None, end_date: str
         return RedirectResponse(url="/select-server")
 
     if guild_id != "demo-guild" and not await has_dashboard_permission(request, "view_stats"):
-        sidebar_ctx = await get_sidebar_context(request)
-        ctx = {
-            "request": request,
-            "message": "Nemáte oprávnění zobrazovat statistiky této komunity."
-        }
-        ctx.update(sidebar_ctx)
-        return templates.TemplateResponse("activity_restricted.html", ctx)
+        return await render_permission_denied(request, "Nemáte oprávnění zobrazovat statistiky této komunity.")
 
     if guild_id == "demo-guild":
         # SERVE MOCK DATA
@@ -462,15 +463,8 @@ async def activity_page(request: Request, guild_id: str = None, start_date: str 
     else:
         end_date = request.session.get("end_date", "2026-01-20")
 
-    if user_role != "admin":
-        if not await has_dashboard_permission(request, "view_stats"):
-            sidebar_ctx = await get_sidebar_context(request)
-            ctx = {
-                "request": request,
-                "message": "Nemáte oprávnění pro zobrazení statistik této guildy."
-            }
-            ctx.update(sidebar_ctx)
-            return templates.TemplateResponse("activity_restricted.html", ctx)
+    if not await has_dashboard_permission(request, "view_stats"):
+        return await render_permission_denied(request, "Nemáte oprávnění pro zobrazení statistik této guildy.")
 
     from ..utils import get_activity_stats, get_redis_dashboard_stats, get_deep_stats_redis
 
@@ -770,13 +764,7 @@ async def user_activity_page(request: Request, uid: str, start_date: str = None,
 async def predictions_page(request: Request, _=Depends(require_auth)):
     guild_id = request.session.get("guild_id")
     if guild_id and guild_id != "demo-guild" and not await has_dashboard_permission(request, "view_stats"):
-        sidebar_ctx = await get_sidebar_context(request)
-        ctx = {
-            "request": request,
-            "message": "Nemáte oprávnění zobrazovat predikce této komunity."
-        }
-        ctx.update(sidebar_ctx)
-        return templates.TemplateResponse("activity_restricted.html", ctx)
+        return await render_permission_denied(request, "Nemáte oprávnění zobrazovat predikce této komunity.")
 
     sidebar_ctx = await get_sidebar_context(request)
     context = {
