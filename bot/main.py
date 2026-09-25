@@ -29,15 +29,14 @@ if os.path.exists(env_path):
 
 import discord
 
-from discord.ext import commands, tasks 
+from discord.ext import commands, tasks
 try:
     from config.dashboard_secrets import BOT_TOKEN
 except ImportError:
     BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 from config import config
-import redis.asyncio as redis 
+import redis.asyncio as redis
 from shared.redis_client import get_redis_client
-
 
 def ts() -> str:
     """timestamp helper"""
@@ -97,9 +96,9 @@ async def load_commands():
     """Load all command cogs from commands/ folder"""
     start = time.time()
     is_lite = os.getenv("BOT_LITE_MODE") == "1"  # lite mode for dashboard bot
-    
+
     await send_console_log(f"Načítání modulů (Lite Mode: {is_lite})")
-    
+
     commands_dir = os.path.join(os.path.dirname(__file__), "commands")
     if not os.path.exists(commands_dir):
         await send_console_log(f"CHYBA: složka '{commands_dir}' neexistuje")
@@ -119,7 +118,7 @@ async def load_commands():
         module_name = f"bot.commands.{filename[:-3]}"
         await send_console_log(f"Načítám: {module_name}")
         try:
-            
+
             interactive_cogs = ["echo", "emojirole", "help", "log", "notify", "ping", "purge", "report", "verification", "vyzva", "analytics_tracking"]
             if is_lite and any(mod in module_name for mod in interactive_cogs):
                 await send_console_log(f"Vynechán modul {module_name} (Lite Mode)")
@@ -133,7 +132,6 @@ async def load_commands():
             await send_console_log(f"Chyba při načtení {module_name}: {e}\n```{tb}```")
             continue
 
-        
         try:
             mod = __import__(module_name, fromlist=['*'])
             classes = [attr for attr in dir(mod) if isinstance(getattr(mod, attr), type)]
@@ -143,48 +141,38 @@ async def load_commands():
 
     await send_console_log(f"Načítání cogů hotovo za {time.time()-start:.2f}s")
 
-
 @tasks.loop(seconds=10)
 async def member_stats_task():
     """Periodically update the count of online members AND total members in Redis."""
-    
+
     try:
         r = await get_redis_client()
-        
+
         sys.stderr.write(f"{ts()} [DEBUG] MemberStatsTask: Checking {len(bot.guilds)} guilds (Ready: {bot.is_ready()})\n")
-        
+
         for guild in bot.guilds:
-            
+
             online_count = sum(
-                1 for m in guild.members 
+                1 for m in guild.members
                 if m.status != discord.Status.offline
             )
-            
-            
+
             total_members = guild.member_count
-            
+
             sys.stderr.write(f"{ts()} [DEBUG] Guild {guild.id}: {total_members} total, {online_count} online\n")
-            
-            
+
             async with r.pipeline() as pipe:
                 await pipe.setex(f"presence:online:{guild.id}", 60, str(online_count))
                 await pipe.setex(f"presence:total:{guild.id}", 60, str(total_members))
-                
-                
+
                 await pipe.set(f"guild:verification_level:{guild.id}", str(guild.verification_level.value if hasattr(guild.verification_level, "value") else guild.verification_level))
-                await pipe.set(f"guild:mfa_level:{guild.id}", str(guild.mfa_level.value if hasattr(guild.mfa_level, "value") else guild.mfa_level))  
+                await pipe.set(f"guild:mfa_level:{guild.id}", str(guild.mfa_level.value if hasattr(guild.mfa_level, "value") else guild.mfa_level))
                 await pipe.set(f"guild:explicit_filter:{guild.id}", str(guild.explicit_content_filter.value if hasattr(guild.explicit_content_filter, "value") else guild.explicit_content_filter))
-                
-                
+
                 await pipe.sadd("bot:guilds", str(guild.id))
-                
-                
-                
-                
-                
-                
+
                 await pipe.execute()
-        
+
         await r.close()
     except Exception as e:
         if "Error 113" in str(e):
@@ -195,7 +183,6 @@ async def member_stats_task():
 
 @member_stats_task.before_loop
 async def before_member_stats_task():
-    # await bot.wait_until_ready()
     pass
 
 @tasks.loop(seconds=60)
@@ -218,39 +205,34 @@ async def before_heartbeat_task():
 async def on_ready():
     await load_commands()
     await send_console_log(f"Bot připojen: {bot.user} ({bot.user.id})")
-    
-    
+
     is_lite = os.getenv("BOT_LITE_MODE") == "1"
     status_msg = "Analytics" if is_lite else "CommunityMetrics"
     activity = discord.Activity(type=discord.ActivityType.watching, name=status_msg)
     await bot.change_presence(status=discord.Status.online, activity=activity)
-    
+
     guilds = list(bot.guilds)
     await send_console_log(f"Členem {len(guilds)} serverů: {[g.name for g in guilds]}")
 
-    
     try:
         r = redis.from_url(config.REDIS_URL, decode_responses=True)
-        
+
         idx_key = "bot:guilds:dashboard" if is_lite else "bot:guilds:primary"
-        
-        
+
         await r.delete(idx_key)
-        
-        
+
         if guilds:
-            
+
             gids = [str(g.id) for g in guilds]
             await r.sadd(idx_key, *gids)
-            
+
             await r.sadd("bot:guilds", *gids)
-            
+
         await send_console_log(f"✅ Cache aktualizována ({idx_key}): {len(guilds)} serverů")
         await r.close()
     except Exception as e:
         await send_console_log(f"⚠️ Chyba cache: {e}")
 
-    
     if pending_console_msgs:
         channel = bot.get_channel(config.CONSOLE_CHANNEL_ID)
         if channel:
@@ -259,12 +241,6 @@ async def on_ready():
                     await channel.send(f"```{msg[i:i+1900]}```")
         pending_console_msgs.clear()
 
-
-    # await send_console_log("Načítám cogy…")
-    # await load_commands()
-
-    
-    
     try:
         synced = await bot.tree.sync()
         await send_console_log(f"Slash příkazy synchronizovány ({len(synced)}).")
@@ -274,26 +250,25 @@ async def on_ready():
 @bot.event
 async def on_guild_join(guild: discord.Guild):
     await send_console_log(f"🆕 PŘIPOJEN NA GUIDLU: {guild.name} ({guild.id})")
-    
-    
+
     token = BOT_TOKEN
     if token:
         import subprocess
         import sys
         try:
             script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts", "backfill_stats.py"))
-            cmd = [sys.executable, script_path, "--guild_id", str(guild.id), "--token", token]
-            subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            cmd = [sys.executable, script_path, "--guild_id", str(guild.id)]
+            env = {**os.environ, "BOT_TOKEN": token}
+            subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env)
             await send_console_log(f"⏳ Spuštěn auto-backfill pro {guild.name}")
         except Exception as e:
             await send_console_log(f"❌ Auto-backfill selhal: {e}")
 
-    
     try:
         r = redis.from_url(config.REDIS_URL, decode_responses=True)
         is_lite = os.getenv("BOT_LITE_MODE") == "1"
         idx_key = "bot:guilds:dashboard" if is_lite else "bot:guilds:primary"
-        
+
         await r.sadd(idx_key, str(guild.id))
         await r.sadd("bot:guilds", str(guild.id))
         await r.close()
@@ -301,12 +276,11 @@ async def on_guild_join(guild: discord.Guild):
         print(f"Redis add error: {e}")
 
     await send_console_log("✅ Start dokončen, bot připraven.")
-    
-    
+
     if not member_stats_task.is_running():
         member_stats_task.start()
         print("✅ Background task: Member stats sync started")
-    
+
     if not heartbeat_task.is_running():
         heartbeat_task.start()
         print("✅ Background task: Heartbeat started")
@@ -314,79 +288,23 @@ async def on_guild_join(guild: discord.Guild):
 @bot.event
 async def on_guild_remove(guild: discord.Guild):
     await send_console_log(f"👋 ODPOJEN ZE SERVERU: {guild.name} ({guild.id})")
-    
+
     try:
         r = redis.from_url(config.REDIS_URL, decode_responses=True)
         is_lite = os.getenv("BOT_LITE_MODE") == "1"
         idx_key = "bot:guilds:dashboard" if is_lite else "bot:guilds:primary"
-        
+
         await r.srem(idx_key, str(guild.id))
-        
-        
-        await r.srem("bot:guilds", str(guild.id)) 
-        
+
+        await r.srem("bot:guilds", str(guild.id))
+
         await r.close()
     except Exception as e:
         print(f"Redis remove error: {e}")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-
-    
-
-
-
-
-
-
-
-
-
-    
-
-
-
-    
-
-
-
-
-
-
-
-
 @bot.check
 async def globally_block_commands(ctx: commands.Context):
-    
+
     if ctx.command is None:
         return True
     command_name = ctx.command.name
@@ -412,7 +330,7 @@ async def main():
 
     while True:
         token = os.getenv("BOT_TOKEN") or BOT_TOKEN
-        
+
         if token and len(token) >= 30:
             await send_console_log("Token nalezen, startuji bota…")
             try:
@@ -424,13 +342,11 @@ async def main():
             except Exception as e:
                 await send_console_log(f"[ERROR] Chyba při běhu bota: {e}")
                 token = None
-        
+
         if not token or len(token) < 30:
             await send_console_log("[IDLE] Čekám na vložení bot tokenu přes dashboard…")
             print(ts(), "[IDLE] Čekám na vložení bot tokenu přes dashboard…")
             await asyncio.sleep(30) # Poll every 30s
-
-
 
 if __name__ == "__main__":
     try:

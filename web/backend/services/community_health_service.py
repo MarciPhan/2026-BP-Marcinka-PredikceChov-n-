@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import json
 import time
-from collections import Counter, defaultdict
+from collections import Counter
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-from shared.community_health import conflict_severity, factual_role_evidence, normalise_config
-
+from shared.community_health import conflict_severity, factual_role_evidence, keys, normalise_config
 
 class CommunityHealthService:
     def __init__(self, redis_client):
@@ -52,7 +50,7 @@ class CommunityHealthService:
         rows: List[Dict[str, Any]] = []
         action_totals = Counter()
 
-        async for key in self.r.scan_iter(f"health:mod_pair:{guild_id}:*"):
+        async for key in self.r.scan_iter(keys.mod_pair(guild_id, "*", "*")):
             parts = key.split(":")
             if len(parts) < 5:
                 continue
@@ -63,7 +61,7 @@ class CommunityHealthService:
             actions = []
             last_at = 0.0
             for event_id in event_ids:
-                event = await self.r.hgetall(f"health:mod_event:{guild_id}:{event_id}")
+                event = await self.r.hgetall(keys.mod_event(guild_id, event_id))
                 if not event:
                     continue
                 action = event.get("action_type", "unknown")
@@ -95,7 +93,13 @@ class CommunityHealthService:
 
     async def help_requests(self, guild_id: int | str, days: int = 30, start_date: str = None, end_date: str = None, limit: int = 50) -> Dict[str, Any]:
         start_ts, end_ts = self._range(days, start_date, end_date)
-        ids = await self.r.zrevrangebyscore(f"health:help:all:{guild_id}", end_ts, start_ts, start=0, num=max(limit * 4, 100))
+        total_in_range = await self.r.zcount(keys.help_all(guild_id), start_ts, end_ts)
+        ids = []
+        if total_in_range:
+            # Hard cap on top of the true in-range count so a guild with a very
+            # long history/date range can't trigger an unbounded Redis fetch
+            # plus one hgetall per historical entry.
+            ids = await self.r.zrevrangebyscore(keys.help_all(guild_id), end_ts, start_ts, start=0, num=min(total_in_range, 2000))
         rows = []
         response_times = []
         ignored_by_user = Counter()
@@ -104,7 +108,7 @@ class CommunityHealthService:
         timeout_seconds = int(cfg["help_timeout_hours"]) * 3600
 
         for mid in ids:
-            item = await self.r.hgetall(f"health:help:{guild_id}:{mid}")
+            item = await self.r.hgetall(keys.help_item(guild_id, mid))
             if not item:
                 continue
             created = float(item.get("created_at") or 0)
@@ -144,10 +148,10 @@ class CommunityHealthService:
 
     async def departures(self, guild_id: int | str, days: int = 30, start_date: str = None, end_date: str = None, limit: int = 50) -> Dict[str, Any]:
         start_ts, end_ts = self._range(days, start_date, end_date)
-        ids = await self.r.zrevrangebyscore(f"health:departures:{guild_id}", end_ts, start_ts, start=0, num=limit)
+        ids = await self.r.zrevrangebyscore(keys.departures(guild_id), end_ts, start_ts, start=0, num=limit)
         rows = []
         for departure_id in ids:
-            item = await self.r.hgetall(f"health:departure:{guild_id}:{departure_id}")
+            item = await self.r.hgetall(keys.departure(guild_id, departure_id))
             if not item:
                 continue
             user = await self._user(item.get("user_id"))
@@ -173,7 +177,7 @@ class CommunityHealthService:
         start_ts, end_ts = self._range(days, start_date, end_date)
         rows = []
         counts = []
-        async for key in self.r.scan_iter(f"health:mod_events:moderator:{guild_id}:*"):
+        async for key in self.r.scan_iter(keys.mod_events_moderator(guild_id, "*")):
             uid = key.split(":")[-1]
             count = int(await self.r.zcount(key, start_ts, end_ts))
             if count:
@@ -190,12 +194,12 @@ class CommunityHealthService:
 
     async def role_evidence(self, guild_id: int | str, user_id: int | str, days: int = 90) -> Dict[str, Any]:
         start_ts, end_ts = self._range(days)
-        mids = await self.r.zrangebyscore(f"health:user_messages:{guild_id}:{user_id}", start_ts, end_ts)
+        mids = await self.r.zrangebyscore(keys.user_messages(guild_id, user_id), start_ts, end_ts)
         replies = 0
         reactions = 0
         channels = set()
         for mid in mids:
-            item = await self.r.hgetall(f"health:message:{guild_id}:{mid}")
+            item = await self.r.hgetall(keys.message(guild_id, mid))
             if not item:
                 continue
             if item.get("reply_to"):
@@ -203,8 +207,8 @@ class CommunityHealthService:
             reactions += int(item.get("reaction_count") or 0)
             if item.get("channel_id"):
                 channels.add(item["channel_id"])
-        incidents = int(await self.r.zcount(f"health:mod_events:target:{guild_id}:{user_id}", start_ts, end_ts))
-        review = await self.r.hgetall(f"health:role_review:{guild_id}:{user_id}") or None
+        incidents = int(await self.r.zcount(keys.mod_events_target(guild_id, user_id), start_ts, end_ts))
+        review = await self.r.hgetall(keys.role_review(guild_id, user_id)) or None
         evidence = factual_role_evidence(
             messages=len(mids), replies=replies, channels=len(channels), received_reactions=reactions,
             moderation_incidents=incidents, manual_review=review,
@@ -214,14 +218,14 @@ class CommunityHealthService:
         return evidence
 
     async def event_conversion(self, guild_id: int | str, limit: int = 50) -> Dict[str, Any]:
-        event_ids = list(await self.r.smembers(f"health:events:{guild_id}"))
+        event_ids = list(await self.r.smembers(keys.events_index(guild_id)))
         rows = []
         for event_id in event_ids:
-            item = await self.r.hgetall(f"health:event:{guild_id}:{event_id}")
+            item = await self.r.hgetall(keys.event(guild_id, event_id))
             if not item:
                 continue
-            interested = int(await self.r.scard(f"health:event:interested:{guild_id}:{event_id}"))
-            attended = int(await self.r.scard(f"health:event:attended:{guild_id}:{event_id}"))
+            interested = int(await self.r.scard(keys.event_interested(guild_id, event_id)))
+            attended = int(await self.r.scard(keys.event_attended(guild_id, event_id)))
             rows.append({
                 "event_id": event_id,
                 "name": item.get("name") or f"Event {event_id}",

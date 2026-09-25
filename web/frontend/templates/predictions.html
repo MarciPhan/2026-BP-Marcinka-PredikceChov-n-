@@ -217,14 +217,15 @@
 {% endfor %}
 
 
-{% set saved_spans = request.session.get('dashboard_spans', {}) %}
+{% set saved_spans = widget_spans if widget_spans else request.session.get('dashboard_spans', {}) %}
 <div id="predictions-grid" class="grid">
     {% for widget_id in active_order %}
 
     {% set default_span = 1 %}
     {% if widget_id in ['chart_main_pred', 'chart_activity_forecast', 'chart_dau_pred', 'widget_mau',
     'widget_stability', 'widget_research', 'chart_survival', 'chart_state_dist'] %}{% set default_span = 2 %}{% endif %}
-    {% set span_val = saved_spans.get(widget_id, default_span) %}
+    {% set raw_span = saved_spans.get(widget_id, default_span) %}
+    {% set span_val = default_span if (raw_span > 4 or raw_span < 1) else raw_span %}
 
     <div class="widget-wrapper span-{{span_val}}" data-id="{{widget_id}}" data-span="{{span_val}}"
         style="position: relative; display: flex; flex-direction: column;">

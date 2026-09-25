@@ -6,62 +6,47 @@ from shared.redis_client import get_redis_client
 async def get_activity_stats(*args, **kwargs):
     return await AppContainer.repo.get_activity_stats(*args, **kwargs)
 
-
 async def get_bot_guilds(*args, **kwargs):
     return await AppContainer.repo.get_bot_guilds(*args, **kwargs)
-
 
 async def get_cached_roles(*args, **kwargs):
     return await AppContainer.repo.get_cached_roles(*args, **kwargs)
 
-
 async def get_client(*args, **kwargs):
     return await AppContainer.repo.get_client(*args, **kwargs)
-
 
 async def get_deep_stats_redis(*args, **kwargs):
     return await AppContainer.repo.get_deep_stats_redis(*args, **kwargs)
 
-
 async def get_realtime_online_count(*args, **kwargs):
     return await AppContainer.repo.get_realtime_online_count(*args, **kwargs)
-
 
 async def get_redis_dashboard_stats(*args, **kwargs):
     return await AppContainer.repo.get_redis_dashboard_stats(*args, **kwargs)
 
-
 async def get_user_guilds(*args, **kwargs):
     return await AppContainer.repo.get_user_guilds(*args, **kwargs)
-
 
 async def load_member_stats(*args, **kwargs):
     return await AppContainer.repo.load_member_stats(*args, **kwargs)
 
-
 async def save_user_guilds(*args, **kwargs):
     return await AppContainer.repo.save_user_guilds(*args, **kwargs)
-
 
 async def get_action_weights(*args, **kwargs):
     return await AppContainer.analytics.get_action_weights(*args, **kwargs)
 
-
 async def get_engagement_score(*args, **kwargs):
     return await AppContainer.analytics.get_engagement_score(*args, **kwargs)
-
 
 async def get_health_research_data(*args, **kwargs):
     return await AppContainer.analytics.get_health_research_data(*args, **kwargs)
 
-
 async def get_insights(*args, **kwargs):
     return await AppContainer.analytics.get_insights(*args, **kwargs)
 
-
 async def get_security_score(*args, **kwargs):
     return await AppContainer.analytics.get_security_score(*args, **kwargs)
-
 
 async def get_trend_analysis(*args, **kwargs):
     return await AppContainer.analytics.get_trend_analysis(*args, **kwargs)
@@ -72,7 +57,7 @@ import os
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, List, Any
-from collections import defaultdict, Counter
+from collections import Counter
 import redis.asyncio as redis
 import httpx
 import sys
@@ -81,9 +66,7 @@ from fastapi import Request, HTTPException
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-
 from shared.redis_client import get_redis
-from shared.config import settings
 
 try:
     from config.dashboard_secrets import BOT_TOKEN
@@ -93,20 +76,8 @@ except ImportError:
 DATA_DIR = Path("data")
 CONFIG_PATH = DATA_DIR / "challenge_config.json"
 
-
-
-def K_DAU(gid: int, d: str) -> str: 
+def K_DAU(gid: int, d: str) -> str:
     return f"hll:dau:{gid}:{d}"
-
-
-
-    
-    
-
-    
-
-
-    
 
 async def get_summary_card_data(discord_dau=0, discord_mau=0, discord_wau=0, discord_users=0, guild_id: int = None):
     """
@@ -114,26 +85,22 @@ async def get_summary_card_data(discord_dau=0, discord_mau=0, discord_wau=0, dis
     Prioritizes live bot data for user counts.
     """
     r = await get_redis()
-    
+
     real_total_users = discord_users
     real_msgs = 0
-    
+
     try:
-        
+
         total_msgs_str = await r.get(f"stats:total_msgs:{guild_id}")
         real_msgs = int(total_msgs_str) if total_msgs_str else 0
-        
-        
+
         bot_total_members = await r.get(f"presence:total:{guild_id}")
         if bot_total_members:
             real_total_users = int(bot_total_members)
-            
+
     except Exception as e:
         print(f"Error fetching Redis stats: {e}")
-    finally:
-        pass
-    
-    
+
     return {
         "discord": {
             "users": real_total_users,
@@ -153,17 +120,6 @@ def get_challenge_config() -> Dict[str, Any]:
 def save_challenge_config(new_config: Dict[str, Any]):
     CONFIG_PATH.write_text(json.dumps(new_config, ensure_ascii=False, indent=2), encoding="utf-8")
 
-
-    
-
-
-    
-    
-
-    
-
-
-
 def generate_security_insights(metrics: Dict[str, Any]):
     """
     Generate a comprehensive list of actionable insights based on calculated metrics.
@@ -171,8 +127,7 @@ def generate_security_insights(metrics: Dict[str, Any]):
     Priority: critical (🚨), warning (⚠️), info (ℹ️), success (✅)
     """
     insights = []
-    
-    
+
     mod_ratio = metrics.get("mod_ratio")
     users_per_mod = metrics.get("users_per_mod")
     mod_actions = metrics.get("mod_actions")
@@ -192,7 +147,7 @@ def generate_security_insights(metrics: Dict[str, Any]):
     avg_msg_length = metrics.get("avg_msg_length")
     weekend_ratio = metrics.get("weekend_ratio")
     new_member_retention = metrics.get("new_member_retention")
-    
+
     def add(priority: str, category: str, title: str, detail: str):
         """Helper to add structured insight"""
         icon_map = {"critical": "🚨", "warning": "⚠️", "info": "ℹ️", "success": "✅", "tip": "💡"}
@@ -202,11 +157,7 @@ def generate_security_insights(metrics: Dict[str, Any]):
             "category": category,
             "text": f"{icon} **{title}**: {detail}"
         })
-    
-    
-    
-    
-    
+
     if mod_ratio is not None and users_per_mod is not None:
         if mod_ratio < 40:
             add("critical", "team", "Kritický stav", f"{users_per_mod:.0f} členů na moderátora! Urgentně naberte.")
@@ -216,7 +167,7 @@ def generate_security_insights(metrics: Dict[str, Any]):
             add("info", "team", "Vytížení týmu", "Poměr je hraniční – mějte záložní členy.")
         elif mod_ratio >= 95 and users_per_mod < 30:
             add("success", "team", "Silný tým", "Skvělý poměr moderátorů – dostatečná moderační kapacita.")
-    
+
     if mod_actions is None:
         add("info", "team", "Moderační data", "K určení moderační aktivity chybí dostatek dat.")
     elif mod_actions == 0:
@@ -229,11 +180,7 @@ def generate_security_insights(metrics: Dict[str, Any]):
         add("warning", "team", "Vysoká zátěž", f"{mod_actions} akcí. Zvažte rotaci moderátorů.")
     elif mod_actions > 500:
         add("critical", "team", "Přetížení", f"{mod_actions} akcí! Možný systémový problém.")
-    
-    
-    
-    
-    
+
     if ver_level is not None:
         if ver_level == 0:
             add("critical", "security", "Bez ověření", "Kdokoli může psát ihned po vstupu!")
@@ -241,13 +188,13 @@ def generate_security_insights(metrics: Dict[str, Any]):
             add("warning", "security", "Slabé ověření", "Pouze e-mail. Zvažte vyšší úroveň.")
         elif ver_level >= 3:
             add("success", "security", "Silné ověření", f"Úroveň {ver_level}/4 – dobrá ochrana.")
-    
+
     if mfa_level is not None:
         if mfa_level == 0:
             add("warning", "security", "Chybí 2FA", "Moderátoři nemají povinné 2FA.")
         else:
             add("success", "security", "2FA aktivní", "Moderátoři mají povinné 2FA.")
-    
+
     if explicit_filter is not None:
         if explicit_filter == 0:
             add("warning", "security", "Žádný filtr", "Explicitní obsah není skenován.")
@@ -255,11 +202,7 @@ def generate_security_insights(metrics: Dict[str, Any]):
             add("info", "security", "Částečný filtr", "Skenování jen u členů bez role.")
         elif explicit_filter == 2:
             add("success", "security", "Plný filtr", "Veškerý obsah je skenován.")
-    
-    
-    
-    
-    
+
     if participation_rate is not None:
         if participation_rate < 1:
             add("critical", "activity", "Kriticky nízká aktivita", "Pod 1% aktivních. Zvažte reaktivaci.")
@@ -271,7 +214,7 @@ def generate_security_insights(metrics: Dict[str, Any]):
             add("info", "activity", "Průměrná aktivita", f"{participation_rate:.1f}% denní účast.")
         elif participation_rate >= 30:
             add("success", "activity", "Vysoké zapojení", f"{participation_rate:.1f}% aktivních – výborné!")
-    
+
     if reply_ratio is not None:
         if reply_ratio < 5:
             add("info", "activity", "Oznámkový styl", "Téměř žádné odpovědi – server je broadcast.")
@@ -281,15 +224,11 @@ def generate_security_insights(metrics: Dict[str, Any]):
             add("info", "activity", "Málo konverzací", f"{reply_ratio:.0f}% odpovědí. Zkuste ankety.")
         elif reply_ratio > 40:
             add("success", "activity", "Živá diskuze", f"{reply_ratio:.0f}% relevantních požadavků získalo odpověď!")
-            
+
     if voice_hours is not None:
         if voice_hours >= 0.5:
             add("success", "activity", "Aktivní voice", f"Průměrně {voice_hours:.1f}h/den na uživatele.")
-    
-    
-    
-    
-    
+
     if churn_rate is not None:
         if churn_rate > 50:
             add("critical", "retention", "Masový exodus", f"{churn_rate:.0f}% odchodů! Kritické.")
@@ -301,7 +240,7 @@ def generate_security_insights(metrics: Dict[str, Any]):
             add("info", "retention", "Normální fluktuace", f"{churn_rate:.1f}% – běžné rozmezí.")
         elif churn_rate <= 2:
             add("success", "retention", "Vysoká míra retence", "Minimální odchody – stabilní členská základna.")
-    
+
     if stickiness is not None:
         if stickiness < 5:
             add("warning", "retention", "Nízká stickiness", "DAU/MAU pod 5%. Vrací se zřídka.")
@@ -311,7 +250,7 @@ def generate_security_insights(metrics: Dict[str, Any]):
             add("info", "retention", "Dobrá stabilita", f"Stickiness {stickiness:.0f}% – stabilní komunita.")
         elif stickiness >= 40:
             add("success", "retention", "Vysoký návrat uživatelů", f"Stickiness {stickiness:.0f}% – stabilní pravidelné zapojení.")
-            
+
     if growth_rate is not None:
         if growth_rate < -10:
             add("critical", "growth", "Úbytek členů", f"{growth_rate:.1f}% – server ztrácí lidi.")
@@ -323,19 +262,19 @@ def generate_security_insights(metrics: Dict[str, Any]):
             add("success", "growth", "Zdravý růst", f"+{growth_rate:.1f}% měsíčně.")
         elif growth_rate >= 15:
             add("success", "growth", "Virální růst", f"+{growth_rate:.1f}%! Moderace stíhá?")
-            
+
     if avg_msg_length is not None:
         if avg_msg_length > 0 and avg_msg_length < 20:
             add("info", "community", "Krátké zprávy", f"Průměr {avg_msg_length:.0f} znaků – chat styl.")
         elif avg_msg_length >= 100:
             add("success", "community", "Obsahové diskuze", f"Průměr {avg_msg_length:.0f} znaků – nadprůměrná délka sdělení.")
-            
+
     if weekend_ratio is not None:
         if weekend_ratio > 1.5:
             add("info", "community", "Víkendová komunita", "1.5x vyšší aktivita o víkendech.")
         elif weekend_ratio < 0.5:
             add("info", "community", "Pracovní komunita", "Aktivnější během týdne.")
-            
+
     if new_member_retention is not None:
         if new_member_retention < 30:
             add("warning", "community", "Únik nováčků", "Pod 30% zůstává. Vylepšete onboarding.")
@@ -345,19 +284,19 @@ def generate_security_insights(metrics: Dict[str, Any]):
     if total_members is not None and participation_rate is not None and voice_hours is not None:
         if total_members > 100 and participation_rate < 10 and voice_hours < 0.1:
             add("tip", "tips", "Event tip", "Zkuste voice event nebo AMA session pro oživení.")
-    
+
     if reply_ratio is not None and participation_rate is not None:
         if reply_ratio < 20 and participation_rate > 5:
             add("tip", "tips", "Interakce tip", "Přidejte ankety/hlasování pro více konverzací.")
-    
+
     if churn_rate is not None and new_member_retention is not None:
         if churn_rate > 10 and new_member_retention < 50:
             add("tip", "tips", "Onboarding tip", "Vytvořte uvítací kanál s pravidly a FAQ.")
-    
+
     if mod_actions is not None and mod_ratio is not None:
         if mod_actions > 200 and mod_ratio < 70:
             add("tip", "tips", "Automatizace tip", "Zvažte AutoMod pro odlehčení týmu.")
-    
+
     achievements = 0
     if overall_score is not None and overall_score >= 80: achievements += 1
     if participation_rate is not None and participation_rate >= 20: achievements += 1
@@ -365,16 +304,12 @@ def generate_security_insights(metrics: Dict[str, Any]):
     if mod_ratio is not None and mod_ratio >= 90: achievements += 1
     if stickiness is not None and stickiness >= 30: achievements += 1
     if growth_rate is not None and growth_rate >= 5: achievements += 1
-    
+
     if achievements >= 4:
         add("success", "achievement", "Vzorová komunita", f"Vynikáte v {achievements} oblastech! 🏆")
     elif achievements >= 2:
         add("success", "achievement", "Na dobré cestě", f"Silní ve {achievements} oblastech.")
-    
-    
-    
-    
-    
+
     if not insights:
         if overall_score is not None:
             if overall_score >= 90:
@@ -385,53 +320,43 @@ def generate_security_insights(metrics: Dict[str, Any]):
                 add("info", "general", "Standardní úroveň", "Server funguje – prostor pro růst.")
         else:
             add("info", "general", "Nedostatek dat", "Pro detailní analýzu chybí dostatek dat.")
-    
-    
+
     priority_order = {"critical": 0, "warning": 1, "info": 2, "tip": 3, "success": 4}
     insights.sort(key=lambda x: priority_order.get(x["priority"], 5))
-    
-    
+
     return [i["text"] for i in insights]
-
-
-
-
-
 
 async def get_time_comparisons(guild_id: int, start_date: str = None, end_date: str = None) -> Dict[str, Any]:
     """Calculate WoW and MoM DAU changes relative to end_date."""
-    
+
     if end_date:
         e_dt = datetime.strptime(end_date, "%Y-%m-%d")
     else:
         e_dt = datetime.now()
-    
-    
+
     activity_stats = await get_activity_stats(guild_id, end_date=e_dt.strftime("%Y-%m-%d"), days=60)
     dau_data = activity_stats.get("dau_data", [])
-    
-    
+
     if len(dau_data) >= 14:
         this_week = sum(dau_data[-7:]) / 7
         last_week = sum(dau_data[-14:-7]) / 7
         wow_change = ((this_week - last_week) / max(1, last_week)) * 100
     else:
-        
+
         this_week = sum(dau_data) / len(dau_data) if dau_data else 0
         last_week = 0
-        wow_change = 0 
-        
-    
+        wow_change = 0
+
     if len(dau_data) >= 60:
         this_month = sum(dau_data[-30:]) / 30
         last_month = sum(dau_data[-60:-30]) / 30
         mom_change = ((this_month - last_month) / max(1, last_month)) * 100
     else:
-        
+
         this_month = sum(dau_data) / len(dau_data) if dau_data else 0
         last_month = 0
         mom_change = 0
-        
+
     return {
         "week_over_week": {
             "this_week": round(this_week, 1),
@@ -447,7 +372,7 @@ async def get_time_comparisons(guild_id: int, start_date: str = None, end_date: 
 
 async def get_voice_leaderboard(guild_id: int, limit: int = 10, start_date: str = None, end_date: str = None, role_id: str = "all") -> List[Dict[str, Any]]:
     """Fetch top users by voice duration - currently all-time fallback."""
-    
+
     r = await get_redis()
     try:
         data = await r.zrevrange(f"stats:voice_duration:{guild_id}", 0, limit - 1, withscores=True)
@@ -469,7 +394,7 @@ async def get_command_stats(guild_id: int, limit: int = 10, start_date: str = No
 
 async def get_traffic_stats(guild_id: int, days: int = 30, start_date: str = None, end_date: str = None, role_id: str = "all") -> Dict[str, Any]:
     """Fetch Joins vs Leaves for traffic chart."""
-    return await load_member_stats(guild_id, start_date=start_date, end_date=end_date) 
+    return await load_member_stats(guild_id, start_date=start_date, end_date=end_date)
 
 async def get_leaderboard_data(guild_id: int, limit: int = 15, start_date: str = None, end_date: str = None) -> Dict[str, Any]:
     """Fetch user leaderboard with optional date filtering."""
@@ -478,25 +403,23 @@ async def get_leaderboard_data(guild_id: int, limit: int = 15, start_date: str =
         if start_date and end_date:
             start_dt = datetime.strptime(start_date, "%Y-%m-%d")
             end_dt = datetime.strptime(end_date, "%Y-%m-%d")
-            
-            
+
             if (end_dt - start_dt).days > 365:
                 top_users = await r.zrevrange(f"leaderboard:messages:{guild_id}", 0, limit - 1, withscores=True)
             else:
-                
+
                 daily_keys = []
                 curr = start_dt
                 while curr <= end_dt:
                     daily_keys.append(f"stats:user_daily:{guild_id}:{curr.strftime('%Y%m%d')}")
                     curr += timedelta(days=1)
-                
-                
+
                 existing_keys = []
                 for k in daily_keys:
                     if await r.exists(k): existing_keys.append(k)
-                
+
                 if not existing_keys:
-                    
+
                     top_users = await r.zrevrange(f"leaderboard:messages:{guild_id}", 0, limit - 1, withscores=True)
                 else:
                     temp_key = f"tmp:leaderboard:{guild_id}:{start_date}:{end_date}"
@@ -511,13 +434,13 @@ async def get_leaderboard_data(guild_id: int, limit: int = 15, start_date: str =
             uid = int(float(user_id_str))
             user_info = await r.hgetall(f"user:info:{uid}") or {}
             name = user_info.get("name", f"User {uid}")
-            
+
             lengths = await r.lrange(f"leaderboard:msg_lengths:{guild_id}:{uid}", 0, -1)
             avg_len = sum(int(l) for l in lengths) / len(lengths) if lengths else 0
-            
+
             leaderboard.append({
                 "user_id": uid, "name": name,
-                "avatar": user_info.get("avatar"), 
+                "avatar": user_info.get("avatar"),
                 "total_messages": int(msg_count),
                 "avg_message_length": round(avg_len, 1)
             })
@@ -530,21 +453,20 @@ async def get_channel_distribution(guild_id: int, start_date: str = None, end_da
     """Fetch message distribution by channel, optionally filtered by date/days."""
     r = await get_redis()
     try:
-        
+
         if not start_date:
             end_dt = datetime.now()
             start_dt = end_dt - timedelta(days=days-1)
             start_date = start_dt.strftime("%Y-%m-%d")
             end_date = end_dt.strftime("%Y-%m-%d")
-            
+
         if not start_date or not end_date:
             data = await r.zrevrange(f"stats:channel_total:{guild_id}", 0, 14, withscores=True)
             return [{"channel_id": cid, "count": int(score)} for cid, score in data]
 
         start_dt = datetime.strptime(start_date, "%Y-%m-%d")
         end_dt = datetime.strptime(end_date, "%Y-%m-%d") if end_date != datetime.now().strftime("%Y-%m-%d") else datetime.now()
-        
-        
+
         if (end_dt - start_dt).days > 365:
             data = await r.zrevrange(f"stats:channel_total:{guild_id}", 0, 14, withscores=True)
             return [{"channel_id": cid, "count": int(score)} for cid, score in data]
@@ -561,29 +483,28 @@ async def get_channel_distribution(guild_id: int, start_date: str = None, end_da
                 pipe.get(f"stats:channel:{guild_id}:{cid_str}:{d_str}")
             curr -= timedelta(days=1)
             day_count += 1
-            if day_count > 365: break 
+            if day_count > 365: break
 
         responses = await pipe.execute()
         channel_counts = Counter()
         num_channels = len(all_channels)
-        
-        
+
         for d_idx in range(day_count):
             for c_idx in range(num_channels):
                 val = responses[d_idx * num_channels + c_idx]
                 if val is not None:
-                    cid_str = all_channels[c_idx] 
+                    cid_str = all_channels[c_idx]
                     try:
                         channel_counts[cid_str] += int(float(val))
                     except (ValueError, TypeError):
                         pass
-        
+
         if not channel_counts:
-            
+
             data = await r.zrevrange(f"stats:channel_total:{guild_id}", 0, 14, withscores=True)
-            if not data: return [] 
+            if not data: return []
             return [{"channel_id": cid, "count": int(score)} for cid, score in data]
-            
+
         return [{"channel_id": cid, "count": count} for cid, count in channel_counts.most_common(15)]
     except Exception as e:
         print(f"Channel dist error: {e}")
@@ -595,55 +516,47 @@ async def get_dashboard_team(guild_id: int) -> List[Dict[str, Any]]:
     """
     r = await get_redis()
     try:
-        
+
         user_ids = await r.smembers(f"dashboard:team:{guild_id}")
         team = []
-        
+
         for uid in user_ids:
             perms = await r.smembers(f"dashboard:perms:{guild_id}:{uid}")
-            
+
             user_info = await r.hgetall(f"user:info:{uid}") or {}
-            
+
             team.append({
                 "id": uid,
                 "username": user_info.get("username", "Unknown User"),
                 "avatar": user_info.get("avatar"),
                 "permissions": list(perms)
             })
-            
+
         return team
     except Exception as e:
         print(f"Error fetching dashboard team: {e}")
         return []
-    finally:
-        pass
 
 async def get_dashboard_permissions(guild_id: int, user_id: str, discord_role: str = "guest") -> List[str]:
     """
     Get effective permissions for a user on a guild.
     """
-    
-    
-    if discord_role == "admin": 
+
+    if discord_role == "admin":
         return ["*"]
 
-    
     from .utils import get_user_guilds
     user_guilds = await get_user_guilds(user_id)
-    
+
     guild_info = next((g for g in user_guilds if str(g["id"]) == str(guild_id)), None)
-    
+
     if not guild_info:
-        
+
         return []
 
-    
-    
-    
     if guild_info.get("is_admin"):
         return ["*"]
 
-    
     r = await get_redis()
     try:
         perms = await r.smembers(f"dashboard:perms:{guild_id}:{user_id}")
@@ -657,25 +570,21 @@ async def add_dashboard_user(guild_id: int, user_id: str, user_data: Dict[str, s
     """
     r = await get_redis()
     try:
-        
+
         await r.sadd(f"dashboard:team:{guild_id}", user_id)
-        
-        
+
         perm_key = f"dashboard:perms:{guild_id}:{user_id}"
         await r.delete(perm_key)
         if permissions:
             await r.sadd(perm_key, *permissions)
-            
-        
+
         if user_data:
              await r.hset(f"user:info:{user_id}", mapping=user_data)
-             
+
         return True
     except Exception as e:
         print(f"Error adding dashboard user: {e}")
         return False
-    finally:
-        pass
 
 async def remove_dashboard_user(guild_id: int, user_id: str):
     """
@@ -689,10 +598,6 @@ async def remove_dashboard_user(guild_id: int, user_id: str):
     except Exception as e:
         print(f"Error removing dashboard user: {e}")
         return False
-    finally:
-        pass
-
-
 
 async def get_daily_stats(r: redis.Redis, gid: int, uid: int, day: datetime.date) -> dict:
     """
@@ -702,88 +607,78 @@ async def get_daily_stats(r: redis.Redis, gid: int, uid: int, day: datetime.date
     from datetime import datetime as dt
     import json
     from collections import defaultdict
-    
+
     day_str = day.strftime("%Y-%m-%d")
     cache_key = f"stats:day:{day_str}:{gid}:{uid}"
-    
-    
+
     cached_version = await r.hget(cache_key, "_version")
-    current_version = await r.get("config:weights_version") or "0"
-    
+    current_version = await r.get(f"config:weights_version:{gid}") or "0"
+
     if cached_version == current_version:
-        
+
         stats = await r.hgetall(cache_key)
-        
+
         return {k: float(v) if k != "_version" else v for k, v in stats.items()}
-    
-    
-    weights = await get_action_weights(r)
-    
-    
+
+    weights = await get_action_weights(gid)
+
     from datetime import time as dt_time
     day_start = dt.combine(day, dt_time(0, 0, 0)).timestamp()
     day_end = dt.combine(day, dt_time(23, 59, 59)).timestamp()
-    
+
     stats = defaultdict(float)
-    
-    
+
     msg_key = f"events:msg:{gid}:{uid}"
     messages = await r.zrangebyscore(msg_key, day_start, day_end, withscores=True)
-    
+
     last_msg_ts = 0
     raw_chat_time = 0
-    SESSION_GAP = 300 
-    
+    SESSION_GAP = 300
+
     for msg_json, score in messages:
         msg_data = json.loads(msg_json)
         msg_ts = float(score)
-        
-        
+
         if last_msg_ts == 0 or (msg_ts - last_msg_ts) > SESSION_GAP:
             raw_chat_time += weights.get("session_base", 180)
-        
+
         last_msg_ts = msg_ts
-        
-        
+
         raw_chat_time += msg_data.get("len", 0) * weights.get("char_weight", 1)
         raw_chat_time += weights.get("msg_weight", 0)
         if msg_data.get("reply"):
             raw_chat_time += weights.get("reply_weight", 60)
-            
+
     stats["messages"] += len(messages)
     stats["chat_time"] = raw_chat_time * weights.get("chat_time", 1)
-    
-    
+
     voice_key = f"events:voice:{gid}:{uid}"
     voice_sessions = await r.zrangebyscore(voice_key, day_start, day_end)
-    
+
     for vs_json in voice_sessions:
         vs_data = json.loads(vs_json)
         stats["voice_time"] += vs_data["duration"] * weights.get("voice_time", 1)
-    
-    
+
     action_key = f"events:action:{gid}:{uid}"
     actions = await r.zrangebyscore(action_key, day_start, day_end)
-    
+
     for action_json in actions:
         action_data = json.loads(action_json)
         action_type = action_data["type"]
-        
-        
+
         metric_map = {
             "ban": "bans", "kick": "kicks", "timeout": "timeouts",
             "unban": "unbans", "role_update": "role_updates",
             "msg_delete": "msg_deleted"
         }
-        
+
         metric = metric_map.get(action_type, action_type + "s")
         stats[metric] += 1
-    
-    
+
     cache_data = dict(stats)
     cache_data["_version"] = current_version
     await r.hset(cache_key, mapping={k: str(v) for k, v in cache_data.items()})
-    
+
     return dict(stats)
 
 async def update_env_token(token: str):
@@ -793,7 +688,7 @@ async def update_env_token(token: str):
     env_path = ROOT / ".env"
     lines = []
     found = False
-    
+
     if env_path.exists():
         with open(env_path, "r") as f:
             for line in f:
@@ -802,18 +697,18 @@ async def update_env_token(token: str):
                     found = True
                 else:
                     lines.append(line)
-    
+
     if not found:
         lines.append(f"BOT_TOKEN={token}\n")
-        
+
     with open(env_path, "w") as f:
         f.writelines(lines)
-        
+
     # Update in-memory
     os.environ["BOT_TOKEN"] = token
-    
+
     # Odebráno ukládání do Redis z důvodu bezpečnosti (Token musí být pouze v .env)
-    
+
     return True
 
 async def is_bot_token_set() -> bool:
@@ -823,7 +718,6 @@ async def is_bot_token_set() -> bool:
        return True
     return False
 
-
 async def get_sidebar_context(request: Request) -> Dict[str, Any]:
     """
     Globally inject sidebar data via Flat Variable Resolution.
@@ -831,56 +725,51 @@ async def get_sidebar_context(request: Request) -> Dict[str, Any]:
     """
     user = request.session.get("discord_user")
     guild_id = request.session.get("guild_id")
-    
-    
+
     print(f"[Sidebar Debug] Session ID: {guild_id}")
-    
-    
+
     if not guild_id:
         q_guild_id = request.query_params.get("guild_id")
         if q_guild_id:
             print(f"[Sidebar Debug] Recovered ID from Query: {q_guild_id}")
             guild_id = q_guild_id
-            
+
             if user:
                 request.session["guild_id"] = guild_id
-    
+
     if guild_id == "demo-guild":
         return {
             "sidebar_guild_id": "demo-guild",
             "sidebar_guild_name": "Demo Server",
             "sidebar_guild_icon": "", # Could be a static asset
         }
-    
+
     resolved_guild = None
-    
+
     if user and guild_id:
-        
+
         s_name = request.session.get("guild_name")
         s_icon = request.session.get("guild_icon")
-        
+
         if s_name and s_name not in ["Neznámý server", "Žádný server"]:
             resolved_guild = {"name": s_name, "icon": s_icon}
-        
-        
+
         if not resolved_guild:
             try:
-                
+
                 from .utils import get_user_guilds
                 user_guilds = await get_user_guilds(user["id"])
-                
+
                 match = None
                 if user_guilds:
                     match = next((g for g in user_guilds if str(g["id"]) == str(guild_id)), None)
-                
-                
+
                 if not match:
                     r = await get_redis_client()
                     info = await r.hgetall(f"guild:info:{guild_id}")
                     if info and "name" in info:
                         match = {"name": info["name"], "icon": info.get("icon")}
-                
-                
+
                 if not match:
                      async with httpx.AsyncClient() as client:
                         resp = await client.get(
@@ -890,31 +779,25 @@ async def get_sidebar_context(request: Request) -> Dict[str, Any]:
                         if resp.status_code == 200:
                             data = resp.json()
                             match = {"name": data["name"], "icon": data.get("icon")}
-                            
+
                             r = await get_redis_client()
                             await r.hset(f"guild:info:{guild_id}", mapping={"name": data["name"], "icon": data.get("icon") or ""})
-                            
+
                 if match:
                     resolved_guild = match
-                    
+
                     request.session["guild_name"] = resolved_guild["name"]
                     request.session["guild_icon"] = resolved_guild.get("icon")
 
             except Exception as e:
                 print(f"Sidebar Resolution Error: {e}")
 
-    
-    
-    
     final_name = resolved_guild["name"] if resolved_guild else None
-    
+
     if not final_name and guild_id:
-        final_name = "Načítání..." 
-        
+        final_name = "Načítání..."
+
     final_icon = resolved_guild["icon"] if resolved_guild else None
-    
-    
-    
 
     if "csrf_token" not in request.session:
         import secrets
@@ -927,7 +810,6 @@ async def get_sidebar_context(request: Request) -> Dict[str, Any]:
         "csrf_token": request.session["csrf_token"],
     }
 
-
 async def require_auth(request: Request):
     if not request.session.get("authenticated"):
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -939,29 +821,65 @@ async def require_admin(request: Request):
         raise HTTPException(status_code=403, detail="Prístup pouze pro administrátory")
     return True
 
+async def has_dashboard_permission(request: Request, permission: str) -> bool:
+    """Check whether the current session holds `permission` (or full access) for the active guild.
 
-from fastapi import Request, HTTPException
+    Global/guild admins and the demo guild always pass (get_dashboard_permissions
+    returns "*" for them); a team member only passes if explicitly granted
+    that specific permission via /settings/team.
+    """
+    guild_id = request.session.get("guild_id")
+    if not guild_id:
+        return False
+    if guild_id == "demo-guild" or request.session.get("role") == "demo":
+        return True
+    user_id = request.session.get("discord_user", {}).get("id")
+    role = request.session.get("role")
+    perms = await get_dashboard_permissions(guild_id, user_id, role)
+    return "*" in perms or permission in perms
+
+async def require_dashboard_permission(request: Request, permission: str):
+    await require_auth(request)
+    if not await has_dashboard_permission(request, permission):
+        raise HTTPException(status_code=403, detail="Nemáte oprávnění pro tuto akci.")
+    return True
+
+async def require_view_stats(request: Request):
+    return await require_dashboard_permission(request, "view_stats")
+
+async def require_manage_settings(request: Request):
+    return await require_dashboard_permission(request, "manage_settings")
+
+def require_non_demo_guild(request: Request) -> str:
+    """Return the active guild_id, rejecting requests with no guild selected
+    or targeting the read-only demo guild."""
+    guild_id = request.session.get("guild_id")
+    if not guild_id:
+        raise HTTPException(status_code=400, detail="No guild selected")
+    if guild_id == "demo-guild":
+        raise HTTPException(status_code=403, detail="Tato akce není v demo režimu povolena.")
+    return guild_id
+
+async def require_export_data(request: Request):
+    return await require_dashboard_permission(request, "export_data")
+
 from typing import Optional, Union
 
 def get_guild_id(request: Request, guild_id: Optional[str] = None) -> Union[int, str]:
     gid = request.session.get("guild_id")
     if not gid and guild_id:
         gid = guild_id
-    
+
     if not gid:
         raise HTTPException(status_code=400, detail="No guild selected")
-        
+
     if gid == "demo-guild":
         return gid
-        
+
     try:
         return int(gid)
     except (ValueError, TypeError):
         return gid
-
-import httpx
-from typing import Any
-import os
 
 async def get_discord_channels(guild_id: Any):
     if guild_id == "demo-guild":
@@ -975,16 +893,15 @@ async def get_discord_channels(guild_id: Any):
         if int(guild_id) < 0:
             r = await get_redis()
             # Try to fetch channel info from redis
-            keys = await r.keys("channel:info:*")
             channels = []
-            for k in keys:
+            async for k in r.scan_iter("channel:info:*"):
                 info = await r.hgetall(k)
                 if info.get("guild_id") == str(guild_id):
                     channels.append({"id": k.split(":")[-1], "name": info.get("name", f"Kategorie {k.split(':')[-1]}")})
             return channels
     except ValueError:
         pass
-        
+
     bot_token = os.environ.get("BOT_TOKEN")
     if not bot_token:
         try:
@@ -992,7 +909,7 @@ async def get_discord_channels(guild_id: Any):
             bot_token = BOT_TOKEN
         except:
             bot_token = ""
-            
+
     url = f"https://discord.com/api/v10/guilds/{guild_id}/channels"
     async with httpx.AsyncClient() as client:
         resp = await client.get(url, headers={"Authorization": f"Bot {bot_token}"})

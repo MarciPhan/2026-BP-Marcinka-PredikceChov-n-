@@ -474,7 +474,9 @@ body::before {
 
 #dashboard-grid.grid,
 #analytics-grid.grid,
-#predictions-grid.grid {
+#predictions-grid.grid,
+#activity-grid.grid,
+#health-grid.grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 24px;
@@ -484,7 +486,9 @@ body::before {
 @media (min-width: 768px) {
     #dashboard-grid.grid,
     #analytics-grid.grid,
-    #predictions-grid.grid {
+    #predictions-grid.grid,
+    #activity-grid.grid,
+    #health-grid.grid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
@@ -492,7 +496,9 @@ body::before {
 @media (min-width: 1200px) {
     #dashboard-grid.grid,
     #analytics-grid.grid,
-    #predictions-grid.grid {
+    #predictions-grid.grid,
+    #activity-grid.grid,
+    #health-grid.grid {
         grid-template-columns: repeat(4, 1fr);
     }
 }

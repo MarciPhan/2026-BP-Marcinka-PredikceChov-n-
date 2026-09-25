@@ -25,10 +25,10 @@ async def test_engagement_score_missing_data():
 @pytest.mark.asyncio
 async def test_security_score():
     fake_r = fakeredis.aioredis.FakeRedis(decode_responses=True)
-    await fake_r.hset("config:security_weights", mapping={
+    await fake_r.hset("config:security_weights:999", mapping={
         "mod_ratio": "25", "security": "25", "engagement": "25", "moderation": "25"
     })
-    await fake_r.hset("config:security_ideals", mapping={
+    await fake_r.hset("config:security_ideals:999", mapping={
         "mod_ratio_min": "50", "mod_ratio_max": "100",
         "verification_level": "2", "dau_percent": "10",
         "mod_actions_min": "1", "mod_actions_max": "5"

@@ -1,7 +1,7 @@
 import datetime
 import pytest
 import json
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 from web.backend.services.analytics_service import DefaultAnalyticsService
 class DummyRepo:
     def __init__(self):
@@ -140,14 +140,38 @@ async def test_fr_06_support_health():
 
 @pytest.mark.asyncio
 async def test_fr_08_api_filters():
+    """FR-08: the channel-activity API requires authentication and forwards
+    the platform/channel filters to the service, returning its filtered result."""
     from fastapi.testclient import TestClient
     from web.backend.main import app
+    from web.backend.routers.api import require_auth
     client = TestClient(app)
-    
-    # This is an integration test simulating the router logic, we mock the service layer to just return the kwargs
-    from web.backend.routers.api import api_channel_activity
-    # Just asserting the route exists and accepts the params
-    assert api_channel_activity is not None
+    app.dependency_overrides.clear()
+
+    # Unauthenticated requests must be rejected
+    resp = client.get("/api/channel-activity?platform=discourse&channel_id=123")
+    assert resp.status_code == 401
+
+    # Authenticated requests must pass the filters through and return the
+    # service's filtered data unchanged
+    app.dependency_overrides[require_auth] = lambda: True
+    try:
+        with patch(
+            "web.backend.services.analytics_service.DefaultAnalyticsService.get_channel_activity",
+            new_callable=AsyncMock,
+        ) as mock_activity:
+            mock_activity.return_value = [{"channel_id": "chA", "messages": 3}]
+            resp = client.get(
+                "/api/channel-activity?platform=discord&channel_id=chA",
+                cookies={"session": "dummy"},
+            )
+            assert resp.status_code == 200
+            assert resp.json()["data"] == [{"channel_id": "chA", "messages": 3}]
+            args, kwargs = mock_activity.call_args
+            assert args[3] == "discord"  # platform
+            assert args[4] == "chA"  # channel_id
+    finally:
+        app.dependency_overrides.clear()
 
 
 

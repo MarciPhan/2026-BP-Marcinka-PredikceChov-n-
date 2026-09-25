@@ -29,7 +29,7 @@ class BaseAnalyticsService(ABC):
         pass
         
     @abstractmethod
-    async def get_action_weights(self) -> dict:
+    async def get_action_weights(self, guild_id: int) -> dict:
         pass
 
     @abstractmethod

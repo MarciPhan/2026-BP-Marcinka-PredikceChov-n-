@@ -232,14 +232,18 @@
         <div class="server-grid">
             {% for guild in guilds %}
             {% if guild.bot_in_guild %}
-            <a href="/select-server/{{ guild.id }}" class="server-card">
+            <a href="javascript:void(0)" onclick="selectServer('{{ guild.id }}')" class="server-card">
                 {% else %}
                 <a href="https://discord.com/api/oauth2/authorize?client_id={{ client_id }}&permissions=277025508352&scope=bot%20applications.commands&guild_id={{ guild.id }}&disable_guild_select=true"
                     class="server-card" target="_blank">
                     {% endif %}
                     {% if guild.icon %}
+                    {% if guild.icon.startswith('http') %}
+                    <img src="{{ guild.icon }}" class="server-icon" alt="{{ guild.name }}">
+                    {% else %}
                     <img src="https://cdn.discordapp.com/icons/{{ guild.id }}/{{ guild.icon }}.png" class="server-icon"
                         alt="{{ guild.name }}">
+                    {% endif %}
                     {% else %}
                     <div class="server-icon">{{ guild.name[:2] }}</div>
                     {% endif %}
@@ -265,6 +269,23 @@
         </div>
         {% endif %}
     </div>
+    <script>
+        async function selectServer(guildId) {
+            try {
+                const res = await fetch('/select-server/' + encodeURIComponent(guildId), {
+                    method: 'POST',
+                    headers: { 'X-CSRF-Token': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (res.ok) {
+                    window.location.href = '/';
+                } else {
+                    alert('Nepodařilo se přepnout server.');
+                }
+            } catch (e) {
+                alert('Nepodařilo se přepnout server.');
+            }
+        }
+    </script>
 </body>
 
 </html>

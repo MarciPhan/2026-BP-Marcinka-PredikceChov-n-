@@ -11,6 +11,21 @@
     <meta name="csrf-token" content="{{ csrf_token or request.session.get('csrf_token', '') }}">
     <script>
         window.CSRF_TOKEN = "{{ csrf_token or request.session.get('csrf_token', '') }}";
+        async function selectServer(guildId) {
+            try {
+                const res = await fetch('/select-server/' + encodeURIComponent(guildId), {
+                    method: 'POST',
+                    headers: { 'X-CSRF-Token': window.CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (res.ok) {
+                    window.location.href = '/';
+                } else {
+                    alert('Nepodařilo se přepnout server.');
+                }
+            } catch (e) {
+                alert('Nepodařilo se přepnout server.');
+            }
+        }
     </script>
     <script src="/static/js/chart.js"></script>
     <script src="/static/js/charts.js?v=2.1"></script>
@@ -92,8 +107,12 @@
                 <div class="server-active-card">
                     <div class="server-active-icon">
                         {% if sidebar_guild_icon %}
+                        {% if sidebar_guild_icon.startswith('http') %}
+                        <img src="{{ sidebar_guild_icon }}" alt="{{ sidebar_guild_name }}">
+                        {% else %}
                         <img src="https://cdn.discordapp.com/icons/{{ sidebar_guild_id }}/{{ sidebar_guild_icon }}.png"
                             alt="{{ sidebar_guild_name }}">
+                        {% endif %}
                         {% else %}
                         <div class="server-placeholder">{{ sidebar_guild_name[0]|upper }}</div>
                         {% endif %}

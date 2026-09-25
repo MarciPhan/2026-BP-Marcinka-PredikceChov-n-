@@ -40,8 +40,12 @@
             {% for server in servers %}
             <div class="server-card-square">
                 {% if server.icon %}
+                {% if server.icon.startswith('http') %}
+                <img src="{{ server.icon }}" class="server-icon" alt="{{ server.name }}">
+                {% else %}
                 <img src="https://cdn.discordapp.com/icons/{{ server.id }}/{{ server.icon }}.png" class="server-icon"
                     alt="{{ server.name }}">
+                {% endif %}
                 {% else %}
                 <div class="server-icon">
                     {{ server.name[0]|upper }}
@@ -54,7 +58,7 @@
                 <span class="server-status status-active">
                     <i class="fas fa-check-circle"></i> Aktivní
                 </span>
-                <a href="/select-server/{{ server.id }}" class="btn-action btn-manage">
+                <a href="javascript:void(0)" onclick="selectServer('{{ server.id }}')" class="btn-action btn-manage">
                     <i class="fas fa-exchange-alt"></i> Spravovat
                 </a>
                 {% else %}

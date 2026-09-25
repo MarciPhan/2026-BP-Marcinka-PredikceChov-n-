@@ -135,7 +135,10 @@
             }
             if (id) {
                 visibleOrder.push(id);
-                spans[id] = parseInt(w.dataset.span || 1);
+                let sp = parseInt(w.dataset.span || 1);
+                if (isNaN(sp) || sp < 1) sp = 1;
+                if (sp > 4) sp = 4;
+                spans[id] = sp;
             }
         });
 
@@ -189,30 +192,22 @@
             e.preventDefault();
             e.stopPropagation();
 
-            // We must find the element that has data-span and grid-column control
-            // This is usually the widget wrapper (.widget-wrapper) or the card itself.
             let wrapper = btn.closest('.widget-wrapper');
             if (!wrapper) wrapper = btn.closest('.card');
-            
-            // For community health, cards might use .health-card
-            if (!wrapper && btn.closest('.health-card')) wrapper = btn.closest('.health-card');
 
             const isIncrease = btn.classList.contains('action-increase');
             const delta = isIncrease ? 1 : -1;
 
             if (wrapper) {
                 let currentSpan = parseInt(wrapper.dataset.span || wrapper.style.gridColumn.replace('span ', '') || 1);
-                // Health cards use col-span up to 12. Normal ones use up to 4.
-                // Let's assume standard span system up to 4 (or 12 if health-card, but wait...)
-                let maxSpan = 4;
-                if (wrapper.classList.contains('health-card')) maxSpan = 12;
+                if (isNaN(currentSpan) || currentSpan < 1) currentSpan = 1;
+                if (currentSpan > 4) currentSpan = 4;
                 
+                let maxSpan = 4;
                 let newSpan = Math.max(1, Math.min(maxSpan, currentSpan + delta));
 
                 wrapper.classList.remove('span-1', 'span-2', 'span-3', 'span-4');
-                if (!wrapper.classList.contains('health-card')) {
-                    wrapper.classList.add(`span-${newSpan}`);
-                }
+                wrapper.classList.add(`span-${newSpan}`);
                 wrapper.dataset.span = newSpan;
                 wrapper.style.gridColumn = `span ${newSpan}`;
 

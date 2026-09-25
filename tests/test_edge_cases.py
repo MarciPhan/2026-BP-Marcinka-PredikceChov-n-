@@ -22,10 +22,11 @@ def test_insights_with_invalid_types():
         'voice_hours_per_dau': "0.5"
     }
     
-    # Náš utils by s tím měl ideálně umět pracovat, nebo alespoň nespadnout, 
+    # Náš utils by s tím měl ideálně umět pracovat, nebo alespoň nespadnout,
     # pokud spoléhá na float, hodí chybu, uvidíme
     try:
-        pass
+        insights = generate_security_insights(metrics)
+        assert isinstance(insights, list)
     except TypeError:
         # Pokud nekonvertuje typy automaticky, zachytíme to jako známé omezení
         pass

@@ -1,11 +1,9 @@
-from fastapi import APIRouter, Request, Form, HTTPException, Depends
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi import APIRouter, Request
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from typing import Optional
 from datetime import datetime
 import urllib.parse
 import httpx
-import base64
 import os
 import secrets
 
@@ -49,8 +47,6 @@ async def demo_login(request: Request):
     request.session["login_time"] = datetime.now().isoformat()
     return RedirectResponse(url="/", status_code=303)
 
-
-
 def get_effective_redirect_uri(request: Request = None) -> str:
     uri = os.getenv("DISCORD_REDIRECT_URI", "").strip()
     if uri:
@@ -64,12 +60,12 @@ async def login_page(request: Request):
     client_id = os.getenv("DISCORD_CLIENT_ID", DISCORD_CLIENT_ID).strip()
     if not client_id or client_id == "YOUR_CLIENT_ID_HERE":
         return templates.TemplateResponse("login.html", {
-            "request": request, 
+            "request": request,
             "error": "Discord OAuth není nakonfigurován (chybí DISCORD_CLIENT_ID v .env). Kontaktujte administrátora."
         })
-    
+
     redirect_uri = get_effective_redirect_uri(request)
-    
+
     # Blbovzdornost: Pokud uživatel přistoupil přes 127.0.0.1 nebo jiný port než redirect_uri,
     # přesměrujeme na správný host/port, aby session cookie fungovala spolehlivě
     try:
@@ -84,7 +80,7 @@ async def login_page(request: Request):
 
     state_str = secrets.token_urlsafe(32)
     request.session["oauth_state"] = state_str
-    
+
     params = {
         "client_id": client_id,
         "redirect_uri": redirect_uri,
@@ -105,17 +101,17 @@ async def auth_callback(request: Request, code: str = None, error: str = None, s
         return templates.TemplateResponse("login.html", {"request": request, "error": err_msg})
     if not code:
         return RedirectResponse(url="/login")
-        
+
     saved_state = request.session.get("oauth_state")
     if "oauth_state" in request.session:
         del request.session["oauth_state"]
-        
+
     if not state or not saved_state or not secrets.compare_digest(str(state), str(saved_state)):
         return templates.TemplateResponse("login.html", {
-            "request": request, 
+            "request": request,
             "error": "Platnost přihlašovací relace vypršela nebo nastala chyba stavu (CSRF token). Zkuste se přihlásit znovu."
         })
-    
+
     redirect_uri = get_effective_redirect_uri(request)
     client_id = os.getenv("DISCORD_CLIENT_ID", DISCORD_CLIENT_ID).strip()
     client_secret = os.getenv("DISCORD_CLIENT_SECRET", DISCORD_CLIENT_SECRET).strip()
@@ -129,7 +125,7 @@ async def auth_callback(request: Request, code: str = None, error: str = None, s
                 "code": code,
                 "redirect_uri": redirect_uri
             })
-            
+
             if token_resp.status_code != 200:
                 err_detail = "Ověření s Discordem selhalo."
                 try:
@@ -140,39 +136,39 @@ async def auth_callback(request: Request, code: str = None, error: str = None, s
                 except Exception:
                     err_detail += f" (HTTP {token_resp.status_code})"
                 return templates.TemplateResponse("login.html", {"request": request, "error": err_detail})
-            
+
             token_data = token_resp.json()
             access_token = token_data["access_token"]
-            
+
             headers = {"Authorization": f"Bearer {access_token}"}
             user_resp = await client.get(f"{DISCORD_API_BASE}/users/@me", headers=headers)
             user_data = user_resp.json()
-            
+
             guilds_resp = await client.get(f"{DISCORD_API_BASE}/users/@me/guilds", headers=headers)
             guilds_data = guilds_resp.json() if guilds_resp.status_code == 200 else []
-        
+
         user_id = int(user_data["id"])
         is_admin = user_id in ADMIN_USER_IDS
-        
+
         managed_guilds = []
         for g in guilds_data:
             perms = int(g.get("permissions", 0))
             is_admin_perm = bool(perms & 0x8)
             is_manage_guild = bool(perms & 0x20)
             is_owner = g.get("owner", False)
-            
+
             if is_admin_perm or is_manage_guild or is_owner:
                 managed_guilds.append({
-                    "id": g["id"], 
-                    "name": g["name"], 
+                    "id": g["id"],
+                    "name": g["name"],
                     "icon": g.get("icon"),
-                    "is_admin": is_admin_perm or is_owner, 
-                    "is_mod_candidate": is_manage_guild 
+                    "is_admin": is_admin_perm or is_owner,
+                    "is_mod_candidate": is_manage_guild
                 })
-        
+
         from ..utils import save_user_guilds
         await save_user_guilds(str(user_id), managed_guilds)
-        
+
         request.session["authenticated"] = True
         request.session["discord_user"] = {
             "id": str(user_id),
@@ -184,9 +180,9 @@ async def auth_callback(request: Request, code: str = None, error: str = None, s
         request.session["csrf_token"] = secrets.token_urlsafe(32)
         request.session["login_time"] = datetime.now().isoformat()
         request.session["guilds_count"] = len(managed_guilds)
-        
+
         return RedirectResponse(url="/select-server", status_code=303)
-        
+
     except httpx.RequestError as exc:
         return templates.TemplateResponse("login.html", {"request": request, "error": "Chyba sítě při komunikaci s Discordem."})
     except Exception as exc:
@@ -200,12 +196,3 @@ async def logout(request: Request):
     request.session.clear()
     return RedirectResponse(url="/", status_code=302)
 
-@router.get("/debug/session")
-async def debug_session(request: Request):
-    """Debugovací zobrazení obsahu session."""
-    return {
-        "session_keys": list(request.session.keys()),
-        "auth": request.session.get("authenticated"),
-        "role": request.session.get("role"),
-        "user_id": request.session.get("discord_user", {}).get("id")
-    }

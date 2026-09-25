@@ -153,7 +153,7 @@ class TestMII:
         source = inspect.getsource(HealthCog.health.callback)
 
         assert "toxicity_index" not in source, "Variable toxicity_index still present in health command"
-        assert "toxicity" not in source.lower() or "Toxicita" not in source, \
+        assert "toxicity" not in source.lower() and "Toxicita" not in source, \
             "User-facing 'toxicity' label should not appear"
 
     def test_mii_not_called_toxicity_in_demo_data(self):

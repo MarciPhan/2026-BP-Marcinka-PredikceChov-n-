@@ -2,11 +2,7 @@
 {% from "components/layout_editor.html" import layout_controls, layout_drawer, layout_scripts %}
 
 {% block content %}
-<style>
-.health-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; margin-bottom: 32px; }
-@media(max-width:1000px){ .health-grid > div { grid-column: span 6 !important; } }
-@media(max-width:700px){ .health-grid > div { grid-column: 1 / -1 !important; } }
-</style>
+
 
 
 
@@ -36,52 +32,47 @@
 
 
 {% macro render_widget(id) %}
-  {% set span = widget_spans.get(id, 4) if id in ['h_conflict', 'h_help_open', 'h_help_overdue', 'h_depart_signal', 'h_workload_avg', 'h_events'] else widget_spans.get(id, 6) %}
-  {% if id in ['h_events_table', 'h_api', 'h_config'] %}
-     {% set span = widget_spans.get(id, 12) %}
-  {% endif %}
-  
   {% if id == 'h_conflict' %}
-    <div class="card stat-card widget-wrapper" data-id="h_conflict" style="grid-column: span {{ span }}"><div class="stat-label">Opakované dvojice člen–moderátor</div><div id="conflictCount" class="stat-value">–</div></div>
+    <div class="card stat-card" data-id="h_conflict"><div class="stat-label">Opakované dvojice člen–moderátor</div><div id="conflictCount" class="stat-value">–</div></div>
   {% elif id == 'h_help_open' %}
-    <div class="card stat-card widget-wrapper" data-id="h_help_open" style="grid-column: span {{ span }}"><div class="stat-label">Nevyřešené žádosti o pomoc</div><div id="helpOpenCount" class="stat-value">–</div></div>
+    <div class="card stat-card" data-id="h_help_open"><div class="stat-label">Nevyřešené žádosti o pomoc</div><div id="helpOpenCount" class="stat-value">–</div></div>
   {% elif id == 'h_help_overdue' %}
-    <div class="card stat-card widget-wrapper" data-id="h_help_overdue" style="grid-column: span {{ span }}"><div class="stat-label">Po termínu odpovědi</div><div id="helpOverdueCount" class="stat-value">–</div></div>
+    <div class="card stat-card" data-id="h_help_overdue"><div class="stat-label">Po termínu odpovědi</div><div id="helpOverdueCount" class="stat-value">–</div></div>
   {% elif id == 'h_depart_signal' %}
-    <div class="card stat-card widget-wrapper" data-id="h_depart_signal" style="grid-column: span {{ span }}"><div class="stat-label">Odchody s předchozím signálem</div><div id="departureSignalCount" class="stat-value">–</div></div>
+    <div class="card stat-card" data-id="h_depart_signal"><div class="stat-label">Odchody s předchozím signálem</div><div id="departureSignalCount" class="stat-value">–</div></div>
   {% elif id == 'h_workload_avg' %}
-    <div class="card stat-card widget-wrapper" data-id="h_workload_avg" style="grid-column: span {{ span }}"><div class="stat-label">Průměr zásahů na moderátora</div><div id="workloadAverage" class="stat-value">–</div></div>
+    <div class="card stat-card" data-id="h_workload_avg"><div class="stat-label">Průměr zásahů na moderátora</div><div id="workloadAverage" class="stat-value">–</div></div>
   {% elif id == 'h_events' %}
-    <div class="card stat-card widget-wrapper" data-id="h_events" style="grid-column: span {{ span }}"><div class="stat-label">Sledované komunitní akce</div><div id="eventCount" class="stat-value">–</div></div>
+    <div class="card stat-card" data-id="h_events"><div class="stat-label">Sledované komunitní akce</div><div id="eventCount" class="stat-value">–</div></div>
   {% elif id == 'h_conflicts_table' %}
-    <section class="card widget-wrapper" data-id="h_conflicts_table" style="grid-column: span {{ span }}">
+    <section class="card" data-id="h_conflicts_table">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;"><h3>Opakované konflikty</h3><span class="badge bg-secondary" style="font-size: 11px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.1);">časová souvislost</span></div>
-        <div style="color: var(--text-secondary); font-size: 13px;" style="margin-bottom:10px">Dvojice, u kterých se ve zvoleném období opakovaly moderační zásahy.</div>
-        <table ><thead><tr><th>Člen</th><th>Moderátor</th><th>Zásahy</th><th>Závažnost</th></tr></thead><tbody id="conflictsBody"><tr><td colspan="4" style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px;">Načítám…</td></tr></tbody></table>
+        <div style="color: var(--text-secondary); font-size: 13px; margin-bottom:10px">Dvojice, u kterých se ve zvoleném období opakovaly moderační zásahy.</div>
+        <table><thead><tr><th>Člen</th><th>Moderátor</th><th>Zásahy</th><th>Závažnost</th></tr></thead><tbody id="conflictsBody"><tr><td colspan="4" style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px;">Načítám…</td></tr></tbody></table>
     </section>
   {% elif id == 'h_help_table' %}
-    <section class="card widget-wrapper" data-id="h_help_table" style="grid-column: span {{ span }}">
+    <section class="card" data-id="h_help_table">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;"><h3>Žádosti o pomoc</h3><span class="badge bg-secondary" style="font-size: 11px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.1);">jen nastavené kanály</span></div>
-        <div style="color: var(--text-secondary); font-size: 13px;" style="margin-bottom:10px">Dotazy bez přímé odpovědi. Reakce je zobrazena jako potvrzení, ne jako vyřešení.</div>
-        <table ><thead><tr><th>Uživatel</th><th>Kanál</th><th>Stav</th><th>Čekání</th></tr></thead><tbody id="helpBody"><tr><td colspan="4" style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px;">Načítám…</td></tr></tbody></table>
+        <div style="color: var(--text-secondary); font-size: 13px; margin-bottom:10px">Dotazy bez přímé odpovědi. Reakce je zobrazena jako potvrzení, ne jako vyřešení.</div>
+        <table><thead><tr><th>Uživatel</th><th>Kanál</th><th>Stav</th><th>Čekání</th></tr></thead><tbody id="helpBody"><tr><td colspan="4" style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px;">Načítám…</td></tr></tbody></table>
     </section>
   {% elif id == 'h_depart_table' %}
-    <section class="card widget-wrapper" data-id="h_depart_table" style="grid-column: span {{ span }}">
+    <section class="card" data-id="h_depart_table">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;"><h3>Odchody po událostech</h3><span class="badge bg-secondary" style="font-size: 11px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.1);">bez tvrzení příčiny</span></div>
-        <table ><thead><tr><th>Uživatel</th><th>Odchod</th><th>Moderace 30 d.</th><th>Žádosti o pomoc</th></tr></thead><tbody id="departuresBody"><tr><td colspan="4" style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px;">Načítám…</td></tr></tbody></table>
+        <table><thead><tr><th>Uživatel</th><th>Odchod</th><th>Moderace 30 d.</th><th>Žádosti o pomoc</th></tr></thead><tbody id="departuresBody"><tr><td colspan="4" style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px;">Načítám…</td></tr></tbody></table>
     </section>
   {% elif id == 'h_workload_table' %}
-    <section class="card widget-wrapper" data-id="h_workload_table" style="grid-column: span {{ span }}">
+    <section class="card" data-id="h_workload_table">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;"><h3>Zátěž moderátorů</h3><span class="badge bg-secondary" style="font-size: 11px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.1);">popis, ne hodnocení</span></div>
-        <table ><thead><tr><th>Moderátor</th><th>Zásahy</th><th>Kontext</th></tr></thead><tbody id="workloadBody"><tr><td colspan="3" style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px;">Načítám…</td></tr></tbody></table>
+        <table><thead><tr><th>Moderátor</th><th>Zásahy</th><th>Kontext</th></tr></thead><tbody id="workloadBody"><tr><td colspan="3" style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px;">Načítám…</td></tr></tbody></table>
     </section>
   {% elif id == 'h_events_table' %}
-    <section class="card widget-wrapper" data-id="h_events_table" style="grid-column: span {{ span }}">
+    <section class="card" data-id="h_events_table">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;"><h3>Zájem o akce vs. skutečná účast</h3><span class="badge bg-secondary" style="font-size: 11px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.1);">Discord Scheduled Events</span></div>
-        <table ><thead><tr><th>Akce</th><th>Termín</th><th>Zájem</th><th>Účast</th><th>Konverze</th></tr></thead><tbody id="eventsBody"><tr><td colspan="5" style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px;">Načítám…</td></tr></tbody></table>
+        <table><thead><tr><th>Akce</th><th>Termín</th><th>Zájem</th><th>Účast</th><th>Konverze</th></tr></thead><tbody id="eventsBody"><tr><td colspan="5" style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 20px;">Načítám…</td></tr></tbody></table>
     </section>
   {% elif id == 'h_evidence' %}
-    <section class="card widget-wrapper" data-id="h_evidence" style="grid-column: span {{ span }}">
+    <section class="card" data-id="h_evidence">
         <h3 style="margin-bottom:12px">Podklady pro lidské rozhodnutí</h3>
         <p style="color: var(--text-secondary); font-size: 13px;">Zadejte ID člena. Systém zobrazí pouze pozorovatelná data a případné ruční stanovisko týmu.</p>
         <div style="display:flex;gap:8px;margin:12px 0"><input id="evidenceUserId" placeholder="Discord user ID" style="background: var(--bg-secondary); border: 1px solid var(--glass-border); color: var(--text-primary); padding: 8px 12px; border-radius: 8px;"><button class="btn" onclick="loadEvidence()">Načíst podklady</button></div>
@@ -95,7 +86,7 @@
         {% endif %}
     </section>
   {% elif id == 'h_config' and is_admin %}
-    <section class="card widget-wrapper" data-id="h_config" style="grid-column: span {{ span }}">
+    <section class="card" data-id="h_config">
         <h3 style="margin-bottom:12px">Konfigurace podle typu komunity</h3>
         <form method="post" action="/settings/community-health" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -112,7 +103,7 @@
         </form>
     </section>
   {% elif id == 'h_api' and is_admin %}
-    <section class="card widget-wrapper" data-id="h_api" style="grid-column: span {{ span }}">
+    <section class="card" data-id="h_api">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;"><h3>Integrační API</h3><a href="/api/docs" target="_blank">OpenAPI / Swagger</a></div>
         <p style="color: var(--text-secondary); font-size: 13px;">Vytvořte omezený klíč. Posílá se v hlavičce <code>X-API-Key</code>. Klíč se po vytvoření zobrazí pouze jednou.</p>
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 12px;">
@@ -132,17 +123,82 @@
 {% endif %}
 
 {% set current_order = widget_order if widget_order else all_widgets %}
+{% set saved_spans = widget_spans if widget_spans else request.session.get('dashboard_spans', {}) %}
 
-<div class="health-grid" id="health-grid">
+{% set default_spans = {
+    'h_conflict': 1,
+    'h_help_open': 1,
+    'h_help_overdue': 1,
+    'h_depart_signal': 1,
+    'h_workload_avg': 2,
+    'h_events': 2,
+    'h_conflicts_table': 2,
+    'h_help_table': 2,
+    'h_depart_table': 2,
+    'h_workload_table': 2,
+    'h_events_table': 4,
+    'h_evidence': 4,
+    'h_config': 4,
+    'h_api': 4
+} %}
+
+<div id="health-grid" class="grid">
   {% for w_id in current_order %}
-     {{ render_widget(w_id) }}
+     {% set raw_s = saved_spans.get(w_id, default_spans.get(w_id, 2)) %}
+     {% if raw_s > 4 or raw_s < 1 %}
+         {% set s_val = default_spans.get(w_id, 2) %}
+     {% else %}
+         {% set s_val = raw_s %}
+     {% endif %}
+     <div class="widget-wrapper span-{{ s_val }}" data-id="{{ w_id }}" data-span="{{ s_val }}"
+         style="position: relative; display: flex; flex-direction: column;">
+         <div class="resize-controls"
+             style="display: none; position: absolute; top: 8px; right: 8px; z-index: 100; gap: 4px; background: rgba(0,0,0,0.8); padding: 5px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(8px); box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+             <button class="resize-btn action-decrease" title="Zúžit"
+                 style="width: 28px; height: 28px; border: none; background: rgba(255,255,255,0.05); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: all 0.2s;">
+                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                     <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
+                 </svg>
+             </button>
+             <button class="resize-btn action-increase" title="Rozšířit"
+                 style="width: 28px; height: 28px; border: none; background: rgba(255,255,255,0.05); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: all 0.2s;">
+                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                     <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
+                 </svg>
+             </button>
+         </div>
+         {{ render_widget(w_id) }}
+     </div>
   {% endfor %}
 </div>
 
 <div id="hidden-bucket" style="display:none;">
   {% for w_id in all_widgets %}
     {% if w_id not in current_order %}
-      {{ render_widget(w_id) }}
+     {% set s_val = default_spans.get(w_id, 2) %}
+     <div class="widget-wrapper span-{{ s_val }}" data-id="{{ w_id }}" data-span="{{ s_val }}"
+         style="position: relative; display: flex; flex-direction: column;">
+         <div class="resize-controls"
+             style="display: none; position: absolute; top: 8px; right: 8px; z-index: 100; gap: 4px; background: rgba(0,0,0,0.8); padding: 5px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(8px); box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+             <button class="resize-btn action-decrease" title="Zúžit"
+                 style="width: 28px; height: 28px; border: none; background: rgba(255,255,255,0.05); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: all 0.2s;">
+                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                     <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
+                 </svg>
+             </button>
+             <button class="resize-btn action-increase" title="Rozšířit"
+                 style="width: 28px; height: 28px; border: none; background: rgba(255,255,255,0.05); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: all 0.2s;">
+                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                     <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
+                 </svg>
+             </button>
+         </div>
+         {{ render_widget(w_id) }}
+     </div>
     {% endif %}
   {% endfor %}
 </div>
@@ -151,6 +207,7 @@
 const fmtDate = ts => ts ? new Date(ts * 1000).toLocaleString('cs-CZ') : '—';
 const fmtDuration = seconds => {if(seconds===null||seconds===undefined)return '—'; if(seconds<60)return `${seconds} s`; if(seconds<3600)return `${Math.round(seconds/60)} min`; return `${(seconds/3600).toFixed(1)} h`;};
 const esc = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+function getCsrfToken(){return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token }}';}
 function emptyRow(cols,text='Zatím nejsou dostupná data.'){return `<tr><td colspan="${cols}" style="color: var(--text-secondary); font-size: 13px;">${esc(text)}</td></tr>`}
 
 async function loadHealth(){
@@ -173,10 +230,10 @@ async function loadHealth(){
 }
 let currentEvidenceUser=null;
 async function loadEvidence(){const uid=document.getElementById('evidenceUserId').value.trim();if(!uid)return;currentEvidenceUser=uid;const r=await fetch(`/api/community-health/role-evidence/${encodeURIComponent(uid)}`);const d=await r.json();const o=d.observable;document.getElementById('evidenceOutput').innerHTML=`<strong>${esc(d.user.name)}</strong><br>Zprávy: ${o.messages}, odpovědi: ${o.replies}, aktivní kanály: ${o.active_channels}, získané reakce: ${o.received_reactions}, moderační události: ${o.moderation_incidents}.<br><br><span style="color: var(--text-secondary); font-size: 13px;">${esc(d.notice)}</span>${d.human_review?`\n<div class="health-notice" style="margin-top:10px"><strong>Ruční stanovisko:</strong> ${esc(d.human_review.judgement)}<br>${esc(d.human_review.note||'')}</div>`:''}`;const f=document.getElementById('reviewForm');if(f)f.style.display='block';}
-async function saveReview(){if(!currentEvidenceUser)return;const r=await fetch('/api/community-health/role-review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:currentEvidenceUser,judgement:document.getElementById('reviewJudgement').value,note:document.getElementById('reviewNote').value})});if(!r.ok){const d=await r.json().catch(()=>({})); showModal('Uložení selhalo', d.message || 'Tato akce není v demo režimu povolena.');return;}await loadEvidence();}
-async function createApiKey(){const scopes=[...document.getElementById('apiKeyScopes').selectedOptions].map(o=>o.value);const r=await fetch('/api/community-health/api-keys',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({label:document.getElementById('apiKeyLabel').value,scopes})});const out=document.getElementById('apiKeyOutput');out.style.display='block';if(!r.ok){const d=await r.json().catch(()=>({})); showModal('Vytvoření selhalo', d.message || 'Akce zamítnuta.'); out.style.display='none'; return;}const d=await r.json();out.textContent=d.api_key;await loadApiKeys();}
+async function saveReview(){if(!currentEvidenceUser)return;const r=await fetch('/api/community-health/role-review',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':getCsrfToken()},body:JSON.stringify({user_id:currentEvidenceUser,judgement:document.getElementById('reviewJudgement').value,note:document.getElementById('reviewNote').value})});if(!r.ok){const d=await r.json().catch(()=>({})); showModal('Uložení selhalo', d.message || 'Tato akce není v demo režimu povolena.');return;}await loadEvidence();}
+async function createApiKey(){const scopes=[...document.getElementById('apiKeyScopes').selectedOptions].map(o=>o.value);const r=await fetch('/api/community-health/api-keys',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':getCsrfToken()},body:JSON.stringify({label:document.getElementById('apiKeyLabel').value,scopes})});const out=document.getElementById('apiKeyOutput');out.style.display='block';if(!r.ok){const d=await r.json().catch(()=>({})); showModal('Vytvoření selhalo', d.message || 'Akce zamítnuta.'); out.style.display='none'; return;}const d=await r.json();out.textContent=d.api_key;await loadApiKeys();}
 async function loadApiKeys(){const box=document.getElementById('apiKeysList');if(!box)return;const r=await fetch('/api/community-health/api-keys');if(!r.ok){box.textContent='Seznam klíčů nelze načíst.';return;}const rows=await r.json();box.innerHTML=rows.length?rows.map(x=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--glass-border)"><span><strong>${esc(x.label)}</strong> <code>${esc(x.id)}…</code><br>${esc(x.scopes.join(', '))} · ${x.enabled?'aktivní':'revokovaný'}</span>${x.enabled?`<button class="btn" onclick="revokeApiKey('${esc(x.id)}')">Revokovat</button>`:''}</div>`).join(''):'Zatím nebyl vytvořen žádný API klíč.';}
-async function revokeApiKey(id){showModal('Opravdu revokovat?', 'Chcete opravdu zneplatnit tento klíč?', true, async () => { const r = await fetch(`/api/community-health/api-keys/${encodeURIComponent(id)}`,{method:'DELETE'}); if(!r.ok){const d=await r.json().catch(()=>({})); showModal('Chyba', d.message || 'Nelze revokovat.'); return; } await loadApiKeys(); });}
+async function revokeApiKey(id){showModal('Opravdu revokovat?', 'Chcete opravdu zneplatnit tento klíč?', true, async () => { const r = await fetch(`/api/community-health/api-keys/${encodeURIComponent(id)}`,{method:'DELETE',headers:{'X-CSRF-Token':getCsrfToken()}}); if(!r.ok){const d=await r.json().catch(()=>({})); showModal('Chyba', d.message || 'Nelze revokovat.'); return; } await loadApiKeys(); });}
 loadHealth();loadApiKeys();
 </script>
 {{ layout_scripts() }}

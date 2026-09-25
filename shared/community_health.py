@@ -90,6 +90,97 @@ def conflict_severity(action_types: Iterable[str]) -> str:
     return "low"
 
 
+class keys:
+    """Redis key builders for the community-health feature.
+
+    Kept in one place because the event writer (bot/commands/community_health.py),
+    the read-side service (web/backend/services/community_health_service.py) and
+    GDPR export/delete (bot/commands/gdpr.py) all need to agree on the exact same
+    key schema — otherwise GDPR export/delete can silently miss data after a
+    schema change in only one of them.
+    """
+
+    @staticmethod
+    def user_messages(gid, uid) -> str:
+        return f"health:user_messages:{gid}:{uid}"
+
+    @staticmethod
+    def message(gid, mid) -> str:
+        return f"health:message:{gid}:{mid}"
+
+    @staticmethod
+    def messages_index(gid) -> str:
+        return f"health:messages:{gid}"
+
+    @staticmethod
+    def help_user(gid, uid) -> str:
+        return f"health:help:user:{gid}:{uid}"
+
+    @staticmethod
+    def help_item(gid, hid) -> str:
+        return f"health:help:{gid}:{hid}"
+
+    @staticmethod
+    def help_all(gid) -> str:
+        return f"health:help:all:{gid}"
+
+    @staticmethod
+    def help_open(gid) -> str:
+        return f"health:help:open:{gid}"
+
+    @staticmethod
+    def help_answered(gid) -> str:
+        return f"health:help:answered:{gid}"
+
+    @staticmethod
+    def mod_events(gid) -> str:
+        return f"health:mod_events:{gid}"
+
+    @staticmethod
+    def mod_events_moderator(gid, uid) -> str:
+        return f"health:mod_events:moderator:{gid}:{uid}"
+
+    @staticmethod
+    def mod_events_target(gid, uid) -> str:
+        return f"health:mod_events:target:{gid}:{uid}"
+
+    @staticmethod
+    def mod_event(gid, eid) -> str:
+        return f"health:mod_event:{gid}:{eid}"
+
+    @staticmethod
+    def mod_pair(gid, target_id, moderator_id) -> str:
+        return f"health:mod_pair:{gid}:{target_id}:{moderator_id}"
+
+    @staticmethod
+    def role_review(gid, uid) -> str:
+        return f"health:role_review:{gid}:{uid}"
+
+    @staticmethod
+    def departures(gid) -> str:
+        return f"health:departures:{gid}"
+
+    @staticmethod
+    def departure(gid, did) -> str:
+        return f"health:departure:{gid}:{did}"
+
+    @staticmethod
+    def events_index(gid) -> str:
+        return f"health:events:{gid}"
+
+    @staticmethod
+    def event(gid, eid) -> str:
+        return f"health:event:{gid}:{eid}"
+
+    @staticmethod
+    def event_interested(gid, eid) -> str:
+        return f"health:event:interested:{gid}:{eid}"
+
+    @staticmethod
+    def event_attended(gid, eid) -> str:
+        return f"health:event:attended:{gid}:{eid}"
+
+
 def factual_role_evidence(
     *,
     messages: int,

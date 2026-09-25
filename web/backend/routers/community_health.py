@@ -1,25 +1,24 @@
 from __future__ import annotations
 
-import secrets
 from datetime import datetime, timedelta
 from typing import List, Literal, Optional
 
 from fastapi import APIRouter, Depends, Form, Header, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
+import secrets
 import time
 
 from shared.community_health import api_key_digest, generate_api_key, normalise_config
 from shared.redis_client import get_redis_client
 from ..services.community_health_service import CommunityHealthService
-from ..utils import get_sidebar_context
+from ..utils import get_sidebar_context, has_dashboard_permission, require_view_stats
 from ..demo_data import get_demo_health_overview, get_demo_health_evidence
 from ..security import require_csrf
 
 router = APIRouter(tags=["community-health"])
 templates = Jinja2Templates(directory="web/frontend/templates")
-
 
 def require_auth(request: Request):
     if not request.session.get("authenticated"):
@@ -28,13 +27,11 @@ def require_auth(request: Request):
         raise HTTPException(403, "Guest access is not allowed")
     return True
 
-
 def selected_guild(request: Request) -> str:
     gid = request.session.get("guild_id")
     if not gid:
         raise HTTPException(400, "No guild selected")
     return str(gid)
-
 
 def require_admin_session(request: Request):
     require_auth(request)
@@ -42,25 +39,31 @@ def require_admin_session(request: Request):
         raise HTTPException(403, "Administrator access required")
     return True
 
-
 class RoleReviewInput(BaseModel):
     user_id: str = Field(min_length=1, max_length=30)
     judgement: Literal["observe", "discuss", "not_now", "recommended_by_team"]
     note: str = Field(default="", max_length=2000)
 
-
 class ApiKeyInput(BaseModel):
     label: str = Field(min_length=1, max_length=80)
     scopes: List[Literal["overview", "channels", "moderation", "help", "departures", "events", "role_evidence"]] = Field(default_factory=lambda: ["overview"])
 
-
 async def _service() -> CommunityHealthService:
     return CommunityHealthService(await get_redis_client())
-
 
 @router.get("/community-health", response_class=HTMLResponse)
 async def community_health_page(request: Request, _=Depends(require_auth)):
     gid = selected_guild(request)
+    if not await has_dashboard_permission(request, "view_stats"):
+        sidebar = await get_sidebar_context(request)
+        ctx = {
+            "request": request,
+            "message": "Nemáte oprávnění zobrazovat community health této komunity."
+        }
+        ctx.update(sidebar)
+        return templates.TemplateResponse("activity_restricted.html", ctx)
+    if "csrf_token" not in request.session:
+        request.session["csrf_token"] = secrets.token_urlsafe(32)
     service = await _service()
     sidebar = await get_sidebar_context(request)
     context = {
@@ -69,54 +72,46 @@ async def community_health_page(request: Request, _=Depends(require_auth)):
         "guild_id": gid,
         "config": await service.config(gid),
         "is_admin": request.session.get("role") == "admin",
-        "csrf_token": request.session.get("csrf_token", ""),
+        "csrf_token": request.session["csrf_token"],
         "widget_order": request.session.get("health_order", []),
         "widget_spans": request.session.get("dashboard_spans", {})
     }
     context.update(sidebar)
     return templates.TemplateResponse("community_health.html", context)
 
-
 @router.get("/api/community-health/overview")
-async def health_overview(request: Request, days: int = 30, _=Depends(require_auth)):
+async def health_overview(request: Request, days: int = 30, _=Depends(require_auth), __=Depends(require_view_stats)):
     guild_id = selected_guild(request)
     if guild_id == "demo-guild":
         return get_demo_health_overview()
     return await (await _service()).overview(guild_id, max(1, min(days, 365)))
 
-
 @router.get("/api/community-health/conflicts")
-async def health_conflicts(request: Request, days: int = 30, _=Depends(require_auth)):
+async def health_conflicts(request: Request, days: int = 30, _=Depends(require_auth), __=Depends(require_view_stats)):
     return await (await _service()).conflict_summary(selected_guild(request), days=max(1, min(days, 365)))
 
-
 @router.get("/api/community-health/help-requests")
-async def health_help(request: Request, days: int = 30, _=Depends(require_auth)):
+async def health_help(request: Request, days: int = 30, _=Depends(require_auth), __=Depends(require_view_stats)):
     return await (await _service()).help_requests(selected_guild(request), days=max(1, min(days, 365)))
 
-
 @router.get("/api/community-health/departures")
-async def health_departures(request: Request, days: int = 30, _=Depends(require_auth)):
+async def health_departures(request: Request, days: int = 30, _=Depends(require_auth), __=Depends(require_view_stats)):
     return await (await _service()).departures(selected_guild(request), days=max(1, min(days, 365)))
 
-
 @router.get("/api/community-health/moderator-workload")
-async def health_workload(request: Request, days: int = 30, _=Depends(require_auth)):
+async def health_workload(request: Request, days: int = 30, _=Depends(require_auth), __=Depends(require_view_stats)):
     return await (await _service()).moderator_workload(selected_guild(request), days=max(1, min(days, 365)))
 
-
 @router.get("/api/community-health/events")
-async def health_events(request: Request, _=Depends(require_auth)):
+async def health_events(request: Request, _=Depends(require_auth), __=Depends(require_view_stats)):
     return await (await _service()).event_conversion(selected_guild(request))
 
-
 @router.get("/api/community-health/role-evidence/{user_id}")
-async def health_role_evidence(request: Request, user_id: str, days: int = 90, _=Depends(require_auth)):
+async def health_role_evidence(request: Request, user_id: str, days: int = 90, _=Depends(require_auth), __=Depends(require_view_stats)):
     guild_id = selected_guild(request)
     if guild_id == "demo-guild":
         return get_demo_health_evidence(user_id)
     return await (await _service()).role_evidence(guild_id, user_id, max(1, min(days, 365)))
-
 
 @router.post("/api/community-health/role-review")
 async def save_role_review(request: Request, payload: RoleReviewInput, _=Depends(require_admin_session)):
@@ -131,7 +126,6 @@ async def save_role_review(request: Request, payload: RoleReviewInput, _=Depends
         "reviewed_at": datetime.now().isoformat(),
     })
     return {"status": "ok", "evidence": await CommunityHealthService(r).role_evidence(gid, payload.user_id)}
-
 
 @router.post("/settings/community-health")
 async def save_health_settings(
@@ -168,7 +162,6 @@ async def save_health_settings(
         await r.sadd(key, *channel_ids)
     return RedirectResponse("/community-health", status_code=303)
 
-
 @router.post("/api/community-health/api-keys")
 async def create_api_key(request: Request, payload: ApiKeyInput, _=Depends(require_admin_session)):
     await require_csrf(request)
@@ -187,7 +180,6 @@ async def create_api_key(request: Request, payload: ApiKeyInput, _=Depends(requi
     await r.sadd(f"api:keys:guild:{gid}", digest)
     return {"api_key": raw_key, "label": payload.label, "scopes": payload.scopes, "notice": "Klíč se zobrazí pouze nyní."}
 
-
 @router.get("/api/community-health/api-keys")
 async def list_api_keys(request: Request, _=Depends(require_admin_session)):
     gid = selected_guild(request)
@@ -198,7 +190,6 @@ async def list_api_keys(request: Request, _=Depends(require_admin_session)):
         if item:
             rows.append({"id": digest[:12], "label": item.get("label"), "scopes": item.get("scopes", "").split(","), "created_at": item.get("created_at"), "enabled": item.get("enabled") == "1"})
     return rows
-
 
 @router.delete("/api/community-health/api-keys/{key_id}")
 async def revoke_api_key(request: Request, key_id: str, _=Depends(require_admin_session)):
@@ -211,7 +202,6 @@ async def revoke_api_key(request: Request, key_id: str, _=Depends(require_admin_
     digest = matches[0]
     await r.hset(f"api:key:{digest}", mapping={"enabled": "0", "revoked_at": datetime.now().isoformat()})
     return {"status": "revoked", "id": digest[:12]}
-
 
 async def api_key_context(x_api_key: str = Header(..., alias="X-API-Key")) -> dict:
     r = await get_redis_client()
@@ -230,41 +220,34 @@ async def api_key_context(x_api_key: str = Header(..., alias="X-API-Key")) -> di
     item["scopes_set"] = set(filter(None, item.get("scopes", "").split(",")))
     return item
 
-
 def require_scope(ctx: dict, scope: str):
     if scope not in ctx["scopes_set"] and "*" not in ctx["scopes_set"]:
         raise HTTPException(403, f"API key lacks '{scope}' scope")
-
 
 @router.get("/api/v1/health/overview", tags=["public-api-v1"])
 async def api_v1_overview(days: int = 30, ctx: dict = Depends(api_key_context)):
     require_scope(ctx, "overview")
     return await (await _service()).overview(ctx["guild_id"], max(1, min(days, 365)))
 
-
 @router.get("/api/v1/health/moderation/conflicts", tags=["public-api-v1"])
 async def api_v1_conflicts(days: int = 30, ctx: dict = Depends(api_key_context)):
     require_scope(ctx, "moderation")
     return await (await _service()).conflict_summary(ctx["guild_id"], days=max(1, min(days, 365)))
-
 
 @router.get("/api/v1/health/help-requests", tags=["public-api-v1"])
 async def api_v1_help(days: int = 30, ctx: dict = Depends(api_key_context)):
     require_scope(ctx, "help")
     return await (await _service()).help_requests(ctx["guild_id"], days=max(1, min(days, 365)))
 
-
 @router.get("/api/v1/health/departures", tags=["public-api-v1"])
 async def api_v1_departures(days: int = 30, ctx: dict = Depends(api_key_context)):
     require_scope(ctx, "departures")
     return await (await _service()).departures(ctx["guild_id"], days=max(1, min(days, 365)))
 
-
 @router.get("/api/v1/health/events", tags=["public-api-v1"])
 async def api_v1_events(ctx: dict = Depends(api_key_context)):
     require_scope(ctx, "events")
     return await (await _service()).event_conversion(ctx["guild_id"])
-
 
 @router.get("/api/v1/channels", tags=["public-api-v1"])
 async def api_v1_channels(days: int = 30, ctx: dict = Depends(api_key_context)):
@@ -278,7 +261,6 @@ async def api_v1_channels(days: int = 30, ctx: dict = Depends(api_key_context)):
     for row in rows:
         row["name"] = await r.hget(f"channel:info:{row.get('channel_id')}", "name") or f"Channel {row.get('channel_id')}"
     return {"items": rows}
-
 
 @router.get("/api/v1/health/role-evidence/{user_id}", tags=["public-api-v1"])
 async def api_v1_role_evidence(user_id: str, days: int = 90, ctx: dict = Depends(api_key_context)):
