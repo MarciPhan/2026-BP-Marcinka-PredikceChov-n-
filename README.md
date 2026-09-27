@@ -4,7 +4,7 @@
 
 **Web application for analytics support of Discord and Discourse community administrators**
 
-[![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://python.org)
+[![Python Version](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-00a393.svg)](https://fastapi.tiangolo.com)
 [![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=flat&logo=redis&logoColor=white)](https://redis.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -46,7 +46,7 @@ Built with Python, FastAPI, and Redis, it features a modular Service-Oriented Ar
 ### Installation
 
 #### Prerequisites
-- Python 3.9 or newer
+- Python 3.11 or newer
 - Redis server (or Valkey) running on the host or inside Docker
 
 #### Local Setup
@@ -60,9 +60,15 @@ cd 2026-BP-Marcinka-PredikceChov-n-
 cp .env.example .env
 nano .env  # Supply your BOT_TOKEN and database details
 
-# 3. Start the application (Linux/macOS)
-./start.sh
+# 3. Start the application
+./start.sh          # Linux/macOS
+start.bat            # Windows (double-click or run from cmd/PowerShell)
+python start.py      # Cross-platform: creates the venv, installs dependencies and starts every service
 ```
+
+All three scripts are equivalent — pick whichever fits your OS. Each of them checks for a
+running Redis instance, frees any stale ports left over from a previous run, and creates
+`.env` from `.env.example` if it is missing.
 
 The web dashboard and backend API will be available at `http://localhost:8093`.
 
@@ -101,6 +107,46 @@ pytest tests/
 ### Contributing
 Contributions are highly encouraged. When submitting a Pull Request, ensure your code complies with the project style guidelines (`flake8`, `black`). 
 
+## Community Health Module
+
+The `/community-health` page extends the base volume analytics with context-aware
+features derived from the community-administrator survey conducted for this project:
+
+- repeated moderation events between the same member and moderator;
+- unresolved help requests in explicitly configured support channels;
+- the time context preceding a member's departure, without asserting causation;
+- the distribution of moderation workload, without an automatic quality judgement of a moderator;
+- comparison of interest in a Discord Scheduled Event against actual attendance in the linked voice channel;
+- measurable evidence for human decisions about roles, complemented by a manual team note.
+
+Message content is never stored. Only identifiers, timestamps, channel, reply linkage,
+reaction counts and other necessary metadata (with expiration) are kept.
+
+### Setup
+
+1. Open `/community-health` as an administrator.
+2. Choose the community type and enable only the relevant modules.
+3. Enter the support-channel IDs for help-request analysis.
+4. Historical data can be backfilled with the `/health backfill` command (up to 180 days).
+
+### Internal API
+
+Documentation for the currently deployed FastAPI endpoints is available at `/docs`.
+The backend API is primarily meant for the web dashboard (using session/CSRF auth).
+
+Examples of deployed endpoints (see `docs/api.md`):
+- `GET /api/analytics-tools`
+- `GET /api/predictions-data`
+- `POST /api/discourse/add`
+
+### Tests
+
+```bash
+pytest -q
+```
+
+The current suite also covers contextual analytics and the human-decision-in-the-loop principle.
+
 ---
 
 ## Čeština
@@ -132,7 +178,7 @@ Platforma je postavena na Pythonu, FastAPI a Redisu. Vyznačuje se modulární s
 ### Instalace
 
 #### Požadavky
-- Python 3.9 nebo novější
+- Python 3.11 nebo novější
 - Běžící Redis server (nebo Valkey)
 
 #### Lokální spuštění
@@ -146,9 +192,15 @@ cd 2026-BP-Marcinka-PredikceChov-n-
 cp .env.example .env
 nano .env  # Vyplňte svůj BOT_TOKEN a konfiguraci databáze
 
-# 3. Spuštění (Linux/macOS)
-./start.sh
+# 3. Spuštění
+./start.sh           # Linux/macOS
+start.bat             # Windows (dvojklik, nebo spuštění z cmd/PowerShell)
+python start.py       # Cross-platform: sám vytvoří venv, nainstaluje závislosti a spustí všechny služby
 ```
+
+Všechny tři skripty dělají totéž — použijte ten, který odpovídá vašemu OS. Každý z nich
+zkontroluje běžící Redis, uvolní případné obsazené porty ze staršího běhu a pokud chybí
+`.env`, vytvoří ho z `.env.example`.
 
 Webové rozhraní a API backend budou dostupné na adrese `http://localhost:8093`.
 

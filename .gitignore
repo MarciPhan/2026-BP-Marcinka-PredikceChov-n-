@@ -39,6 +39,7 @@ walkthrough.md
 # Thesis
 *.typ
 *.pdf
+*.bib
 
 # Node
 node_modules/

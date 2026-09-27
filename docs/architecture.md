@@ -29,7 +29,7 @@ flowchart TB
     subgraph WebApp["Webová aplikace"]
         direction LR
         API["FastAPI\n· REST API\n· OpenAPI /api/docs\n· Autentizace\n· CSRF ochrana"]
-        DASH["Dashboard\n· Přehledové karty\n· Časové řady\n· Community Health\n· Experimenty"]
+        DASH["Dashboard\n· Přehledové karty\n· Časové řady\n· Community Health\n· Predikce"]
     end
 
     subgraph Users["Uživatelé"]
