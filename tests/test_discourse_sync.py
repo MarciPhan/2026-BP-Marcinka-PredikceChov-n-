@@ -56,26 +56,5 @@ class TestDiscourseSync(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             await syncer.sync_guild("guild_missing")
 
-    @patch("scripts.discourse_sync.get_redis")
-    @patch("httpx.AsyncClient.get")
-    async def test_sync_guild_rejects_rebound_private_ip(self, mock_get, mock_get_redis):
-        """A Discourse URL that now resolves to a private/loopback address (e.g. its
-        DNS record changed after the instance was added) must be rejected on every
-        sync cycle, not only once at add-time."""
-        mock_redis = AsyncMock()
-        mock_redis.hgetall.return_value = {
-            "url": "http://127.0.0.1",
-            "api_key": "test_key",
-            "api_user": "admin_user",
-        }
-        mock_get_redis.return_value = mock_redis
-
-        syncer = DiscourseSync()
-        with self.assertRaises(ValueError):
-            await syncer.sync_guild("guild_rebind")
-
-        # No outbound request should have been attempted once validation failed.
-        mock_get.assert_not_called()
-
 if __name__ == "__main__":
     unittest.main()

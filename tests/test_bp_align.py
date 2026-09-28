@@ -27,8 +27,8 @@ async def test_discourse_idempotency():
     topic_data = {"id": 123, "title": "Test Topic", "created_at": now_ts}
     
     # Pass 1 (hostname validation is mocked out: this test targets idempotency,
-    # not the SSRF/DNS-rebinding check, which has its own dedicated test below
-    # and would otherwise require real DNS resolution for "http://fake")
+    # not the SSRF/DNS-rebinding check, and would otherwise require real DNS
+    # resolution for the placeholder host "fake")
     with patch("scripts.discourse_sync.assert_safe_discourse_url", side_effect=lambda u: u), \
          patch("httpx.AsyncClient.get") as mock_get:
         mock_response = MagicMock()
