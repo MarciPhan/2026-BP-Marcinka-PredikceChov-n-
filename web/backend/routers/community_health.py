@@ -11,6 +11,7 @@ import secrets
 import time
 
 from shared.community_health import api_key_digest, generate_api_key, normalise_config
+from shared.config import settings
 from shared.redis_client import get_redis_client
 from ..services.community_health_service import CommunityHealthService
 from ..utils import get_sidebar_context, has_dashboard_permission, require_view_stats
@@ -33,10 +34,10 @@ def selected_guild(request: Request) -> str:
         raise HTTPException(400, "No guild selected")
     return str(gid)
 
-def require_admin_session(request: Request):
+async def require_admin_session(request: Request):
     require_auth(request)
-    if request.session.get("role") != "admin":
-        raise HTTPException(403, "Administrator access required")
+    if not await has_dashboard_permission(request, "manage_settings"):
+        raise HTTPException(403, "Community administrator access required")
     return True
 
 class RoleReviewInput(BaseModel):
@@ -66,12 +67,13 @@ async def community_health_page(request: Request, _=Depends(require_auth)):
         request.session["csrf_token"] = secrets.token_urlsafe(32)
     service = await _service()
     sidebar = await get_sidebar_context(request)
+    can_manage = await has_dashboard_permission(request, "manage_settings")
     context = {
         "request": request,
         "user": request.session.get("discord_user"),
         "guild_id": gid,
         "config": await service.config(gid),
-        "is_admin": request.session.get("role") == "admin",
+        "is_admin": can_manage,
         "csrf_token": request.session["csrf_token"],
         "widget_order": request.session.get("health_order", []),
         "widget_spans": request.session.get("dashboard_spans", {})
@@ -119,12 +121,16 @@ async def save_role_review(request: Request, payload: RoleReviewInput, _=Depends
     gid = selected_guild(request)
     reviewer = request.session.get("discord_user", {}).get("id", "")
     r = await get_redis_client()
-    await r.hset(f"health:role_review:{gid}:{payload.user_id}", mapping={
-        "judgement": payload.judgement,
-        "note": payload.note,
-        "reviewed_by": str(reviewer),
-        "reviewed_at": datetime.now().isoformat(),
-    })
+    review_key = f"health:role_review:{gid}:{payload.user_id}"
+    async with r.pipeline() as pipe:
+        pipe.hset(review_key, mapping={
+            "judgement": payload.judgement,
+            "note": payload.note,
+            "reviewed_by": str(reviewer),
+            "reviewed_at": datetime.now().isoformat(),
+        })
+        pipe.expire(review_key, settings.event_retention_days * 86400)
+        await pipe.execute()
     return {"status": "ok", "evidence": await CommunityHealthService(r).role_evidence(gid, payload.user_id)}
 
 @router.post("/settings/community-health")

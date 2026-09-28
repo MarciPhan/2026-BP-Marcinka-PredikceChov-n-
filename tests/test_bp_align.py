@@ -26,24 +26,28 @@ async def test_discourse_idempotency():
     now_ts = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z")
     topic_data = {"id": 123, "title": "Test Topic", "created_at": now_ts}
     
-    # Pass 1
-    with patch("httpx.AsyncClient.get") as mock_get:
+    # Pass 1 (hostname validation is mocked out: this test targets idempotency,
+    # not the SSRF/DNS-rebinding check, which has its own dedicated test below
+    # and would otherwise require real DNS resolution for "http://fake")
+    with patch("scripts.discourse_sync.assert_safe_discourse_url", side_effect=lambda u: u), \
+         patch("httpx.AsyncClient.get") as mock_get:
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"topic_list": {"topics": [topic_data]}}
         mock_get.return_value = mock_response
-        
+
         await syncer.sync_guild(guild_id)
-        
+
     count1 = await fake_r.zcard(f"events:msg:{guild_id}:discourse")
-    
+
     # Pass 2
-    with patch("httpx.AsyncClient.get") as mock_get:
+    with patch("scripts.discourse_sync.assert_safe_discourse_url", side_effect=lambda u: u), \
+         patch("httpx.AsyncClient.get") as mock_get:
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"topic_list": {"topics": [topic_data]}}
         mock_get.return_value = mock_response
-        
+
         await syncer.sync_guild(guild_id)
         
     count2 = await fake_r.zcard(f"events:msg:{guild_id}:discourse")

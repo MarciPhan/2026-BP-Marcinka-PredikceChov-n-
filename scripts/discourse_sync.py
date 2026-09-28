@@ -12,6 +12,7 @@ if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
 from shared.redis_client import get_redis
+from shared.net_security import assert_safe_discourse_url, UnsafeDiscourseURLError
 
 class DiscourseSync:
     """
@@ -56,7 +57,12 @@ class DiscourseSync:
         elif msg_len <= 200: bucket = 150
         else: bucket = 250
         
+        from shared.config import settings as _settings
         pipe.pfadd(f"hll:dau:{guild_id}:{d_str}", str(uid))
+        # nx=True: only set the TTL the first time this day's key is created,
+        # so a later write (from either connector) never resets an
+        # already-running expiry.
+        pipe.expire(f"hll:dau:{guild_id}:{d_str}", _settings.event_retention_days * 86400, nx=True)
         pipe.hincrby(f"stats:hourly:{guild_id}:{d_str}", hour, 1)
         pipe.hincrby(f"stats:heatmap:{guild_id}", f"{weekday}_{hour}", 1)
         pipe.zincrby(f"stats:msglen:{guild_id}", 1, bucket)
@@ -89,13 +95,22 @@ class DiscourseSync:
             
             if not url or not api_key or not api_user:
                 raise ValueError("Neúplná konfigurace API klíčů.")
-                
+
+            # Re-validate on every sync cycle, not only when the instance was added:
+            # a domain's DNS record can change afterwards to point at a private/
+            # internal address (DNS rebinding), which a one-time add-time check
+            # would not catch.
+            try:
+                url = assert_safe_discourse_url(url)
+            except UnsafeDiscourseURLError as e:
+                raise ValueError(f"Discourse URL selhala bezpečnostní kontrolu: {e}")
+
             headers = {
                 "Api-Key": api_key,
                 "Api-Username": api_user
             }
-            
-            async with httpx.AsyncClient() as client:
+
+            async with httpx.AsyncClient(follow_redirects=False) as client:
                 try:
                     about_resp = await client.get(f"{url}/about.json", headers=headers)
                     if about_resp.status_code == 200:
@@ -168,10 +183,19 @@ class DiscourseSync:
             url = conf.get("url")
             api_key = conf.get("api_key")
             api_user = conf.get("api_user")
-            
+
+            try:
+                url = assert_safe_discourse_url(url)
+            except UnsafeDiscourseURLError as e:
+                await r.hset(f"backfill:status:{guild_id}", mapping={
+                    "status": "error",
+                    "message": f"Discourse URL selhala bezpečnostní kontrolu: {e}",
+                })
+                return
+
             headers = {"Api-Key": api_key, "Api-Username": api_user}
-            
-            async with httpx.AsyncClient(timeout=30.0) as client:
+
+            async with httpx.AsyncClient(timeout=30.0, follow_redirects=False) as client:
                 try:
                     about_resp = await client.get(f"{url}/about.json", headers=headers)
                     if about_resp.status_code == 200:

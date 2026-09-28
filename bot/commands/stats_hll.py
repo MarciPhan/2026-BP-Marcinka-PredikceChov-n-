@@ -15,9 +15,14 @@ import redis.asyncio as redis
 
 
 import os
+from shared.config import settings
+
 CONFIG = {
     "REDIS_URL": os.getenv("REDIS_URL", "redis://localhost:6379/0"),
-    "RETENTION_DAYS": 40,
+    # Was previously a separate hardcoded 40-day value, independent of (and
+    # inconsistent with) EVENT_RETENTION_DAYS used everywhere else. HyperLogLog
+    # DAU keys now expire on the same configurable retention window.
+    "RETENTION_DAYS": settings.event_retention_days,
     "USER_COOLDOWN_SEC": 60,
     "VOICE_MIN_MINUTES": 5,
     "QUEUE_MAXSIZE": 50000,
@@ -106,12 +111,19 @@ class ActivityHLLOptCog(commands.Cog):
 
         
         self.stats = {"enqueued": 0, "written": 0, "drop_cooldown": 0, "drop_queue": 0}
-        self.last_flush = asyncio.get_event_loop().time()
+        self.last_flush = 0.0
         self._incidents: Dict[int, deque] = defaultdict(lambda: deque(maxlen=5))
         self._errors_recent: Dict[int, deque] = defaultdict(lambda: deque(maxlen=3))
+        self.worker_task: Optional[asyncio.Task] = None
 
-        
-        self.worker_task = self.bot.loop.create_task(self._worker())
+    async def cog_load(self):
+        # Background tasks/loop-bound state must not be created in __init__:
+        # discord.py only guarantees a running event loop (and a usable
+        # `bot.loop`) once the cog has actually been added, in this async
+        # hook -- not synchronously at construction time.
+        loop = asyncio.get_running_loop()
+        self.last_flush = loop.time()
+        self.worker_task = asyncio.create_task(self._worker())
         self.log_task.start()
         self.housekeep_local.start()
         self.roll_day_task.start()

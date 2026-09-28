@@ -572,6 +572,7 @@ async def add_dashboard_user(guild_id: int, user_id: str, user_data: Dict[str, s
     try:
 
         await r.sadd(f"dashboard:team:{guild_id}", user_id)
+        await r.sadd(f"dashboard:guilds:user:{user_id}", str(guild_id))
 
         perm_key = f"dashboard:perms:{guild_id}:{user_id}"
         await r.delete(perm_key)
@@ -593,6 +594,7 @@ async def remove_dashboard_user(guild_id: int, user_id: str):
     r = await get_redis()
     try:
         await r.srem(f"dashboard:team:{guild_id}", user_id)
+        await r.srem(f"dashboard:guilds:user:{user_id}", str(guild_id))
         await r.delete(f"dashboard:perms:{guild_id}:{user_id}")
         return True
     except Exception as e:

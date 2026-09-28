@@ -60,22 +60,36 @@ class CommunityHealthTracker(commands.Cog):
             "reaction_count": str(sum(reaction.count for reaction in message.reactions)),
         }
         key = health_keys.message(gid, mid)
+        cutoff = time.time() - (settings.event_retention_days * 86400)
         async with self.r.pipeline() as pipe:
             pipe.hset(key, mapping=mapping)
             pipe.expire(key, settings.event_retention_days * 86400)
             pipe.hset(f"channel:info:{message.channel.id}", mapping={"name": getattr(message.channel, "name", str(message.channel.id)), "guild_id": str(gid)})
             pipe.zadd(health_keys.messages_index(gid), {str(mid): message.created_at.timestamp()})
+            pipe.zremrangebyscore(health_keys.messages_index(gid), "-inf", cutoff)
             pipe.zadd(health_keys.user_messages(gid, message.author.id), {str(mid): message.created_at.timestamp()})
+            pipe.zremrangebyscore(health_keys.user_messages(gid, message.author.id), "-inf", cutoff)
             await pipe.execute()
 
-    async def _mark_help_answered(self, guild_id: int, parent_id: int, responder_id: int, response_id: int) -> None:
+    async def _mark_help_answered(
+        self,
+        guild_id: int,
+        parent_id: int,
+        responder_id: int,
+        response_id: int,
+        answered_at: float | None = None,
+    ) -> None:
         key = health_keys.help_item(guild_id, parent_id)
         if not await self.r.exists(key):
             return
-        now = time.time()
+        author_id = await self.r.hget(key, "author_id")
+        if author_id and str(author_id) == str(responder_id):
+            return
+        now = answered_at if answered_at is not None else time.time()
         created = float(await self.r.hget(key, "created_at") or now)
         if await self.r.hget(key, "status") == "answered":
             return
+        cutoff = time.time() - (settings.event_retention_days * 86400)
         async with self.r.pipeline() as pipe:
             pipe.hset(key, mapping={
                 "status": "answered",
@@ -86,6 +100,7 @@ class CommunityHealthTracker(commands.Cog):
             })
             pipe.zrem(health_keys.help_open(guild_id), str(parent_id))
             pipe.zadd(health_keys.help_answered(guild_id), {str(parent_id): now})
+            pipe.zremrangebyscore(health_keys.help_answered(guild_id), "-inf", cutoff)
             await pipe.execute()
 
     @commands.Cog.listener()
@@ -100,7 +115,13 @@ class CommunityHealthTracker(commands.Cog):
         # A direct reply closes an existing help request, regardless of whether
         # question detection is enabled for the current channel.
         if message.reference and message.reference.message_id:
-            await self._mark_help_answered(gid, message.reference.message_id, message.author.id, message.id)
+            await self._mark_help_answered(
+                gid,
+                message.reference.message_id,
+                message.author.id,
+                message.id,
+                message.created_at.timestamp(),
+            )
 
         if not cfg["help_requests_enabled"]:
             return
@@ -122,12 +143,16 @@ class CommunityHealthTracker(commands.Cog):
             "response_seconds": "",
             "acknowledged_by_reaction": "0",
         }
+        cutoff = time.time() - (settings.event_retention_days * 86400)
         async with self.r.pipeline() as pipe:
             pipe.hset(key, mapping=mapping)
             pipe.expire(key, settings.event_retention_days * 86400)
             pipe.zadd(health_keys.help_all(gid), {str(message.id): message.created_at.timestamp()})
+            pipe.zremrangebyscore(health_keys.help_all(gid), "-inf", cutoff)
             pipe.zadd(health_keys.help_open(gid), {str(message.id): message.created_at.timestamp()})
+            pipe.zremrangebyscore(health_keys.help_open(gid), "-inf", cutoff)
             pipe.zadd(health_keys.help_user(gid, message.author.id), {str(message.id): message.created_at.timestamp()})
+            pipe.zremrangebyscore(health_keys.help_user(gid, message.author.id), "-inf", cutoff)
             await pipe.execute()
 
     @commands.Cog.listener()
@@ -182,14 +207,19 @@ class CommunityHealthTracker(commands.Cog):
             "created_at": str(ts),
             "resolved_at": str(ts) if action_type == "unban" else "",
         }
+        cutoff = time.time() - (settings.event_retention_days * 86400)
         async with self.r.pipeline() as pipe:
             pipe.hset(event_key, mapping=mapping)
             pipe.expire(event_key, settings.event_retention_days * 86400)
             pipe.zadd(health_keys.mod_events(gid), {str(entry.id): ts})
+            pipe.zremrangebyscore(health_keys.mod_events(gid), "-inf", cutoff)
             pipe.zadd(health_keys.mod_events_moderator(gid, entry.user.id), {str(entry.id): ts})
+            pipe.zremrangebyscore(health_keys.mod_events_moderator(gid, entry.user.id), "-inf", cutoff)
             if target_id:
                 pipe.zadd(health_keys.mod_events_target(gid, target_id), {str(entry.id): ts})
+                pipe.zremrangebyscore(health_keys.mod_events_target(gid, target_id), "-inf", cutoff)
                 pipe.zadd(health_keys.mod_pair(gid, target_id, entry.user.id), {str(entry.id): ts})
+                pipe.zremrangebyscore(health_keys.mod_pair(gid, target_id, entry.user.id), "-inf", cutoff)
             await pipe.execute()
 
     @commands.Cog.listener()
@@ -221,10 +251,12 @@ class CommunityHealthTracker(commands.Cog):
             "recent_help_requests": str(open_help),
             "interpretation": "temporal_context_only",
         }
+        cutoff = now - (settings.event_retention_days * 86400)
         async with self.r.pipeline() as pipe:
             pipe.hset(key, mapping=mapping)
             pipe.expire(key, settings.event_retention_days * 86400)
             pipe.zadd(health_keys.departures(gid), {departure_id: now})
+            pipe.zremrangebyscore(health_keys.departures(gid), "-inf", cutoff)
             await pipe.execute()
 
 
@@ -238,7 +270,9 @@ class CommunityHealthTracker(commands.Cog):
 
     @commands.Cog.listener()
     async def on_scheduled_event_user_add(self, event: discord.ScheduledEvent, user: discord.User):
-        await self.r.sadd(health_keys.event_interested(event.guild_id, event.id), str(user.id))
+        key = health_keys.event_interested(event.guild_id, event.id)
+        await self.r.sadd(key, str(user.id))
+        await self.r.expire(key, settings.event_retention_days * 86400)
         await self._store_event(event)
 
     @commands.Cog.listener()
@@ -259,8 +293,12 @@ class CommunityHealthTracker(commands.Cog):
             "scheduled_end": str(event.end_time.timestamp() if event.end_time else ""),
             "status": str(event.status),
         }
-        await self.r.hset(health_keys.event(event.guild_id, event.id), mapping=mapping)
-        await self.r.sadd(health_keys.events_index(event.guild_id), str(event.id))
+        event_key = health_keys.event(event.guild_id, event.id)
+        await self.r.hset(event_key, mapping=mapping)
+        await self.r.expire(event_key, settings.event_retention_days * 86400)
+        index_key = health_keys.events_index(event.guild_id)
+        await self.r.sadd(index_key, str(event.id))
+        await self.r.expire(index_key, settings.event_retention_days * 86400)
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
@@ -279,10 +317,17 @@ class CommunityHealthTracker(commands.Cog):
             start = float(data.get("scheduled_start") or 0)
             end = float(data.get("scheduled_end") or (start + 6 * 3600))
             if start - 30 * 60 <= now <= end + 30 * 60:
-                await self.r.sadd(health_keys.event_attended(gid, event_id), str(member.id))
+                attended_key = health_keys.event_attended(gid, event_id)
+                await self.r.sadd(attended_key, str(member.id))
+                await self.r.expire(attended_key, settings.event_retention_days * 86400)
 
 
-    health_group = app_commands.Group(name="health", description="Kontextová analytika Engagement Score")
+    # Named "chealth", not "health": bot/commands/health.py already registers a
+    # top-level slash command literally called "health" (Engagement Score/MII
+    # summary). Discord's command tree does not allow a command and a group to
+    # share a top-level name, so this cog failed to load at all when it also
+    # tried to claim "health" (see tests/test_bot_cog_loading.py).
+    health_group = app_commands.Group(name="chealth", description="Kontextová analytika Community Health")
 
     @health_group.command(name="status", description="Zobrazí stav modulů Engagement Score.")
     @app_commands.checks.has_permissions(administrator=True)
@@ -321,21 +366,32 @@ class CommunityHealthTracker(commands.Cog):
                     await self._store_message_metadata(message)
                     messages += 1
                     if message.reference and message.reference.message_id:
-                        await self._mark_help_answered(guild.id, message.reference.message_id, message.author.id, message.id)
+                        await self._mark_help_answered(
+                            guild.id,
+                            message.reference.message_id,
+                            message.author.id,
+                            message.id,
+                            message.created_at.timestamp(),
+                        )
                         replies += 1
                     if cfg["help_requests_enabled"] and str(channel.id) in support_ids:
                         if cfg["question_mode"] == "all" or is_probable_question(message.content):
                             key = health_keys.help_item(guild.id, message.id)
                             if not await self.r.exists(key):
+                                backfill_cutoff = time.time() - (settings.event_retention_days * 86400)
                                 await self.r.hset(key, mapping={
                                     "message_id": str(message.id), "author_id": str(message.author.id),
                                     "channel_id": str(channel.id), "created_at": str(message.created_at.timestamp()),
                                     "status": "open", "answered_at": "", "responder_id": "",
                                     "response_id": "", "response_seconds": "", "acknowledged_by_reaction": "0",
                                 })
+                                await self.r.expire(key, settings.event_retention_days * 86400)
                                 await self.r.zadd(health_keys.help_all(guild.id), {str(message.id): message.created_at.timestamp()})
+                                await self.r.zremrangebyscore(health_keys.help_all(guild.id), "-inf", backfill_cutoff)
                                 await self.r.zadd(health_keys.help_open(guild.id), {str(message.id): message.created_at.timestamp()})
+                                await self.r.zremrangebyscore(health_keys.help_open(guild.id), "-inf", backfill_cutoff)
                                 await self.r.zadd(health_keys.help_user(guild.id, message.author.id), {str(message.id): message.created_at.timestamp()})
+                                await self.r.zremrangebyscore(health_keys.help_user(guild.id, message.author.id), "-inf", backfill_cutoff)
                                 questions += 1
             except (discord.Forbidden, discord.HTTPException):
                 continue

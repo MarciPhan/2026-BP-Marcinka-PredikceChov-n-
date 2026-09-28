@@ -134,6 +134,7 @@ class GDPRCommands(commands.Cog):
                     "help_requests": 0,
                     "mod_events": 0,
                     "leaderboard_voice_seconds": 0,
+                    "role_review": None,
                 }
 
                 # Messages
@@ -170,9 +171,17 @@ class GDPRCommands(commands.Cog):
                 voice_seconds = await self.r.zscore(f"stats:voice_duration:{guild_id}", user_id)
                 guild_data["leaderboard_voice_seconds"] = int(voice_seconds or 0)
 
+                # Manual admin note/judgement about this member (Community Health).
+                # Included here so a GDPR export actually covers it, since it is
+                # personal data about the user even though an admin wrote it.
+                review = await self.r.hgetall(health_keys.role_review(guild_id, user_id))
+                if review:
+                    guild_data["role_review"] = review
+
                 # Only include guilds with data
                 if any([msg_count, len(voice_events), action_count, guild_data["health_messages"],
-                        guild_data["help_requests"], guild_data["mod_events"], voice_seconds]):
+                        guild_data["help_requests"], guild_data["mod_events"], voice_seconds,
+                        guild_data["role_review"]]):
                     data_summary["guilds"][guild_id] = guild_data
 
             # Format output
@@ -225,6 +234,15 @@ class GDPRCommands(commands.Cog):
                     if gdata['leaderboard_voice_seconds'] > 0:
                         hours = gdata['leaderboard_voice_seconds'] / 3600
                         guild_text += f"**🎧 Voice (leaderboard):** {hours:.1f}h\n"
+
+                    if gdata['role_review']:
+                        review = gdata['role_review']
+                        note_text = (review.get('note') or '').strip()
+                        guild_text += (
+                            f"**📝 Ruční poznámka správce:** {review.get('judgement', 'N/A')}"
+                            + (f" – {note_text[:200]}" if note_text else "")
+                            + f" (zapsáno {review.get('reviewed_at', 'N/A')})\n"
+                        )
 
                     embed.add_field(name=f"{guild_name}", value=guild_text, inline=False)
             else:
@@ -369,6 +387,12 @@ class GDPRCommands(commands.Cog):
                             deleted_keys.append(key)
                         for did in departure_ids:
                             await r.zrem(health_keys.departures(guild_id), f"{uid}:{did}")
+
+                        # Community health: manual admin note/judgement about this member
+                        key = health_keys.role_review(guild_id, uid)
+                        if await r.exists(key):
+                            await r.delete(key)
+                            deleted_keys.append(key)
 
                         # Community health: scheduled event interest/attendance
                         event_ids = await r.smembers(health_keys.events_index(guild_id))

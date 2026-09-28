@@ -154,8 +154,14 @@ class RedisRepository(BaseRepository):
             return {
                 "dau_labels": dau_labels,
                 "dau_data": dau_data,
-                "mau_labels": [],
-                "mau_data": [],
+                "mau_labels": dau_labels,
+                "mau_data": [
+                    await r.pfcount(*[
+                        f"hll:dau:{guild_id}:{(d - timedelta(days=i)).strftime('%Y%m%d')}"
+                        for i in range(30)
+                    ])
+                    for d in date_list
+                ],
                 "avg_dau": round(avg_dau, 1),
                 "raw_data": {}
             }
@@ -416,6 +422,7 @@ class RedisRepository(BaseRepository):
 
             stats = {
                 "wau_data": wau_data,
+                "mau_data": mau_data,
                 "dau_wau_ratio": dau_wau_ratio,
                 "dau_mau_ratio": dau_mau_ratio,
                 "retention_labels": date_list,
@@ -624,7 +631,32 @@ class RedisRepository(BaseRepository):
             if data is not None:
                 final_guilds.extend(json.loads(data))
 
-            # 2. Discourse Virtual Guilds
+            # 2. Communities explicitly shared with this dashboard team member.
+            team_guild_ids = set(await r.smembers(f"dashboard:guilds:user:{user_id}"))
+            # Backwards-compatible discovery for grants created before the reverse
+            # index existed. The result is indexed so later reads stay cheap.
+            async for team_key in r.scan_iter("dashboard:team:*"):
+                if await r.sismember(team_key, str(user_id)):
+                    team_guild_ids.add(team_key.split(":")[-1])
+            if team_guild_ids:
+                await r.sadd(f"dashboard:guilds:user:{user_id}", *team_guild_ids)
+
+            known_ids = {str(g.get("id")) for g in final_guilds}
+            for guild_id in sorted(team_guild_ids):
+                if guild_id in known_ids:
+                    continue
+                info = await r.hgetall(f"guild:info:{guild_id}")
+                final_guilds.append({
+                    "id": guild_id,
+                    "name": info.get("name") or f"Community {guild_id}",
+                    "icon": info.get("icon", ""),
+                    "is_admin": False,
+                    "is_mod_candidate": False,
+                    "is_team_member": True,
+                })
+                known_ids.add(guild_id)
+
+            # 3. Discourse Virtual Guilds
             discourse_ids = await r.smembers(f"user:discourse:{user_id}")
             for d_id in discourse_ids:
                 conf = await r.hgetall(f"discourse:conf:{d_id}")

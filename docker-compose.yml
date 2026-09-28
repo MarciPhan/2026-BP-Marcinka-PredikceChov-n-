@@ -23,6 +23,8 @@ services:
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
       - REDIS_URL=redis://redis:6379/0
+      - EVENT_RETENTION_DAYS=${EVENT_RETENTION_DAYS:-90}
+      - ACTIVITY_INACTIVITY_THRESHOLD_DAYS=${ACTIVITY_INACTIVITY_THRESHOLD_DAYS:-14}
       - TZ=Europe/Prague
       - PYTHONPATH=/app
     volumes:
@@ -62,8 +64,11 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - DASHBOARD_SECRET_KEY=${DASHBOARD_SECRET_KEY}
       - DASHBOARD_ACCESS_TOKEN=${DASHBOARD_ACCESS_TOKEN}
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
       - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
+      - DISCORD_REDIRECT_URI=${DISCORD_REDIRECT_URI}
       - BOT_TOKEN=${BOT_TOKEN}
+      - EVENT_RETENTION_DAYS=${EVENT_RETENTION_DAYS:-90}
       - TZ=Europe/Prague
       - PYTHONPATH=/app
     ports:
@@ -84,6 +89,7 @@ services:
     command: [ "python", "-m", "scripts.discourse_sync" ]
     environment:
       - REDIS_URL=redis://redis:6379/0
+      - EVENT_RETENTION_DAYS=${EVENT_RETENTION_DAYS:-90}
       - TZ=Europe/Prague
       - PYTHONPATH=/app
     volumes:

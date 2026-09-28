@@ -9,9 +9,8 @@ from ..utils import *
 from ..demo_data import get_demo_stats
 from ..security import require_csrf
 @router.post("/api/admin/config/bot-token")
-async def set_bot_token(request: Request, token: str = Form(...)):
-    # Nastavení Discord bot tokenu administrátorem
-    await require_auth(request)
+async def set_bot_token(request: Request, token: str = Form(...), _=Depends(require_admin)):
+    # Nastavení Discord bot tokenu systémovým administrátorem
     await require_csrf(request)
 
     if not token or len(token) < 30:
@@ -34,35 +33,18 @@ async def api_add_discourse(
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    # Basic validation
-    url = url.strip().rstrip("/")
-    if not url.startswith("http"):
-        return JSONResponse({"error": "Invalid URL"}, status_code=400)
-
-    # SSRF & DNS Rebinding Protection
+    # SSRF & DNS Rebinding Protection. The same check runs again before every
+    # later background sync (scripts/discourse_sync.py), since DNS records can
+    # change after the instance was added here.
     from urllib.parse import urlparse
-    import socket
-    import ipaddress
+    from shared.net_security import assert_safe_discourse_url, validate_hostname_ips, UnsafeDiscourseURLError
 
     try:
-        parsed_url = urlparse(url)
-        if parsed_url.scheme not in ("http", "https"):
-            return JSONResponse({"error": "Invalid scheme"}, status_code=400)
+        url = assert_safe_discourse_url(url)
+    except UnsafeDiscourseURLError as e:
+        return JSONResponse({"error": str(e)}, status_code=403 if "SSRF" in str(e) else 400)
 
-        def validate_hostname_ips(hostname):
-            addr_info = socket.getaddrinfo(hostname, None)
-            for result in addr_info:
-                ip = result[4][0]
-                ip_obj = ipaddress.ip_address(ip)
-                if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_multicast or ip_obj.is_link_local or ip_obj.is_reserved or str(ip_obj) == "169.254.169.254":
-                    return False
-            return True
-
-        if not validate_hostname_ips(parsed_url.hostname):
-            return JSONResponse({"error": "SSRF Protection: Local or private IPs are not allowed"}, status_code=403)
-
-    except Exception as e:
-        return JSONResponse({"error": f"Invalid URL hostname: {str(e)}"}, status_code=400)
+    parsed_url = urlparse(url)
 
     # Verify connection to Discourse
     try:
@@ -167,7 +149,7 @@ async def remove_team_member(request: Request, target_id: str):
     return {"status": "ok" if success else "error"}
 
 @router.get("/api/leaderboard/xp")
-async def get_xp_leaderboard(request: Request):
+async def get_xp_leaderboard(request: Request, _=Depends(require_view_stats)):
     """Get XP Leaderboard."""
     await require_auth(request)
     guild_id = request.session.get("guild_id")
@@ -835,216 +817,233 @@ async def get_extended_stats(request: Request, start_date: str = None, end_date:
 async def export_data(
     export_type: str,
     request: Request,
-    format: str = "csv",
+    format: str = "json",
     start_date: str = None,
     end_date: str = None,
     _=Depends(require_auth),
-    __=Depends(require_export_data)
+    __=Depends(require_export_data),
 ):
-    """Export server data as CSV or JSON with date filtering."""
+    """Export selected community analytics as bounded CSV or JSON."""
+    import csv
+    import io
+    import json
+    import time
+    from datetime import datetime as dt, timedelta as td
+
+    allowed_types = {
+        "leaderboard", "voice_top", "commands_top", "emojis_top",
+        "channels", "channels_top", "channels_full", "activity",
+        "users", "traffic", "hourly_heatmap", "msg_lengths",
+    }
+    if export_type not in allowed_types:
+        return JSONResponse({"error": "Unsupported export type"}, status_code=400)
+
+    output_format = format.lower()
+    if output_format not in {"csv", "json"}:
+        return JSONResponse({"error": "Format must be 'csv' or 'json'"}, status_code=400)
+
     guild_id = request.session.get("guild_id")
     if not guild_id:
-         return JSONResponse({"status": "error", "message": "No guild selected"}, status_code=400)
-
+        return JSONResponse({"error": "No guild selected"}, status_code=400)
     if guild_id == "demo-guild":
-        return JSONResponse({"status": "error", "message": "Export is not available in demo mode."}, status_code=403)
+        return JSONResponse({"error": "Export is not available in demo mode."}, status_code=403)
+
+    try:
+        period_end = dt.strptime(end_date, "%Y-%m-%d") if end_date else dt.now()
+        period_start = dt.strptime(start_date, "%Y-%m-%d") if start_date else period_end - td(days=6)
+    except ValueError:
+        return JSONResponse({"error": "Dates must use YYYY-MM-DD"}, status_code=400)
+    if period_start > period_end:
+        return JSONResponse({"error": "start_date must not be after end_date"}, status_code=400)
+    if (period_end.date() - period_start.date()).days + 1 > 365:
+        return JSONResponse({"error": "Export range is limited to 365 days"}, status_code=400)
 
     from ..utils import get_redis_client, get_activity_stats, get_leaderboard_data, get_channel_distribution
-    import io
-    import csv
-
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M')
-    filename = f"{export_type}_{guild_id}_{timestamp}"
-
-    data_rows = []
-    headers = []
 
     try:
         r = await get_redis_client()
+        user_id = request.session.get("discord_user", {}).get("id", "anonymous")
+        bucket = int(time.time() // 60)
+        rate_key = f"export:rate:{guild_id}:{user_id}:{bucket}"
+        request_count = await r.incr(rate_key)
+        if request_count == 1:
+            await r.expire(rate_key, 120)
+        if request_count > 120:
+            return JSONResponse({"error": "Export rate limit exceeded"}, status_code=429)
+
+        headers = []
+        data_rows = []
 
         if export_type == "leaderboard":
-            headers = ["User ID", "Name", "Total Messages", "Avg Length (chars)"]
-
-            limit = 1000
-            lb_data = await get_leaderboard_data(guild_id, limit=limit, start_date=start_date, end_date=end_date)
-
-            for u in lb_data.get("leaderboard", []):
-                data_rows.append([u["user_id"], u["name"], u["total_messages"], u["avg_message_length"]])
+            headers = ["user_id", "name", "total_messages", "avg_length_chars"]
+            lb_data = await get_leaderboard_data(
+                guild_id, limit=1000,
+                start_date=period_start.strftime("%Y-%m-%d"),
+                end_date=period_end.strftime("%Y-%m-%d"),
+            )
+            data_rows = [
+                [u["user_id"], u["name"], u["total_messages"], u["avg_message_length"]]
+                for u in lb_data.get("leaderboard", [])
+            ]
 
         elif export_type == "voice_top":
-            headers = ["User ID", "Name", "Total Seconds", "Hours", "Minutes"]
-
+            headers = ["user_id", "name", "total_seconds", "hours", "minutes"]
             voice_lb = await r.zrevrange(f"stats:voice_duration:{guild_id}", 0, -1, withscores=True)
-
             pipe = r.pipeline()
-            for uid, _ in voice_lb:
+            for uid, _score in voice_lb:
                 pipe.hget(f"user:info:{uid}", "name")
             names = await pipe.execute()
-
-            for i, (uid, dur) in enumerate(voice_lb):
-                name = names[i] or f"User {uid}"
-                dur = int(dur)
-                hours = dur // 3600
-                minutes = (dur % 3600) // 60
-                data_rows.append([uid, name, dur, hours, minutes])
+            for index, (uid, duration) in enumerate(voice_lb):
+                seconds = int(duration)
+                data_rows.append([uid, names[index] or f"User {uid}", seconds, seconds // 3600, (seconds % 3600) // 60])
 
         elif export_type == "commands_top":
-            headers = ["Command", "Usage Count"]
-
-            cmds = await r.hgetall(f"stats:commands:{guild_id}")
-
-            sorted_cmds = sorted(cmds.items(), key=lambda x: int(x[1]), reverse=True)
-            for cmd, count in sorted_cmds:
-                data_rows.append([cmd, int(count)])
+            headers = ["command", "usage_count"]
+            commands = await r.hgetall(f"stats:commands:{guild_id}")
+            data_rows = [[name, int(count)] for name, count in sorted(commands.items(), key=lambda item: int(item[1]), reverse=True)]
 
         elif export_type == "emojis_top":
-            headers = ["Emoji", "Usage Count", "Type"]
-
+            headers = ["emoji", "usage_count", "type"]
             emojis = await r.zrevrange(f"stats:emojis:{guild_id}", 0, -1, withscores=True)
-            for emo, count in emojis:
+            data_rows = [[emoji, int(count), "Custom" if len(str(emoji)) > 8 else "Unicode"] for emoji, count in emojis]
 
-                e_type = "Custom" if len(str(emo)) > 8 else "Unicode"
-                data_rows.append([str(emo), int(count), e_type])
-
-        elif export_type in ["channels", "channels_top", "channels_full"]:
-            headers = ["Channel ID", "Name", "Message Count"]
-
-            channels = await get_channel_distribution(guild_id, start_date=start_date, end_date=end_date)
-
+        elif export_type in {"channels", "channels_top", "channels_full"}:
+            headers = ["channel_id", "name", "message_count"]
+            channels = await get_channel_distribution(
+                guild_id,
+                start_date=period_start.strftime("%Y-%m-%d"),
+                end_date=period_end.strftime("%Y-%m-%d"),
+            )
             pipe = r.pipeline()
-            cids = [c["channel_id"] for c in channels]
-            for cid in cids:
-                pipe.hget(f"channel:info:{cid}", "name")
+            for channel in channels:
+                pipe.hget(f"channel:info:{channel['channel_id']}", "name")
             names = await pipe.execute()
-
-            for i, c in enumerate(channels):
-                name = names[i] or f"Channel {c['channel_id']}"
-                data_rows.append([c["channel_id"], name, c["count"]])
+            data_rows = [
+                [channel["channel_id"], names[index] or f"Channel {channel['channel_id']}", channel["count"]]
+                for index, channel in enumerate(channels)
+            ]
 
         elif export_type == "activity":
+            headers = ["date", "messages", "voice_minutes", "joins", "leaves", "dau"]
+            dates = []
+            current = period_start
+            while current.date() <= period_end.date():
+                dates.append(current)
+                current += td(days=1)
 
-            days = 60
-            if start_date and end_date:
-                try:
-                    s = datetime.strptime(start_date, "%Y-%m-%d")
-                    e = datetime.strptime(end_date, "%Y-%m-%d")
-                    days = (e - s).days + 1
-                    if days < 1: days = 1
-                except: pass
+            voice_by_day = {day.strftime("%Y-%m-%d"): 0 for day in dates}
+            range_start = period_start.replace(hour=0, minute=0, second=0).timestamp()
+            range_end = period_end.replace(hour=23, minute=59, second=59).timestamp()
+            async for key in r.scan_iter(f"events:voice:{guild_id}:*"):
+                for raw, score in await r.zrangebyscore(key, range_start, range_end, withscores=True):
+                    try:
+                        day_key = dt.fromtimestamp(float(score)).strftime("%Y-%m-%d")
+                        voice_by_day[day_key] = voice_by_day.get(day_key, 0) + int(json.loads(raw).get("duration", 0))
+                    except (TypeError, ValueError, json.JSONDecodeError):
+                        continue
 
-            stats = await get_activity_stats(guild_id, days=days)
-            headers = ["Date", "Messages", "Active Users (DAU)"]
-
-            labels = stats.get("labels", [])
-
-            labels = stats.get("dau_labels", [])
-            data_points = stats.get("dau_data", [])
-
-            for i, label in enumerate(labels):
-                d = data_points[i] if i < len(data_points) else 0
-                m = 0
-
-                data_rows.append([label, "N/A", d])
+            joins = await r.hgetall(f"stats:joins:daily:{guild_id}")
+            leaves = await r.hgetall(f"stats:leaves:daily:{guild_id}")
+            pipe = r.pipeline()
+            for day in dates:
+                compact = day.strftime("%Y%m%d")
+                pipe.hgetall(f"stats:hourly:{guild_id}:{compact}")
+                pipe.pfcount(f"hll:dau:{guild_id}:{compact}")
+            values = await pipe.execute()
+            for index, day in enumerate(dates):
+                label = day.strftime("%Y-%m-%d")
+                hourly = values[index * 2] or {}
+                messages = sum(int(value) for value in hourly.values())
+                dau = int(values[index * 2 + 1])
+                data_rows.append([
+                    label, messages, round(voice_by_day.get(label, 0) / 60, 2),
+                    int(joins.get(label, 0)), int(leaves.get(label, 0)), dau,
+                ])
 
         elif export_type == "users":
-
-            headers = ["User ID", "Name", "Total Messages", "Joined At", "Roles"]
-            limit = 1000
-            lb_data = await get_leaderboard_data(guild_id, limit=limit, start_date=start_date, end_date=end_date)
+            headers = ["user_id", "name", "total_messages", "joined_at", "roles"]
+            lb_data = await get_leaderboard_data(
+                guild_id, limit=1000,
+                start_date=period_start.strftime("%Y-%m-%d"),
+                end_date=period_end.strftime("%Y-%m-%d"),
+            )
             active_users = lb_data.get("leaderboard", [])
-
             pipe = r.pipeline()
-            for u in active_users:
-                pipe.hgetall(f"user:info:{u['user_id']}")
+            for user in active_users:
+                pipe.hgetall(f"user:info:{user['user_id']}")
             infos = await pipe.execute()
-
-            for i, u in enumerate(active_users):
-                info = infos[i] or {}
-                joined = info.get("joined_at", "")
-                roles = info.get("roles", "")
-                data_rows.append([u["user_id"], u["name"], u["total_messages"], joined, roles])
+            data_rows = [
+                [user["user_id"], user["name"], user["total_messages"], (infos[index] or {}).get("joined_at", ""), (infos[index] or {}).get("roles", "")]
+                for index, user in enumerate(active_users)
+            ]
 
         elif export_type == "traffic":
             from ..utils import load_member_stats
-            headers = ["Month", "Joins", "Leaves", "Total Members"]
-
-            m_stats = await load_member_stats(guild_id, start_date=start_date, end_date=end_date)
-            labels = m_stats.get("labels", [])
-            joins = m_stats.get("joins", [])
-            leaves = m_stats.get("leaves", [])
-            total = m_stats.get("total", [])
-
-            for i, lbl in enumerate(labels):
-                j = joins[i] if i < len(joins) else 0
-                l = leaves[i] if i < len(leaves) else 0
-                t = total[i] if i < len(total) else 0
-                data_rows.append([lbl, j, l, t])
+            headers = ["date", "joins", "leaves", "total_members"]
+            stats = await load_member_stats(
+                guild_id,
+                start_date=period_start.strftime("%Y-%m-%d"),
+                end_date=period_end.strftime("%Y-%m-%d"),
+            )
+            labels, joins, leaves, totals = stats.get("labels", []), stats.get("joins", []), stats.get("leaves", []), stats.get("total", [])
+            data_rows = [[label, joins[index], leaves[index], totals[index]] for index, label in enumerate(labels)]
 
         elif export_type == "hourly_heatmap":
-            headers = ["Day/Hour", "Messages Count"]
-
+            headers = ["day_hour", "message_count"]
             heatmap = await r.hgetall(f"stats:heatmap:{guild_id}")
-
-            days_map = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-
-            sorted_keys = sorted(heatmap.keys())
-            for k in sorted_keys:
+            day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            for key in sorted(heatmap):
                 try:
-                    parts = k.split('_')
-                    if len(parts) == 2:
-                        d, h = int(parts[0]), int(parts[1])
-                        d_name = days_map[d] if 0 <= d <= 6 else str(d)
-                        count = int(heatmap[k])
-                        data_rows.append([f"{d_name} {h:02d}:00", count])
-                except: pass
+                    day_index, hour = (int(value) for value in key.split("_", 1))
+                    day_name = day_names[day_index] if 0 <= day_index <= 6 else str(day_index)
+                    data_rows.append([f"{day_name} {hour:02d}:00", int(heatmap[key])])
+                except (ValueError, TypeError):
+                    continue
 
         elif export_type == "msg_lengths":
-             headers = ["Length Range", "Count"]
-             msg_len_raw = await r.zrange(f"stats:msglen:{guild_id}", 0, -1, withscores=True)
-             buckets_map = {0: "0 chars", 5: "1-10 chars", 30: "11-50 chars", 75: "51-100 chars", 150: "101-200 chars", 250: "201+ chars"}
-             for bucket, score in msg_len_raw:
-                 b_lbl = buckets_map.get(int(float(bucket)), str(bucket))
-                 data_rows.append([b_lbl, int(score)])
+            headers = ["length_range", "count"]
+            raw_buckets = await r.zrange(f"stats:msglen:{guild_id}", 0, -1, withscores=True)
+            labels = {0: "0 chars", 5: "1-10 chars", 30: "11-50 chars", 75: "51-100 chars", 150: "101-200 chars", 250: "201+ chars"}
+            data_rows = [[labels.get(int(float(bucket)), str(bucket)), int(score)] for bucket, score in raw_buckets]
 
-        elif export_type == "raw_logs":
+        generated_at = dt.now().isoformat()
+        period = {"start": period_start.strftime("%Y-%m-%d"), "end": period_end.strftime("%Y-%m-%d")}
+        timestamp = dt.now().strftime("%Y%m%d_%H%M")
+        filename = f"{export_type}_{guild_id}_{timestamp}"
 
-             headers = ["Log Entry"]
-             data_rows.append(["Log export requires enabled centralized logging."])
-
-        else:
-
-             pass
-
-        if not data_rows and export_type not in ["leaderboard", "activity"]:
-             data_rows.append(["No data found for this export type or period."])
-
-        if format.lower() == "json":
-            return {
-                "export_type": export_type,
-                "generated_at": datetime.now().isoformat(),
-                "count": len(data_rows),
-                "data": [dict(zip(headers, row)) for row in data_rows]
-            }
-        else:
-
-            output = io.StringIO()
-            writer = csv.writer(output)
-            writer.writerow(headers)
-            writer.writerows(data_rows)
-
-            output.seek(0)
-            return Response(
-                content=output.getvalue(),
-                media_type="text/csv",
-                headers={"Content-Disposition": f"attachment; filename={filename}.csv"}
+        if output_format == "json":
+            if export_type == "activity":
+                payload = {
+                    "guild_id": str(guild_id), "period": period,
+                    "generated_at": generated_at,
+                    "daily": [dict(zip(headers, row)) for row in data_rows],
+                }
+            else:
+                payload = {
+                    "export_type": export_type, "guild_id": str(guild_id),
+                    "period": period, "generated_at": generated_at,
+                    "count": len(data_rows),
+                    "data": [dict(zip(headers, row)) for row in data_rows],
+                }
+            return JSONResponse(
+                payload,
+                headers={"Content-Disposition": f'attachment; filename="{filename}.json"'},
             )
 
-    except Exception as e:
-        print(f"Export error: {e}")
-        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(headers)
+        writer.writerows(data_rows)
+        return Response(
+            content=output.getvalue(), media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="{filename}.csv"'},
+        )
+    except Exception as exc:
+        print(f"Export error: {exc}")
+        return JSONResponse({"error": "Export generation failed"}, status_code=500)
 
 @router.get("/api/logs")
-async def get_live_logs(request: Request):
+async def get_live_logs(request: Request, _=Depends(require_admin)):
     """API endpoint to get live logs from Redis."""
     guild_id = request.session.get("guild_id")
     if guild_id == "demo-guild":
@@ -1058,7 +1057,7 @@ async def get_live_logs(request: Request):
         return {"logs": [f"Error fetching logs: {e}"]}
 
 @router.get("/api/peak-stats")
-async def get_peak_stats_api(request: Request, start_date: Optional[str] = None, end_date: Optional[str] = None, role_id: str = "all"):
+async def get_peak_stats_api(request: Request, start_date: Optional[str] = None, end_date: Optional[str] = None, role_id: str = "all", _=Depends(require_view_stats)):
     """Get peak activity stats."""
     guild_id = get_guild_id(request)
 
@@ -1079,7 +1078,7 @@ async def get_peak_stats_api(request: Request, start_date: Optional[str] = None,
     }
 
 @router.get("/api/channel-stats")
-async def get_channel_stats(request: Request, start_date=None, end_date=None, role_id="all"):
+async def get_channel_stats(request: Request, start_date=None, end_date=None, role_id="all", platform: str = "all", channel_id: str = None, _=Depends(require_view_stats)):
     """Get per-channel activity statistics."""
     try:
         gid = request.session.get("guild_id")
@@ -1094,6 +1093,24 @@ async def get_channel_stats(request: Request, start_date=None, end_date=None, ro
                 ], "guild_id": gid
             }
         gid = get_guild_id(request)
+        if platform != "all" or channel_id:
+            from ..services.analytics_service import DefaultAnalyticsService
+            from ..repositories.redis_repo import RedisRepository
+            topic_id = channel_id if platform == "discourse" else None
+            discord_channel_id = None if platform == "discourse" else channel_id
+            rows = await DefaultAnalyticsService(RedisRepository()).get_channel_activity(
+                int(gid), start_date, end_date, platform, discord_channel_id, topic_id
+            )
+            r = await get_redis_client()
+            for row in rows:
+                item_id = row["channel_id"]
+                if row.get("platform") == "discourse":
+                    row["name"] = f"Téma {item_id}"
+                else:
+                    row["name"] = await r.hget(f"channel:info:{item_id}", "name") or f"#{item_id}"
+                row["count"] = row.pop("messages")
+            return {"channels": rows, "guild_id": gid, "platform": platform}
+
         dist = await get_channel_distribution(gid, start_date=start_date, end_date=end_date)
 
         channels = await get_discord_channels(gid)
@@ -1107,7 +1124,7 @@ async def get_channel_stats(request: Request, start_date=None, end_date=None, ro
         return {"error": str(e), "channels": [], "guild_id": None}
 
 @router.get("/api/leaderboard")
-async def api_leaderboard(request: Request, limit: int = 15, start_date=None, end_date=None, role_id="all"):
+async def api_leaderboard(request: Request, limit: int = 15, start_date=None, end_date=None, role_id="all", _=Depends(require_view_stats)):
     """Get user leaderboard."""
     try:
         gid = get_guild_id(request)
@@ -1132,7 +1149,7 @@ async def api_leaderboard(request: Request, limit: int = 15, start_date=None, en
         return {"error": str(e), "leaderboard": [], "guild_id": None}
 
 @router.get("/api/comparisons")
-async def api_time_comparisons(request: Request, start_date: Optional[str] = None, end_date: Optional[str] = None):
+async def api_time_comparisons(request: Request, start_date: Optional[str] = None, end_date: Optional[str] = None, _=Depends(require_view_stats)):
     """Get WoW and MoM comparisons."""
     try:
         guild_id = request.session.get("guild_id")
@@ -1198,7 +1215,8 @@ async def api_voice_stats(
     limit: int = 10,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    role_id: str = "all"
+    role_id: str = "all",
+    _=Depends(require_view_stats),
 ):
     """API endpoint for voice leaderboard."""
     gid = get_guild_id(request)
@@ -1218,7 +1236,8 @@ async def api_command_stats(
     limit: int = 10,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    role_id: str = "all"
+    role_id: str = "all",
+    _=Depends(require_view_stats),
 ):
     """API endpoint for command usage stats."""
     gid = get_guild_id(request)
@@ -1239,7 +1258,8 @@ async def api_traffic_stats(
     days: int = 30,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    role_id: str = "all"
+    role_id: str = "all",
+    _=Depends(require_view_stats),
 ):
     """API endpoint for traffic stats (joins/leaves)."""
     gid = get_guild_id(request)
@@ -1250,7 +1270,7 @@ async def api_traffic_stats(
     return await get_traffic_stats(gid, days=days, start_date=start_date, end_date=end_date, role_id=role_id)
 
 @router.get("/api/channel-distribution")
-async def api_channel_distribution(request: Request, start_date=None, end_date=None, role_id="all"):
+async def api_channel_distribution(request: Request, start_date=None, end_date=None, role_id="all", _=Depends(require_view_stats)):
     """DEPRECATED: Redirecting to channel-stats."""
     gid = get_guild_id(request)
     if gid == "demo-guild":
@@ -1264,7 +1284,7 @@ async def api_channel_distribution(request: Request, start_date=None, end_date=N
     return await get_channel_stats(request, start_date, end_date, role_id)
 
 @router.get("/api/health-research")
-async def api_health_research(request: Request):
+async def api_health_research(request: Request, _=Depends(require_view_stats)):
     """API endpoint pro výzkumná data (Markov, Survival)."""
     gid = get_guild_id(request)
     if gid == "demo-guild":

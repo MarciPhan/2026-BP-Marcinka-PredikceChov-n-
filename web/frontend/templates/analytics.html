@@ -65,7 +65,53 @@
             <span>Filtrovat</span>
         </button>
     </form>
+
+    <div style="display: flex; gap: 12px; align-items: center; background: var(--bg-card); padding: 8px 16px; border-radius: 12px; border: 1px solid var(--glass-border); margin-top: 12px;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Export dat</label>
+            <select id="exportType" style="min-width: 160px;">
+                <option value="activity">Aktivita (zprávy, voice, joins/leaves, DAU)</option>
+                <option value="leaderboard">Žebříček zpráv</option>
+                <option value="voice_top">Žebříček voice</option>
+                <option value="commands_top">Použití příkazů</option>
+                <option value="emojis_top">Nejpoužívanější emoji</option>
+                <option value="channels">Aktivita podle kanálů</option>
+                <option value="users">Uživatelé</option>
+                <option value="traffic">Nárůst/odchody členů</option>
+                <option value="hourly_heatmap">Hodinová teplotní mapa</option>
+                <option value="msg_lengths">Rozložení délky zpráv</option>
+            </select>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Formát</label>
+            <select id="exportFormat" style="min-width: 90px;">
+                <option value="csv">CSV</option>
+                <option value="json">JSON</option>
+            </select>
+        </div>
+        <button type="button" class="btn" id="exportButton"
+            style="height: 42px; margin-top: auto; display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-download"></i>
+            <span>Exportovat</span>
+        </button>
+    </div>
+    <p style="color: var(--text-secondary); font-size: 12px; margin-top: 6px;">
+        Export použije zvolené období „Od“ / „Do“ výše. Maximální rozsah je 365 dní, export je omezen na 120 požadavků za minutu.
+    </p>
 </div>
+
+<script>
+document.getElementById('exportButton')?.addEventListener('click', function () {
+    const type = document.getElementById('exportType').value;
+    const format = document.getElementById('exportFormat').value;
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    const params = new URLSearchParams({ format: format });
+    if (startDate) params.set('start_date', startDate);
+    if (endDate) params.set('end_date', endDate);
+    window.open(`/api/export/${type}?${params.toString()}`, '_blank');
+});
+</script>
 
 
 {% set all_widgets = [
