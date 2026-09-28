@@ -107,7 +107,6 @@ communitymetrics/
        main.py           # FastAPI app — middleware, routery, error handling
        security.py       # CSRF ochrana (require_csrf)
        utils.py          # Analytické výpočty — Engagement, predikce
-       hydrate_users.py  # Synchronizace uživatelských dat
        routers/
            auth.py       # Discord OAuth2, demo login
            pages.py      # Server-side rendered HTML stránky

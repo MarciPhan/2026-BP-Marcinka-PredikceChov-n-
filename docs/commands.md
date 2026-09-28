@@ -60,6 +60,20 @@ Po potvrzení smaže vaši hlavní historii a profil z databáze CommunityMetric
 > [!CAUTION]
 > Tato operace je nevratná. Smazáním přijdete o všechny své XP, úrovně a historické statistiky, včetně případné ruční poznámky/hodnocení, které o vás mohl uložit administrátor v modulu Community Health.
 
+## Community Health (`/chealth`)
+
+Kontextová analytika modulu Engagement Score/Community Health (viz [Community Health](/COMMUNITY_HEALTH)). Obě podpříkazy vyžadují oprávnění **Administrator**.
+
+### `/chealth status`
+Zobrazí, které moduly Community Health jsou pro server zapnuté (žádosti o pomoc, kontext moderace, kontext odchodů, převod zájmu o akce na účast) a kolik podpůrných kanálů je nastaveno.
+
+### `/chealth backfill`
+Doplní historický kontext zpráv, moderačních zásahů a žádostí o pomoc zpětně.
+
+| Parametr | Povinný | Výchozí | Rozsah |
+| :--- | :--- | :--- | :--- |
+| `days` | Ne | 30 | 1–180 dní historie. |
+
 ## Systémové příkazy
 
 Doplňkové funkce pro kontrolu stavu bota.
