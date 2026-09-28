@@ -31,8 +31,8 @@ Body (XP) získáváte přirozenou aktivitou. Systém je navržen tak, aby odmě
 Vaše data jsou u nás v bezpečí. **Nikdy neukládáme obsah vašich zpráv**, pouze statistické údaje (kolik, kdy, kde).
 
 ### Vaše nástroje:
-- **`/gdpr export`**: Stáhne přehled všeho, co o vás bot v databázi má.
-- **`/gdpr delete`**: Smaže všechna vaše data. Tím přijdete o všechny nasbírané body a úroveň na tomto serveru.
+- **`/gdpr export`**: Zobrazí vám (jen vy to vidíte) souhrnný přehled toho, co o vás bot v databázi má – nejde o soubor ke stažení.
+- **`/gdpr delete`**: Smaže vaši hlavní historii a profil, včetně případné ruční poznámky administrátora o vás v Community Health modulu. Tím přijdete o všechny nasbírané body a úroveň na tomto serveru.
 - **`/privacy`**: Rychlý přehled našich zásad.
 
 ---

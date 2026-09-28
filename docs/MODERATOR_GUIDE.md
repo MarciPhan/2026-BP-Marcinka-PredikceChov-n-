@@ -91,8 +91,8 @@ CommunityMetrics používá **Anti-Spam XP systém**. Body se získávají maxim
 
 ## 7. GDPR a ochrana soukromí
 Jako moderátoři máte přístup k analytickým datům. Respektujte soukromí uživatelů:
-- **Právo na smazání:** Pokud uživatel požádá o smazání dat, odkažte ho na příkaz `/gdpr delete`.
-- **Transparentnost:** Příkaz `/gdpr export` stáhne uživateli vše, co o něm bot ví. Pro rychlý přehled slouží `/privacy`.
+- **Právo na smazání:** Pokud uživatel požádá o smazání dat, odkažte ho na příkaz `/gdpr delete`. Ten smaže hlavní historii a profil včetně vaší případné ruční poznámky/hodnocení o daném členovi v Community Health.
+- **Transparentnost:** Příkaz `/gdpr export` zobrazí uživateli (jen jemu) souhrnný přehled toho, co o něm bot ví – nejde o soubor ke stažení, ale o ephemerní zprávu se souhrnnými počty. Pro rychlý přehled zásad slouží `/privacy`.
 
 ---
 

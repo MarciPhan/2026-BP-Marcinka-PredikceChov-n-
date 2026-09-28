@@ -8,7 +8,7 @@ Jak CommunityMetrics chrání vaše data na infrastrukturní úrovni.
 - **Cookie-based Sessions:** Sezení jsou uložena v podepsaných cookie pomocí `itsdangerous` (`SameSite=Lax`). V produkci se nastavuje `https_only=True`. Expirace je konfigurována přes `SESSION_EXPIRY_HOURS`.
 - **CSRF Ochrana:** Všechny stavotvorné požadavky API (`POST`, `DELETE`) vyžadují předložení kryptograficky bezpečného CSRF tokenu, který je kontrolován proti timing útokům pomocí `secrets.compare_digest` v `web/backend/security.py`. Token se předává v hlavičce `X-CSRF-Token` nebo jako pole `csrf_token` ve formuláři.
 - **X-API-Key Autentizace:** Pro externí klienty existuje autentizace pomocí API klíčů (prefix `mtr_`), validovaných přes SHA-256 digest.
-- **Role-Based Access (RBAC):** Backend striktně kontroluje oprávnění `Manage Server` před jakýmkoliv čtením či zápisem dat konkrétní komunity.
+- **Role-Based Access (RBAC):** Backend rozlišuje dvě úrovně: globálního systémového administrátora (`require_admin`, používá se jen pro `/api/logs` a změnu globálního bot tokenu) a per-komunitní oprávnění (`view_stats`, `manage_settings`, `export_data`, ...), které mají automaticky administrátoři daného Discord serveru a jinak jen team memberové, kterým bylo oprávnění výslovně uděleno v Nastavení → Tým.
 
 ## 2. Životní cyklus dat
 
@@ -22,7 +22,7 @@ Jak CommunityMetrics chrání vaše data na infrastrukturní úrovni.
 
 - **Rate Limiting:** Aplikován omezený tok pro citlivé endpointy a omezovače Discord API.
 - **CORS:** Omezení hlaviček na povolené domény v produkční konfiguraci.
-- **Ochrana SSRF (Server-Side Request Forgery):** Během konfigurace integrace Discourse se provádí striktní filtrace IP adres s cílem blokovat `localhost`, privátní IP, link-local adresy a metadata služby (např. `169.254.169.254`). Ochrana zahrnuje implementaci Post-Fetch validace k zamezení útoků typu DNS Rebinding.
+- **Ochrana SSRF (Server-Side Request Forgery):** Jak při PŘIDÁVÁNÍ integrace Discourse, tak při KAŽDÉM běhu periodické synchronizace na pozadí (`scripts/discourse_sync.py`, každých 300 s) se přes sdílenou funkci `assert_safe_discourse_url` (`shared/net_security.py`) provádí striktní filtrace IP adres s cílem blokovat `localhost`, privátní IP, link-local adresy a metadata služby (např. `169.254.169.254`). Díky opakované validaci při každém požadavku je pokrytý i útok typu DNS Rebinding (změna DNS záznamu domény po přidání instance).
 
 ## 4. Infrastruktura
 
@@ -36,4 +36,4 @@ Aplikace běží v oddělených Docker kontejnerech. Redis není přístupný z 
 
 ## 6. Šifrování a komunikace
 
-Veškerá produkční komunikace s klienty a Discord API je určena pro provoz za reverzní proxy podepsanou certifikátem pro TLS 1.2/1.3. Citlivé API klíče a OAuth secrety v `.env` se z produkčního `docker-compose.prod.yml` do aplikace předávají jako environment variables, nejsou ukládány do kódu (hardcoding).
+Veškerá produkční komunikace s klienty a Discord API je určena pro provoz za reverzní proxy podepsanou certifikátem pro TLS 1.2/1.3. Citlivé klíče a secrety v `.env` se do aplikace předávají jako environment variables, nejsou ukládány do kódu (hardcoding). `docker-compose.prod.yml` předává do kontejneru `web-dashboard` všechny proměnné potřebné pro OAuth2 přihlášení (`DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_REDIRECT_URI`, `DASHBOARD_SECRET_KEY`, `DASHBOARD_ACCESS_TOKEN`, `BOT_TOKEN`, `EVENT_RETENTION_DAYS`), viz [Nasazení do produkce](/deployment).

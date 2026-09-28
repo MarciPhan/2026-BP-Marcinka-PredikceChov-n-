@@ -41,10 +41,13 @@ Data se zpracovávají výhradně pro:
 | Surové eventy (zprávy, voice, akce) | 90 dní | Ne (pevně nastaveno dle konfigurace) |
 | HyperLogLog statistiky (DAU) | 90 dní | Ne |
 | Uživatelský profil cache | 7 dní | Ne (automatická expirace Redis) |
+| Ruční poznámka/stanovisko správce (Community Health) | 90 dní | Ne (stejná hodnota jako retence eventů) |
 | Runtime status (heartbeat) | 60 sekund | Ne |
 | GDPR deletion log | 30 dní | Ne |
 
 Po uplynutí TTL Redis automaticky smaže příslušné klíče. Administrátor nemusí spouštět žádné čistící skripty.
+
+Výjimkou jsou některé indexy a souhrnné záznamy modulu Community Health (např. evidence žádostí o pomoc, historie moderačních dvojic, záznamy odchodu, zájem/účast na akcích) – ty v současné verzi automatickou dobu platnosti nemají a zůstávají v databázi, dokud je nesmaže `/gdpr delete` daného uživatele nebo ruční zásah administrátora.
 
 ## Práva uživatele (GDPR)
 
@@ -52,8 +55,8 @@ Každý uživatel má právo na:
 
 | Právo | Příkaz | Popis |
 | :--- | :--- | :--- |
-| Přístup k datům | `/gdpr export` | Export všech dat v JSON formátu. Odpověď je ephemeral. |
-| Výmaz dat | `/gdpr delete` | Nevratné smazání všech dat z databáze. Vyžaduje potvrzení. |
+| Přístup k datům | `/gdpr export` | Ephemerní Discord zpráva se souhrnnými počty (zprávy, voice relace, moderační akce, Community Health data) za jednotlivé servery. Nejde o soubor ke stažení ani o JSON export. |
+| Výmaz dat | `/gdpr delete` | Nevratné smazání hlavních uložených záznamů z databáze. Vyžaduje potvrzení. |
 | Informace o zpracování | `/privacy` | Přehled sbíraných dat a zásad ochrany. |
 
 ### Postup výmazu
@@ -64,7 +67,10 @@ Příkaz `/gdpr delete` smaže:
 3. Voice sessions (`events:voice:*:{id}`).
 4. Moderátorské akce (`events:action:*:{id}`).
 5. Stavové proměnné (`activity:state:*:{id}:*`).
-6. Denní statistiky (`stats:day:*:*:{id}`).
+6. Denní statistiky a žebříčky (`stats:day:*:*:{id}`, `stats:voice_duration`, `leaderboard:messages`, `leaderboard:msg_lengths`, `stats:user_daily:*`).
+7. Data modulu Community Health navázaná na uživatele: zprávy, žádosti o pomoc, moderační eventy (jako moderátor i jako cíl, včetně historie dvojic), záznamy odchodu, zájem/účast na plánovaných akcích a ruční poznámka/stanovisko správce k danému členovi (`health:role_review:*`).
+
+Odvozené agregované statistiky se po výmazu zpětně nepřepočítávají.
 
 Po smazání bot vytvoří dočasný záznam o provedení výmazu (`gdpr:deletion_log:{id}`) s dobou platnosti 30 dní pro účely auditního logu.
 
@@ -89,8 +95,8 @@ PROČ:
 - Predikce Engagement Score
 
 VAŠE PRÁVA:
-- /gdpr export - stáhněte si kopii všech svých dat
-- /gdpr delete - smažte všechna svá data (nevratné)
+- /gdpr export - zobrazíte si souhrn svých uložených dat
+- /gdpr delete - smažte hlavní uložená data (nevratné)
 - /privacy - zobrazíte podrobné informace
 
 Data jsou uchovávána maximálně 90 dní a automaticky

@@ -58,14 +58,17 @@ CommunityMetrics umožňuje odesílat kritická varování (Alerts) přímo na v
 
 ## Komplexní integrace (Export dat)
 
-Pokud chcete provádět vlastní hloubkovou analýzu, můžete využít endpoint pro export kompletní historie serveru ve formátu JSON:
+Pokud chcete provádět vlastní hloubkovou analýzu, můžete využít endpoint pro export denní aktivity (zprávy, voice minuty, joins/leaves, DAU) za zvolené období ve formátu JSON. Kromě `activity` existují i další typy exportu (`leaderboard`, `voice_top`, `channels`, `users`, ...), viz [Export dat](/export).
 
 ```python
 import requests
 import json
 
-def export_guild_data(api_key, session_cookie):
-    url = "http://localhost:8093/api/export/activity?format=json"
+def export_guild_data(api_key, session_cookie, start_date, end_date):
+    url = (
+        "http://localhost:8093/api/export/activity"
+        f"?format=json&start_date={start_date}&end_date={end_date}"
+    )
     headers = {"X-API-Key": api_key}
     cookies = {"session": session_cookie}
     
@@ -76,10 +79,10 @@ def export_guild_data(api_key, session_cookie):
             json.dump(data, f, indent=2)
         print("Export úspěšně dokončen.")
 
-# Použití
-export_guild_data("VAŠ_API_KEY", "VAŠ_SESSION_COOKIE")
+# Použití (bez start_date/end_date se exportuje jen posledních 7 dní)
+export_guild_data("VAŠ_API_KEY", "VAŠ_SESSION_COOKIE", "2026-01-01", "2026-01-31")
 ```
 
-::: tip Doporučení
-Pro velké servery (> 10 000 členů) doporučujeme používat streamované stahování, abyste předešli přetížení operační paměti vašeho skriptu.
+::: tip Omezení
+Maximální rozsah jednoho exportu je 365 dní a rozhraní je omezeno na 120 požadavků za minutu na uživatele a komunitu. Jde vždy o agregovaná denní data, ne o export syrových jednotlivých zpráv.
 :::

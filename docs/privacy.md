@@ -37,11 +37,13 @@ Vaše osobní údaje **neprodáváme**. Přístup mají pouze:
 - Orgány veřejné moci (pokud to ukládá zákon).
 
 ## 6. Uchovávání dat
-- Analytická data: Po dobu přítomnosti bota na serveru.
-- Technické logy: Maximálně 90 dnů.
+- Detailní analytická data (zprávy, voice relace, moderační akce): Konfigurovatelná retence, výchozí 90 dnů, poté automaticky mazáno.
+- Uživatelský profil (cache): 7 dnů.
+- Ruční poznámky a stanoviska správce k členovi (Community Health): stejná retence jako event data (výchozí 90 dnů).
+- Odvozené agregace a indexy (např. souhrnné statistiky žádostí o pomoc, moderačních dvojic, odchodů): v současné verzi zatím automaticky neexpirují.
 
 ## 7. Vaše práva
-Dle GDPR máte právo na **přístup**, **opravu**, **výmaz** ("být zapomenut") a **námitku**.
+Dle GDPR máte právo na **přístup**, **opravu**, **výmaz** ("být zapomenut") a **námitku**. Přístup a výmaz uplatníte přímo v Discordu příkazy `/gdpr export` (shrnutí uložených dat v podobě zprávy) a `/gdpr delete` (nevratné smazání hlavních záznamů). Odvozené agregované statistiky se po výmazu zpětně nepřepočítávají.
 
 ::: info Kontakt
 Máte dotazy nebo žádosti? Kontaktujte nás na `info@email.cz`.

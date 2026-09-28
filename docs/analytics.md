@@ -58,7 +58,7 @@ Váhy ($w$) jsou konfigurovatelné. Pokud některý údaj není dostupný (např
 Analytický engine generuje matici 7 × 24 (den v týdnu × hodina), která vizualizuje hustotu zpráv.
 
 -   **Uložení:** Redis Hash s klíčem `stats:heatmap:{guild_id}`.
--   **Formát pole:** `den:hodina` (např. `1:14` pro pondělí 14:00 UTC).
+-   **Formát pole:** `den_hodina`, podtržítko jako oddělovač, den číslovaný od 0 (Python `datetime.weekday()`: 0 = pondělí, 6 = neděle) -- např. `0_14` pro pondělí 14:00 UTC.
 -   **Využití:** Plánujte své klíčové aktivity na časy s nejvyšší hustotou v heatmapě.
 
 ## Kvalita dat (DQS)

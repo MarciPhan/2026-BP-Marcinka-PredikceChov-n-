@@ -39,12 +39,12 @@ python3 -c "import secrets; print(secrets.token_urlsafe(48))"
 
 ## Nasazení pomocí Docker Compose (Doporučeno)
 
-Docker Compose automaticky spustí a propojí všechny potřebné služby: Redis, hlavního bota, dashboard bota, webový dashboard a Discourse synchronizátor.
+Pro produkci slouží samostatný soubor `docker-compose.prod.yml` (odlišný od `docker-compose.yml`, který je určen pro lokální vývoj a navíc obsahuje druhého, odlehčeného bota v režimu `BOT_LITE_MODE`). Produkční varianta spustí a propojí jen: Redis, hlavního bota, webový dashboard a Discourse synchronizátor.
 
 1.  Klonujte repozitář: `git clone https://github.com/MarciPhan/2026-BP-Marcinka-PredikceChov-n-`
 2.  Vytvořte konfigurační soubor: `cp .env.example .env`
 3.  Upravte `.env` a vyplňte všechny povinné proměnné (viz Tabulka proměnných níže).
-4.  Spusťte stack: `docker-compose up -d --build`
+4.  Spusťte stack: `docker-compose -f docker-compose.prod.yml up -d --build`
 
 ## Nastavení Nginx a SSL
 

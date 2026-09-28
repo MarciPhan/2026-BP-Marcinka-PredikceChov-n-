@@ -52,21 +52,21 @@ Načte historická data ze serveru (zprávy a akce) do analytických modulů. Vy
 Příkazy pro správu vašich osobních údajů.
 
 ### `/gdpr export`
-Zašle vám soukromý odkaz ke stažení všech dat, která o vás CommunityMetrics uchovává.
+Zobrazí vám ephemerní (jen vy ji vidíte) zprávu se souhrnnými počty dat, která o vás CommunityMetrics uchovává za jednotlivé servery (počet zpráv, voice relací a jejich délka, moderační akce, community health data). Nejde o soubor ke stažení ani o odkaz – jde o přehledový souhrn přímo v Discordu.
 
 ### `/gdpr delete`
-Smaže veškerou vaši historii a profil z databáze CommunityMetrics.
+Po potvrzení smaže vaši hlavní historii a profil z databáze CommunityMetrics (zprávy, voice aktivitu, moderační akce, community health data, statistiky a žebříčky).
 
 > [!CAUTION]
-> Tato operace je nevratná. Smazáním přijdete o všechny své XP, úrovně a historické statistiky.
+> Tato operace je nevratná. Smazáním přijdete o všechny své XP, úrovně a historické statistiky, včetně případné ruční poznámky/hodnocení, které o vás mohl uložit administrátor v modulu Community Health.
 
 ## Systémové příkazy
 
 Doplňkové funkce pro kontrolu stavu bota.
 
 - `/privacy` - Zobrazí podrobné zásady ochrany osobních údajů.
-- `/health` - Ukáže verzi bota a stav připojení k databázi.
-- `/ping` - Změří latenci k Discord API.
+- `/health` - Zobrazí Engagement Score serveru (aktivitu, moderační zátěž MII, doporučený počet moderátorů). S parametrem `research: true` doplní i Markovovu predikci a analýzu přežití aktivity.
+- `/ping` - Změří latenci k Discord API a přidá náhodný motivační citát.
 - `/help` - Otevře interaktivní nabídku nápovědy.
 
 ## Příkaz pro synchronizaci (`*sync`)

@@ -4,10 +4,14 @@ CommunityMetrics umožňuje exportovat nasbíraná data pro další zpracování
 
 ## Přístup k exportu
 
-Export je dostupný z webového dashboardu v sekci **Analytics**. Tlačítko **Export** se nachází v pravém horním rohu.
+Export je dostupný z webového dashboardu v sekci **Analytics**, pod filtry období/platformy/kanálu -- vyberte typ exportu a formát a klikněte na tlačítko **Exportovat**. V demo režimu export dostupný není.
 
 Předpoklady:
-- Přihlášení do dashboardu s oprávněním `Manage Server`.
+- Přihlášení do dashboardu s oprávněním `export_data` -- to mají automaticky administrátoři daného Discord serveru, nebo team member, kterému bylo toto oprávnění výslovně uděleno v Nastavení → Tým.
+
+## Dostupné typy exportu
+
+`activity`, `leaderboard`, `voice_top`, `commands_top`, `emojis_top`, `channels` (`channels_top`/`channels_full`), `users`, `traffic`, `hourly_heatmap`, `msg_lengths`. Níže je jako příklad popsán `activity` -- ostatní typy vrací obdobnou tabulku/JSON se sloupci pojmenovanými malými písmeny (`user_id`, `total_messages`, `channel_id`, `message_count`, ...), viz [API Reference](/api).
 
 ## Dostupné formáty
 
@@ -15,7 +19,7 @@ Předpoklady:
 
 Vhodný pro import do tabulkových procesorů (Microsoft Excel, Google Sheets, LibreOffice Calc).
 
-Struktura CSV souboru:
+Struktura CSV souboru pro typ `activity`:
 
 | Sloupec | Typ | Popis |
 | :--- | :--- | :--- |
@@ -55,7 +59,7 @@ Strukturovaný formát pro strojové zpracování a integrace:
 Stejná data lze získat programově přes REST API:
 
 ```bash
-curl -X GET "http://localhost:8093/api/export/activity?format=csv" \
+curl -X GET "http://localhost:8093/api/export/activity?format=csv&start_date=2026-04-01&end_date=2026-04-14" \
      -H "X-API-Key: YOUR_API_KEY" \
      -H "Cookie: session=YOUR_SESSION_COOKIE" \
      -o export.csv
@@ -64,7 +68,10 @@ curl -X GET "http://localhost:8093/api/export/activity?format=csv" \
 | Parametr | Výchozí | Popis |
 | :--- | :--- | :--- |
 | `format` | `json` | Formát výstupu: `csv` nebo `json`. |
-| `range` | `7` | Počet dní zpětně. |
+| `start_date` | 7 dní zpět | Počátek období, formát `YYYY-MM-DD`. |
+| `end_date` | dnes | Konec období, formát `YYYY-MM-DD`. |
+
+Parametr `range` (počet dní zpětně) neexistuje -- období se zadává vždy dvojicí `start_date`/`end_date`.
 
 ## Omezení
 

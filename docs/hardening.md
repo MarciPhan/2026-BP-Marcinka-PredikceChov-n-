@@ -87,7 +87,7 @@ services:
 CommunityMetrics implementuje principy **Privacy by Design** pro soulad s nařízením GDPR:
 
 1.  **Minimalizace dat:** Neukládáme obsah zpráv, pouze metadata potřebná pro analytiku (čas, délka, metadata autora).
-2.  **Právo na zapomnění:** Příkaz `/gdpr delete` okamžitě a nevratně odstraní všechny záznamy o uživateli ze všech Redis struktur (`Sorted Sets`, `Hashes`).
+2.  **Právo na zapomnění:** Příkaz `/gdpr delete` okamžitě a nevratně odstraní záznamy o uživateli ze všech Redis struktur (`Sorted Sets`, `Hashes`) — zprávy, voice relace, moderační eventy i Community Health data (žádosti o pomoc, záznamy o odchodu, účast na akcích a ruční poznámku/hodnocení administrátora `health:role_review:...`).
 3.  **Šifrování komunikace:** Veškerý provoz mezi prohlížečem a dashboardem musí být šifrován pomocí TLS/SSL (HTTPS).
 
 ## Kontrolní seznam (Production Readiness)

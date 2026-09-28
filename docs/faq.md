@@ -45,15 +45,15 @@ DQS (Data Quality Score) indikuje úplnost dat pro prediktivní modely. Pokud je
 ## Soukromí a GDPR
 
 ::: details Kam se ukládají data po smazání profilu?
-Nikam. Příkaz `/gdpr delete` provede okamžitou operaci `DEL` nad všemi klíči v Redisu, které jsou spojené s vaším uživatelským ID. Tato operace je nevratná a data nelze obnovit ani ze zálohy, pokud byla mezitím přepsána.
+Nikam. Příkaz `/gdpr delete` provede okamžitou operaci `DEL` nad hlavními klíči v Redisu spojenými s vaším uživatelským ID (zprávy, voice aktivita, moderační akce, community health data včetně ruční poznámky/hodnocení administrátora, statistiky a žebříčky). Tato operace je nevratná a data nelze obnovit ani ze zálohy, pokud byla mezitím přepsána. Odvozené agregované statistiky se po výmazu zpětně nepřepočítávají.
 :::
 
 ::: details Můžu data exportovat do jiného systému?
-Ano. Příkaz `/gdpr export` vám vygeneruje JSON soubor, který obsahuje kompletní strukturu vašich dat. Tento soubor je kompatibilní se standardními nástroji pro analýzu dat (např. v jazyce Python nebo R). Pro CSV export využijte [Centrum exportu](/export) v dashboardu.
+Příkaz `/gdpr export` vám zobrazí ephemerní (jen vy ji vidíte) zprávu se souhrnnými počty vašich dat – nejde o soubor ke stažení. Pro skutečný export dat komunity ve formátu CSV nebo JSON slouží samostatné REST API endpointy `/api/export/{typ}` (viz [Export dat](/export)); v aktuální verzi na ně z dashboardu zatím nevede žádné tlačítko, takže je nutné sestavit URL ručně nebo je volat přes vlastní API klienta.
 :::
 
 ::: details Jak dlouho se data uchovávají?
-Surové eventy (zprávy, voice) se uchovávají dle konfigurovatelné retence (výchozí **90 dní**, parametr `EVENT_RETENTION_DAYS`). HyperLogLog statistiky **90 dní** a uživatelské profily **7 dní**. Po uplynutí TTL Redis klíče automaticky smaže. Podrobnosti viz [Privacy Builder](/privacy-builder).
+Surové eventy (zprávy, voice) se uchovávají dle konfigurovatelné retence (výchozí **90 dní**, parametr `EVENT_RETENTION_DAYS`). HyperLogLog statistiky **90 dní** a uživatelské profily **7 dní**. Po uplynutí TTL Redis klíče automaticky smaže. Ruční poznámka administrátora v Community Health má také TTL nastavené na `EVENT_RETENTION_DAYS`; některé pomocné community health indexy (např. propojení opakovaných konfliktů mezi členem a moderátorem nebo záznamy odchodu) v aktuální verzi žádné TTL nemají a je nutné je odstranit ručně přes `/gdpr delete`. Podrobnosti viz [Privacy Builder](/privacy-builder).
 :::
 
 ## Technické otázky
@@ -63,7 +63,7 @@ Pro real-time analytiku v řádech milionů eventů je Redis (in-memory) mnohem 
 :::
 
 ::: details Mohu exportovat data do Excelu?
-Ano, v sekci „Centrum exportu" na dashboardu si můžete stáhnout data ve formátu CSV (přímý import do Excelu) nebo JSON pro strojové zpracování. Viz [Export dat](/export).
+Ano, formát CSV (přímý import do Excelu) i JSON jsou podporované na backendu přes `/api/export/{typ}`. V aktuální verzi ale dashboard nemá samostatnou sekci „Centrum exportu" s tlačítkem – URL je nutné zavolat přímo (v prohlížeči s aktivní session, nebo přes API klienta). Viz [Export dat](/export).
 :::
 
 ::: details Jak funguje Dual-bot režim (Lite Mode)?

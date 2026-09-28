@@ -1,49 +1,30 @@
 # Smart Insights
 
-Insights Engine automaticky vyhodnocuje metriky serveru a generuje varování, doporučení a anomálie. Výsledky se zobrazují v dashboardu na kartě **Smart Insights** a volitelně jako zprávy v moderátorském Discord kanálu.
+Karta **💡 Insights** na dashboardu zobrazuje krátký seznam textových postřehů, které se generují z právě spočítaných metrik komunity (`get_insights()` v analytické vrstvě). Jde o jednoduchá pravidla nad agregovanými čísly, ne o samostatný detekční nebo bezpečnostní systém — pro hodnocení zabezpečení serveru (MFA, verifikace, filtr obsahu) slouží samostatná karta popsaná na stránce [Skóre bezpečnosti](/security).
 
-## Bezpečnostní varování (kritická závažnost)
+## Co karta skutečně ukazuje
 
-| Insight | Podmínka | Doporučená akce |
+Každý postřeh má typ `positive` / `negative` / `neutral`, který určuje barvu ikony, a krátký text:
+
+| Postřeh | Podmínka | Ukázkový text |
 | :--- | :--- | :--- |
-| **Raid Detection** | > 10 nových členů za 5 min + nárůst zpráv > 500 % | Aktivujte verification mode a slowmode. |
-| **Mass Mention Spam** | Opakované @everyone / @here od ne-adminů | Zkontrolujte oprávnění rolí, zablokujte útočníky. |
-| **Alt Account Alert** | Dva účty se shodnými vzorci chování (časy, délky zpráv) | Prověřte profily v Security dashboardu. |
+| Týdenní růst aktivity | Aktivita tento týden roste oproti minulému | 🚀 Silný týdenní růst! Počet aktivních uživatelů stoupá. |
+| Týdenní pokles aktivity | Aktivita tento týden klesá | 📉 Pozor, týdenní aktivita klesá. Zkuste uspořádat event. |
+| Vysoký podíl aktivních členů | Vysoký poměr DAU k celkovému počtu členů | 💎 Vysoký podíl aktivních členů v aktuálním období. |
+| Nízký podíl aktivních členů | Nízký poměr DAU k celkovému počtu členů | ⚠️ Nízký podíl aktivních členů v aktuálním období. |
+| Aktivní voice kanály | Vysoký podíl voice aktivity | 🗣️ Komunita je velmi upovídaná v hlasových kanálech! |
+| Málo voice aktivity | Nízký podíl voice aktivity vůči textu | 💬 Lidé píší, ale málo mluví. Zkuste vytvořit „Chill" voice room. |
+| Nejpoužívanější příkaz | Existuje dominantní příkaz v statistikách použití | 🤖 Nejoblíbenější příkaz je „/{příkaz}" ({N}×). |
+| Dobrý poměr příchodů/odchodů | Přichází výrazně víc lidí, než kolik odchází | 📈 Skvělý nábor! Přichází 2× více lidí než odchází. |
+| Jednoduchá trendová extrapolace | Dostatek historie pro odhad | 🔮 Jednoduchá extrapolace současného trendu odpovídá přibližně {N} denním aktivním uživatelům. Nejde o validovaný prediktivní model. |
+| Nedostatek dat | Žádné z výše uvedených pravidel se nespustilo | Zatím nemám dost dat pro generování specifických postřehů. |
 
-## Retence a trendy (střední závažnost)
+Text posledního postřehu v tabulce je záměrně formulovaný jako upozornění — jde o extrapolaci současného trendu, ne o výstup ověřeného prediktivního modelu (viz [Predikce](/predictions), kde je stejná opatrnost popsána podrobněji).
 
-| Insight | Podmínka | Doporučená akce |
-| :--- | :--- | :--- |
-| **Dead Server Warning** | DAU pokles > 30 % oproti 30dennímu průměru | Analyzujte příčinu. Uspořádejte event. |
-| **Inactivity Spike** | Náhlý nárůst neaktivity | Zkontrolujte poslední změny pravidel. |
-| **Onboarding Failure** | Survival křivka ukazuje > 60 % odchod do 48 h | Vylepšete uvítací kanál, přidejte role-select. |
-| **Engagement Plateau** | Engagement Score stagnuje 7+ dní | Komunita potřebuje nový impulz. |
+## Doručování
 
-## Management komunity (informativní závažnost)
+Insighty se aktuálně zobrazují pouze v dashboardu (karta „💡 Insights" na hlavní stránce serveru). Nejsou automaticky odesílány do Discord kanálu ani samostatně logovány — pokud potřebujete historii upozornění, sledujte standardní logy backendu.
 
-| Insight | Podmínka | Doporučená akce |
-| :--- | :--- | :--- |
-| **Moderation Gap** | Vysoká aktivita + nulové moderátorské akce > 4 h | Ověřte, zda jsou moderátoři online. |
-| **Voice Overload** | Voice kanály na 100 % kapacity | Vytvořte nové voice kanály. |
-| **Understaffed** | Doporučeno více moderátorů, než máte | Identifikujte potenciální moderátory. |
-| **Peak Time Shift** | Hodina max. aktivity se posunula o 2+ h | Aktualizujte plán eventů a směny. |
+## Předpoklady pro smysluplné výstupy
 
-## Doručování notifikací
-
-Insighty se zobrazují na třech místech:
-
-1. **Dashboard** - Karta „Smart Insights" na hlavní stránce serveru.
-2. **Discord** - Kritické insighty odesílá bot do nakonfigurovaného moderátorského kanálu.
-3. **Konzole** - Všechny insighty se logují do `bot.log` pro audit.
-
-## Confidence Score
-
-Každý insight má skóre spolehlivosti (0–1,0):
-
-| Rozsah | Klasifikace | Význam |
-| :--- | :--- | :--- |
-| > 0,8 | Vysoká | Doporučena akce moderátora. |
-| 0,5–0,8 | Střední | Indikativní - sledujte uživatele. |
-| < 0,5 | Experimentální | Málo dat, zobrazuje se s označením. |
-
-Spolehlivost roste s objemem nasbíraných dat. Pro plnou funkčnost insightů je doporučeno minimálně 7 dní historie (ideálně po [backfillu](/backfill)).
+Insighty vycházejí z týdenních a měsíčních agregací, takže pro smysluplné hodnocení je potřeba alespoň několik dní historie aktivity. Pokud bot běží krátce, zobrazí se hláška o nedostatku dat. Pro rychlejší nasbírání historie použijte [backfill historických dat](/backfill).

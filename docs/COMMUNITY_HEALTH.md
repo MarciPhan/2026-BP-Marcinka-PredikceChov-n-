@@ -35,9 +35,15 @@ Systém ukládá data strukturovaně, převážně pomocí map (hash) pro data a
 - `api:key:{digest}` – detaily o vydaném API klíči (oprávnění, stav);
 - `api:keys:guild:{guild}` – seznam API klíčů pro daný server;
 - `api:rate:{digest}:{bucket}` – rate-limiting pro veřejné API.
+## Uložení ručního stanoviska (`health:role_review`)
+
+Uložit nebo upravit `health:role_review:{guild}:{user}` smí administrátor daného Discord serveru nebo team member s explicitně uděleným oprávněním `manage_settings` (Nastavení → Tým) – není to omezené jen na globálního systémového administrátora aplikace. Záznam má stejnou dobu platnosti jako event data (výchozí `EVENT_RETENTION_DAYS`, 90 dní).
+
 ## Omezení
 
 - Discord neposkytuje spolehlivou informaci, zda uživatel skutečně četl kanál.
 - Fyzickou účast na akci nelze zjistit automaticky; implementace měří hlasovou účast u Discord Scheduled Events.
 - Reakce na dotaz znamená pouze potvrzení, nikoli vyřešení.
 - Historický odchod členů nelze zpětně rekonstruovat bez dříve uložených member-remove událostí.
+- Kromě `health:role_review` výše uvedené indexy a časové řady (zprávy, žádosti o pomoc, moderační eventy a dvojice, odchody, zájem/účast na akcích) v současné verzi automaticky neexpirují a je nutné je odstranit ručně nebo příkazem `/gdpr delete` daného uživatele.
+- `/gdpr export` teď zahrnuje i obsah `health:role_review` (pokud existuje) v souhrnu daného uživatele a `/gdpr delete` tento záznam maže spolu s ostatními Community Health daty – nejde už o výjimku.

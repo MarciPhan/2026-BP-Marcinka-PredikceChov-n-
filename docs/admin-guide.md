@@ -27,8 +27,8 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 | :--- | :--- | :--- |
 | `DASHBOARD_PORT` | `8093` | Port webového dashboardu. |
 | `DISCORD_REDIRECT_URI` | `http://localhost:8093/auth/callback` | OAuth2 callback URL. |
-| `BOT_LITE_MODE` | `0` | `1` pro sekundární instanci bez slash příkazů. |
-| `API_ACCESS_TOKEN` | - | API klíč pro REST API (hash SHA-256, odesílá se v hlavičce `X-API-Key`). |
+| `BOT_LITE_MODE` | `0` | `1` pro sekundární instanci bez slash příkazů (vyžaduje vlastní `DASHBOARD_TOKEN`, viz sekce Dual-bot režim níže). |
+| `DASHBOARD_ACCESS_TOKEN` | - | API klíč pro REST API (hash SHA-256, odesílá se v hlavičce `X-API-Key`). |
 
 ::: danger Bezpečnostní upozornění
 Nikdy nahrávejte soubor `.env` do Git repozitáře. Soubor `.gitignore` musí obsahovat řádek `.env`. Kompromitace `BOT_TOKEN` nebo `DASHBOARD_SECRET_KEY` umožňuje útočníkovi plný přístup k vašemu systému a datům uživatelů.
@@ -40,7 +40,7 @@ Pro produkční nasazení doporučujeme provést následující kroky pro zvýš
 
 1.  **Omezení přístupu k Redis:** Ujistěte se, že Redis není přístupný z veřejného internetu. V `redis.conf` nastavte `bind 127.0.0.1` a vždy používejte silné heslo přes `requirepass`.
 2.  **HTTPS:** Vždy provozujte dashboard za reverzní proxy (např. Nginx) s platným SSL certifikátem (Let's Encrypt).
-3.  **API Tokeny:** Pokud nevyužíváte veřejné API, nastavte `API_ACCESS_TOKEN`. Bez něj jsou statistiky serveru přístupné komukoliv, kdo zná `guild_id`.
+3.  **API Tokeny:** Pokud nevyužíváte veřejné API, nastavte `DASHBOARD_ACCESS_TOKEN`. Samotný webový dashboard (`/api/*`) vyžaduje vždy přihlášenou session bez ohledu na tuto proměnnou; `DASHBOARD_ACCESS_TOKEN`/`X-API-Key` chrání pouze externí REST rozhraní `/api/v1/...`.
 4.  **Minimalizace oprávnění:** Botovi přidělte pouze nezbytná oprávnění v Discord Portalu. Vyhněte se přidělování role `Administrator`, pokud to není nezbytně nutné pro jiné moduly.
 
 ### Příklad `.env`
@@ -203,3 +203,6 @@ CommunityMetrics podporuje provoz dvou instancí bota současně:
 | Secondary | `1` | Pouze event tracking - žádné slash příkazy. |
 
 Důvod: Discord API neumožňuje dvěma instancím registrovat stejné slash příkazy. Secondary instance slouží jako záloha pro sběr dat v případě výpadku primary instance. Data obou instancí se ukládají do stejné Redis databáze.
+
+> [!IMPORTANT]
+> `BOT_LITE_MODE` sám o sobě nestačí — sekundární instance (kontejner `discord-bot-dashboard` v `docker-compose.yml`) používá **samostatnou proměnnou `DASHBOARD_TOKEN`**, tedy token DRUHÉ, samostatně vytvořené Discord aplikace/bota (ne stejný token jako primární bot). `DASHBOARD_TOKEN` je v `.env.example` uveden jako prázdná šablona (jen pro vývojový `docker-compose.yml`, produkční `docker-compose.prod.yml` druhou instanci bota nespouští) — musíte do něj doplnit skutečný token, jinak kontejner `discord-bot-dashboard` spadne s prázdným tokenem.

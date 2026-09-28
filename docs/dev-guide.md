@@ -49,7 +49,7 @@ DISCORD_CLIENT_SECRET=<OAuth2 Client Secret>
 # Web Dashboard
 DASHBOARD_PORT=8093
 DASHBOARD_SECRET_KEY=<vygenerujte: python3 -c "import secrets; print(secrets.token_hex(32))">
-DASHBOARD_ACCESS_TOKEN=<API klíč (hashován SHA-256, odesílá se v hlavičce X-API-Key)>
+DASHBOARD_ACCESS_TOKEN=<interní přístupový token backendu; vygeneruje se automaticky, pokud chybí>
 
 # Infrastruktura
 REDIS_URL=redis://localhost:6379/0
@@ -128,17 +128,18 @@ communitymetrics/
         templates/         # Jinja2 HTML šablony (22 souborů)
         static/            # CSS, JS, obrázky
  shared/
-    keys.py              # Redis klíčová schéma (centrální definice)
     models.py            # Matematické modely — Markov, Kaplan-Meier
     redis_client.py      # Redis connection pool (async + sync)
     config.py            # Pydantic Settings — prostředí, retence
     community_health.py  # Helper funkce pro Community Health
     analytics_config.py  # Výchozí váhy MII
+    net_security.py      # SSRF/DNS-rebinding validace Discourse URL
  scripts/
     discourse_sync.py    # Konektor pro Discourse fórum
  docs/                    # Tato dokumentace (VitePress)
  config/                  # Konfigurace a tajemství
- docker-compose.yml       # Produkční nasazení (5 kontejnerů)
+ docker-compose.yml       # Vývojové nasazení (5 kontejnerů, vč. lite bota)
+ docker-compose.prod.yml  # Produkční nasazení (4 kontejnery, bez lite bota)
  Dockerfile               # Container image (python:3.11-slim)
  start.sh                 # Lokální spouštěč
  requirements.txt         # Python závislosti
@@ -150,15 +151,15 @@ communitymetrics/
 Dokumentace běží na VitePress s hot-reload (HMR):
 
 - Soubory: `docs/*.md`
-- Konfigurace navigace: `docs/.vitepress/config.mts`
+- Konfigurace navigace: `docs/.vitepress/config.js`
 - Custom CSS: `docs/.vitepress/theme/custom.css`
 - Změny se projeví okamžitě po uložení.
 
 ### Přidání nové stránky
 
 1. Vytvořte nový `.md` soubor v `docs/`.
-2. Přidejte odkaz do sidebaru v `.vitepress/config.mts`:
-   ```typescript
+2. Přidejte odkaz do sidebaru v `.vitepress/config.js`:
+   ```javascript
    { text: 'Název stránky', link: '/nazev-souboru' }
    ```
 3. Uložte — VitePress automaticky načte novou stránku.
@@ -197,19 +198,7 @@ npm run docs:build
 
 ### Práce s Redis
 
-Všechny Redis klíče jsou definovány centrálně v `shared/keys.py`. Nikdy nepoužívejte hardcoded stringy:
-
-```python
-from shared.redis_client import get_redis
-from shared.keys import K_DAU, day_key
-
-# Správně — použijte funkce z shared/keys.py
-r = await get_redis()
-await r.pfadd(K_DAU(guild_id, day_key(datetime.now())), user_id)
-
-# Špatně — nepoužívejte hardcoded stringy
-await r.pfadd(f"hll:dau:{guild_id}:{date}", user_id)
-```
+Pomocné funkce pro sestavení klíčů HyperLogLogu (`K_DAU`, `day_key`) jsou aktuálně definované v `bot/commands/stats_hll.py` a samostatně (duplicitně) také v `web/backend/utils.py` — projekt zatím nemá jeden centrální modul pro Redis klíčové schéma napříč botem a backendem. Pro Community Health klíče (poznámky, help požadavky, moderační eventy) existuje centralizovaná pomocná vrstva v `shared/community_health.py`. Při přidávání nového klíče se držte existující konvence (`{skupina}:{typ}:{guild_id}:{...}`) a pokud je pro danou oblast už pomocná funkce k dispozici, použijte ji místo ručně skládaného stringu.
 
 ## Řešení potíží
 

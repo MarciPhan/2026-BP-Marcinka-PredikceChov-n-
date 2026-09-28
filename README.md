@@ -127,7 +127,7 @@ reaction counts and other necessary metadata (with expiration) are kept.
 1. Open `/community-health` as an administrator.
 2. Choose the community type and enable only the relevant modules.
 3. Enter the support-channel IDs for help-request analysis.
-4. Historical data can be backfilled with the `/health backfill` command (up to 180 days).
+4. Historical data can be backfilled with the `/chealth backfill` command (up to 180 days).
 
 ### Internal API
 
@@ -257,7 +257,7 @@ Obsah zpráv se neukládá. Ukládají se pouze identifikátory, čas, kanál, v
 1. Otevřete `/community-health` jako administrátor.
 2. Vyberte typ komunity a zapněte pouze relevantní moduly.
 3. Pro analýzu pomoci vložte ID podpůrných kanálů.
-4. Historická data lze doplnit příkazem `/health backfill` (maximálně 180 dní).
+4. Historická data lze doplnit příkazem `/chealth backfill` (maximálně 180 dní).
 
 ### Interní API
 

@@ -54,23 +54,26 @@ chmod +x start.sh
 ./start.sh
 ```
 
-```bash [Docker Compose (doporučeno pro produkci)]
+```bash [Docker Compose (vývoj / staging)]
 # 1. Klonování
 git clone https://github.com/MarciPhan/2026-BP-Marcinka-PredikceChov-n-
 cd 2026-BP-Marcinka-PredikceChov-n-
 
 # 2. Konfigurace
 cp .env.example .env
-# Otevřete .env a vyplňte BOT_TOKEN a další proměnné
+# Otevřete .env a vyplňte BOT_TOKEN, DISCORD_CLIENT_ID, DISCORD_REDIRECT_URI a další proměnné
 
 # 3. Vytvoření Docker sítě (pouze poprvé)
 docker network create botnet
 
-# 4. Spuštění celého stacku
+# 4. Spuštění celého stacku (5 kontejnerů, vč. odlehčeného bota pro dashboard)
 docker-compose up -d --build
 ```
 
 :::
+
+> [!IMPORTANT]
+> `docker-compose up` bez parametru `-f` spustí vývojový soubor `docker-compose.yml` (5 kontejnerů, vč. druhé instance bota v `BOT_LITE_MODE`, která vyžaduje proměnnou `DASHBOARD_TOKEN` — v `.env.example` je uvedena jako prázdná šablona, doplňte do ní skutečný token druhého bota). Pro skutečné produkční nasazení použijte `docker-compose -f docker-compose.prod.yml up -d --build` a postupujte podle [Nasazení do produkce](/deployment).
 
 ### Ověření úspěšného spuštění
 

@@ -7,7 +7,7 @@ Doporučení a osvědčené strategie pro efektivní využití CommunityMetrics 
 Zastavte odchod 40 % uživatelů během prvních 48 hodin:
 
 - Automatizujte uvítací zprávu s přehledem klíčových kanálů.
-- Nastavte první automatickou roli na úrovni 2 (5–10 zpráv) pro okamžitý pocit progresu.
+- Nastavte první automatickou roli na nízkém, rychle dosažitelném milníku (viz [XP systém a automatické role](/roles) pro výchozí vzorec úrovní) pro okamžitý pocit progresu.
 - Vytvořte přehledný kanál `#začínáme` s popisem serveru a pravidly.
 
 Využijte Heatmapu aktivity pro maximální dosah:

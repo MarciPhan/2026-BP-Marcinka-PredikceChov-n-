@@ -1,74 +1,28 @@
 > **Note:** These features (including XP, leveling, and achievements) are additional extensions and are not part of the core functionality evaluated in the bachelor thesis.
 
-# Integrace a webhooky
+# Integrace
 
-CommunityMetrics odesílá HTTP notifikace (webhooky) při výskytu definovaných událostí. Tato sekce popisuje formát zpráv a dostupné události.
-
-## Odchozí webhooky
-
-Bot odesílá `POST` požadavek na zadanou URL s tělem ve formátu JSON při každém výskytu nakonfigurované události.
-
-### Konfigurace
-
-V dashboardu přejděte do sekce **Settings → Webhooks**:
-
-1. Zadejte cílovou URL (HTTPS).
-2. Vyberte události, pro které se webhook aktivuje.
-3. Uložte konfiguraci.
-
-### Dostupné události
-
-| Událost | Podmínka spuštění |
-| :--- | :--- |
-| `member_join_anomaly` | Přípojení > 10 členů za 5 minut |
-| `activity_risk_high` | Prototypový model identifikuje u člena riziko dlouhodobé neaktivity |
-| `dqs_drop` | DQS (Data Quality Score) klesne pod nastavenou hranici |
-| `engagement_drop` | Engagement Score klesne o > 20 % za 7 dní |
-
-### Formát payloadu
-
-```json
-{
-  "guild_id": "123456789012345678",
-  "event": "activity_risk_high",
-  "timestamp": "2026-04-13T12:00:00Z",
-  "details": {
-    "user_id": "987654321",
-    "risk": 0.85,
-    "last_active": "2026-04-07"
-  }
-}
-```
-
-### Ověření doručení
-
-Každý webhook požadavek obsahuje hlavičku `X-CommunityMetrics-Signature` s HMAC-SHA256 podpisem payloadu. Ověření na straně příjemce:
-
-```python
-import hmac, hashlib
-
-def verify_webhook(payload: bytes, signature: str, secret: str) -> bool:
-    expected = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(expected, signature)
-```
+Tato stránka popisuje reálně dostupné způsoby propojení CommunityMetrics s okolím: import dat z Discourse a čtení přes REST API. Odchozí webhooky (aplikace sama aktivně volající vaši URL při události) **nejsou v aktuální implementaci k dispozici** — dřívější verze této stránky popisovala plánovanou funkci (`Settings → Webhooks`, HMAC podpis, události typu `dqs_drop`) tak, jako by už existovala; v kódu žádná taková logika není. Pokud takovou funkci potřebujete, zatím ji lze nahradit periodickým čtením [REST API](/api) nebo [exportů dat](/export) z vlastního skriptu.
 
 ## Integrace s Discourse
 
-CommunityMetrics podporuje propojení Discord účtů s účty na fóru Discourse:
-
-- **Synchronizace událostí:** Idempotent synchronizace Discourse příspěvků do Redis event streamu.
-- **XP Merge:** *(Plánované rozšíření, není součástí aktuální implementace.)* Sloučení bodů z obou platforem.
+CommunityMetrics umí periodicky importovat témata z nakonfigurované Discourse instance (konektor `scripts/discourse_sync.py`, běží každých 300 sekund a čte endpoint `/latest.json`).
 
 Konfigurace v dashboardu:
 
-1. V sekci **Integrations → Discourse** zadejte URL vašeho Discourse fóra.
-2. Zadejte API klíč Discourse (Settings → API Keys v administraci Discourse).
-3. Aktivujte synchronizaci.
+1. Otevřete stránku **Přidat Discourse** (`/add-discourse`).
+2. Zadejte URL vašeho Discourse fóra (HTTPS) a API klíč a uživatelské jméno vygenerované v administraci Discourse (Settings → API Keys).
+3. Uložením se instance přidá a od té chvíle ji `discourse_sync.py` pravidelně synchronizuje.
+
+Adresa se validuje proti SSRF (blokovány jsou loopback, link-local a privátní adresy) jak při přidávání instance, tak znovu při každém běhu periodické synchronizace (`shared/net_security.py`) — pokud se DNS záznam domény po přidání změní na privátní/interní adresu (DNS rebinding), další synchronizace ho odmítne.
 
 Redis klíče:
-- `discourse:conf:{guild_id}` - konfigurace propojení (Hash)
-- `user:discourse:{user_id}` - seznam propojených Guild ID (Set)
+- `discourse:conf:{guild_id}` — konfigurace propojení (Hash)
+- `discourse:synced_topics:{guild_id}` — množina už zpracovaných témat (zajišťuje idempotenci)
+- `user:discourse:{user_id}` — seznam propojených komunit (Set)
 
-## Zapier a Make
+Synchronizují se jen metadata nových témat (identifikátor, název, zdroj, počet reakcí) — ne kompletní obsah příspěvků, kategorie ani uživatelské profily.
 
-REST API CommunityMetrics podporuje integraci s automatizačními platformami. V nástroji Zapier nebo Make použijte modul **HTTP Request** a směřujte jej na endpointy popsané v [API Reference](/api).
+## REST API a automatizace
+
+CommunityMetrics poskytuje dokumentované REST API (viz [API Reference](/api)) a exportní endpointy (viz [Export dat](/export)). V nástrojích jako Zapier nebo Make je lze použít modulem **HTTP Request**, který bude API pravidelně dotazovat (polling) — nejde o obousměrnou webhookovou integraci.

@@ -21,8 +21,8 @@ Následující scénáře jsou **hypotetické příklady** pro ilustraci možnos
 **Problém:** Na server přišlo 200 lidí během noci. Nejsou agresivní, ale spamují nesmyslné krátké zprávy, aby "přebili" skutečnou konverzaci.
 
 **Řešení s CommunityMetrics:**
-1. **Detekce:** *Smart Insights* nahlásily anomálii v *Average Message Length* (pokles ze 45 na 8 znaků).
-2. **Verifikace:** *Velocity Stats* ukazují 120 zpráv/min, ale *DQS Index* je nízký.
+1. **Detekce:** Správce si všiml poklesu průměrné délky zprávy (ze 45 na 8 znaků) v grafech dashboardu — aktuální [Smart Insights](/insights) tuto konkrétní anomálii samy nehlásí, šlo by o ruční pozorování v datech.
+2. **Verifikace:** Hodinové statistiky ukazují prudký nárůst počtu zpráv za minutu, zatímco Data Quality Score zůstává nízké kvůli krátké historii.
 3. **Akce:** Dočasné zpřísnění XP vah pro krátké zprávy a zapnutí 2FA verifikace pro nové členy.
 
 **Výsledek:** Spamery by to přestalo bavit, protože neziskávali úrovně, a po krátké době by server opustili.

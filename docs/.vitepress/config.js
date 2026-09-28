@@ -85,7 +85,6 @@ export default withMermaid(defineConfig({
         items: [
           { text: 'Lokální vývoj', link: '/dev-guide' },
           { text: 'API Reference', link: '/api' },
-          { text: 'API akce', link: '/api-actions' },
           { text: 'API příklady', link: '/api-examples' },
           { text: 'Redis datové schéma', link: '/data-schema' },
           { text: 'Integrace a Webhooky', link: '/integrations' },

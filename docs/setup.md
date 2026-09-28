@@ -60,6 +60,10 @@ Vyplňte povinné hodnoty:
 BOT_TOKEN=<VÁŠ_BOT_TOKEN_Z_DEVELOPER_PORTALU>
 DISCORD_CLIENT_SECRET=abcdefghijklmnopqrstuvwxyz123456
 
+# Discord OAuth2 pro dashboard (povinné, pokud chcete přihlašování přes Discord)
+DISCORD_CLIENT_ID=<CLIENT_ID_Z_KROKU_3_VÝŠE>
+DISCORD_REDIRECT_URI=http://localhost:8093/auth/callback
+
 # Web Dashboard
 DASHBOARD_PORT=8093
 DASHBOARD_SECRET_KEY=           # min 32 znaků (viz generování níže)
@@ -112,7 +116,7 @@ Co `start.sh` udělá:
 5. Spustí **FastAPI dashboard** na portu `8093`.
 6. Spustí **VitePress dokumentaci** na portu `5173`.
 
-### Varianta B: Docker Compose (produkce)
+### Varianta B: Docker Compose (vývoj/staging)
 
 ```bash
 # 1. Vytvoření Docker sítě (pouze poprvé)
@@ -125,15 +129,20 @@ docker-compose up -d --build
 docker-compose ps
 ```
 
-Docker Compose spustí 5 kontejnerů:
+Tento `docker-compose.yml` spustí 5 kontejnerů:
 
 | Kontejner | Funkce |
 | :--- | :--- |
 | `discord-redis` | Redis databáze |
 | `discord-bot-primary` | Hlavní bot — příkazy, tracking, backfill |
-| `discord-bot-dashboard` | Lite Mode bot — záložní sběr dat |
+| `discord-bot-dashboard` | Lite Mode bot — záložní sběr dat (`BOT_LITE_MODE`) |
 | `web-dashboard` | FastAPI backend s OAuth2 |
 | `discourse-sync` | Periodická synchronizace Discourse fóra |
+
+> [!WARNING]
+> Kontejner `discord-bot-dashboard` vyžaduje samostatnou proměnnou `DASHBOARD_TOKEN` (token druhého Discord bota). V `.env.example` je uvedena jako prázdná šablona — doplňte do ní skutečný token, jinak tento kontejner spadne s prázdným tokenem.
+
+Pro skutečné produkční nasazení slouží samostatný `docker-compose.prod.yml` (bez `discord-bot-dashboard`, viz [Nasazení do produkce](/deployment)).
 
 ## Ověření instalace
 
@@ -149,7 +158,8 @@ redis-cli GET bot:heartbeat
 # Měl by vrátit aktuální UNIX timestamp
 
 # 3. Dashboard je dostupný?
-curl -s http://localhost:8093/health
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8093/
+# Očekávaná odpověď: 200 (samostatný endpoint /health v aplikaci není)
 ```
 
 Na Discord serveru ověřte, že bot je **online** (zelená tečka). Pokud nereaguje na příkazy, zaregistrujte slash příkazy:

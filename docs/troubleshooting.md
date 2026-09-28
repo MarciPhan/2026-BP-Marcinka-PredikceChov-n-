@@ -18,8 +18,10 @@ redis-cli GET bot:heartbeat
 # 3. Paměť Redis
 redis-cli INFO memory | grep used_memory_human
 
-# 4. Dashboard dostupnost
-curl -s http://localhost:8093/health
+# 4. Dashboard dostupnost (aplikace nemá samostatný /health endpoint,
+#    ověřte přímo hlavní stránku nebo OpenAPI schéma)
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8093/
+curl -s http://localhost:8093/api/openapi.json | head -c 100
 
 # 5. Docker kontejnery (pokud používáte Docker)
 docker-compose ps
@@ -96,7 +98,6 @@ docker-compose logs --tail=100 discord-bot-primary
 
 - Ověřte, že **Message Content Intent** je zapnutý.
 - Zkontrolujte cooldown (výchozí 60 s) — uživatel nemusí získat XP za každou zprávu.
-- Ověřte váhy: `redis-cli HGETALL config:xp:weights`
 
 ## Problémy s dashboardem
 
@@ -132,27 +133,24 @@ docker-compose logs --tail=50 web-dashboard
 
 ## Problémy s predikcemi
 
-### Prediktivní modely nefungují (DQS < 0.5)
+### Predikce (Markov, Kaplan-Meier) se nezobrazují
 
-- **Příčina:** Model nemá dostatek historických dat pro sestavení matice přechodu.
+- **Příčina:** Model nemá dostatek historických dat. Markovova predikce vyžaduje alespoň 5 pozorovaných přechodů mezi stavy; Kaplan-Meierova křivka se počítá až při dostupné historii aktivity alespoň 30 dní. Pokud podmínka není splněná, aplikace odhad záměrně nezobrazí (místo aby dopočítala nespolehlivý výsledek) — nejde o chybu.
 - **Řešení:**
-  1. Nechte bota běžet alespoň 7 dní.
+  1. Nechte bota běžet déle (ideálně 30+ dní pro Kaplan-Meier).
   2. Zkontrolujte, zda nedošlo k výpadku sběru dat v minulosti.
   3. Spusťte backfill pro doplnění chybějících dat.
 
-### Matice přechodu je singulární (ERR_ML_MATRIX)
+## Časté chyby v logu
 
-- **Příčina:** Příliš málo uživatelů nebo příliš krátká historie.
-- **Řešení:** Prodlužte časový rozsah analýzy nebo počkejte na více dat.
+Aplikace v současné verzi negeneruje formální chybové kódy (`ERR_*`) — chyby se logují jako běžné Python výjimky. Nejčastější příčiny podle textu chybové hlášky:
 
-## Chybové kódy v logu
-
-| Kód | Význam | Doporučená akce |
+| Text v logu / chování | Příčina | Doporučená akce |
 | :--- | :--- | :--- |
-| `ERR_REDIS_CONN` | Nelze se připojit k Redis databázi. | Prověřte `REDIS_URL` a dostupnost portu 6379. |
-| `ERR_DISCORD_429` | Narazili jste na Discord rate limit. | Snižte frekvenci backfillu nebo omezte počet kanálů. |
-| `ERR_ML_MATRIX` | Matice přechodu je singulární. | Nedostatek uživatelů — zkuste delší časový rozsah. |
-| `ERR_OAUTH_FAIL` | OAuth2 selhala. | Ověřte `DISCORD_CLIENT_SECRET` a Redirect URI. |
+| `redis.exceptions.ConnectionError` | Nelze se připojit k Redis databázi. | Prověřte `REDIS_URL` a dostupnost portu 6379. |
+| HTTP 429 od Discordu | Narazili jste na Discord rate limit. | Snižte frekvenci backfillu nebo omezte počet kanálů. |
+| Predikce se nezobrazí, žádná chyba v konzoli | Nedostatek dat pro Markov/Kaplan-Meier (viz výše). | Počkejte na více dat nebo spusťte backfill. |
+| `discord.errors.LoginFailure` / chyba OAuth2 přihlášení | Neplatný `BOT_TOKEN`, `DISCORD_CLIENT_SECRET` nebo Redirect URI. | Ověřte hodnoty v `.env` a nastavení v Discord Developer Portalu. |
 
 ## Diagnostika Docker prostředí
 

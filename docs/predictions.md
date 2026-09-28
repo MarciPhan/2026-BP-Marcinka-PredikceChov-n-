@@ -146,19 +146,13 @@ Prototyp odhaduje možný budoucí počet členů v horizontu 30, 60 a 90 dní. 
 
 ### Sezónní korekce (Weekly Seasonality)
 
-Aktivita na Discordu vykazuje silné týdenní vzorce. Aby CommunityMetrics předešel falešně pozitivním trendům (např. nárůst aktivity v pátek), aplikujeme sezónní indexy $I_d$ vypočítané jako:
+Aktivita na Discordu obvykle vykazuje týdenní vzorce, které se ale liší komunitu od komunity. Aby CommunityMetrics předešel falešně pozitivním trendům (např. nárůst aktivity v pátek), počítá se sezónní index $I_d$ pro každý den v týdnu **dynamicky z historie konkrétní komunity** (posledních 30 dní), nikoli z pevné univerzální tabulky:
 
 $$
-I_d = \frac{\text{Průměrná aktivita v den } d}{\text{Celková průměrná denní aktivita}}
+I_d = \frac{\text{Průměrná aktivita v den } d \text{ za sledované období}}{\text{Celková průměrná denní aktivita za stejné období}}
 $$
 
-| Den | Typický index $I_d$ | Interpretace |
-| :--- | :--- | :--- |
-| **Pondělí–Čtvrtek** | 0,85–0,95 | Pracovní týden, nižší intenzita zpráv. |
-| **Pátek** | 1,15–1,25 | Začátek víkendu, nárůst večerní aktivity. |
-| **Sobota–Neděle** | 1,20–1,40 | Špička aktivity, nejlepší čas pro komunitní eventy. |
-
-Lineární predikce růstu se násobí příslušným sezónním indexem pro daný budoucí den, čímž získáte realističtější předpověď.
+Predikovaná hodnota (zpráv i DAU) se získá lineární regresí přes historii a výsledek se vynásobí sezónním indexem odpovídajícího budoucího dne v týdnu. Konkrétní hodnoty $I_d$ se tedy pro každou komunitu liší podle jejího skutečného chování a nejsou nikde v aplikaci pevně dané.
 
 ## Prototyp analýzy stability aktivity (Inactivity Risk Analysis)
 
@@ -168,13 +162,13 @@ Widget „Predikce stability" na dashboardu experimentálně zobrazuje:
 - **At-Risk Users** - počet uživatelů ve stavu Passive nebo Inactive.
 - **Odhadovaný vývoj (7 dní)** - modelový odhad budoucí míry odchodů na základě Markovova řetězce.
 
-Pokud odchody přesáhnou 5 % celkového počtu členů za měsíc, systém vygeneruje Smart Insight s varováním.
+Tato čísla se zobrazují jen na experimentální stránce Predikce; nejde o samostatné varování v kartě [Smart Insights](/insights) na hlavní stránce dashboardu.
 
 ## Omezení modelů
 
 | Omezení | Popis | Důsledek |
 | :--- | :--- | :--- |
 | Markovova vlastnost | Budoucí stav závisí pouze na současném stavu. | Dlouhodobé závislosti (sezónnost, životní události) nejsou zachyceny. |
-| Minimum dat | Model vyžaduje alespoň 7 dní historie. | Na nových serverech jsou predikce nedostupné (DQS < 0,5). |
+| Minimum dat | Markovova predikce vyžaduje alespoň 5 pozorovaných přechodů mezi stavy; Kaplan-Meierova křivka se počítá až při dostupné historii alespoň 30 dní. | Na nových nebo málo aktivních serverech se příslušný odhad prostě nezobrazí (explicitně označeno jako nedostupný), místo aby se fabrikoval. |
 | Homogenita populace | Model předpokládá stejné pravděpodobnosti přechodu pro všechny uživatele. | Klíčoví členové a nováčci mají ve skutečnosti odlišné vzorce. |
 | Absence sentimentu | Systém nehodnotí tón konverzace. | Toxicita je měřena nepřímo přes moderátorské zásahy (MII). |

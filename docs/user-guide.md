@@ -55,5 +55,5 @@ Ukládáme pouze metadata, nikoliv obsah vašich zpráv:
 ### Jak spravovat svá data?
 Příkazy pro správu vašich osobních údajů:
 
-- `/gdpr export` - Stáhněte si kompletní JSON soubor se všemi svými daty.
-- `/gdpr delete` - Nevratně smažte svůj profil a všechny své záznamy v databázi.
+- `/gdpr export` - Zobrazí vám ephemerní zprávu se souhrnnými počty vašich dat (zprávy, voice aktivita, moderační akce). Nejde o soubor ke stažení.
+- `/gdpr delete` - Nevratně smažte svůj profil a hlavní záznamy v databázi, včetně případné ruční poznámky, kterou o vás mohl uložit administrátor v Community Health.

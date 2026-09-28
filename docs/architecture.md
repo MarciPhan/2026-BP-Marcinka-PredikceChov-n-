@@ -123,16 +123,17 @@ communitymetrics/
        templates/         # Jinja2 HTML šablony (22 souborů)
        static/            # CSS, JS, obrázky
  shared/
-    keys.py              # Redis klíčová schéma (centrální definice)
     models.py            # Matematické modely — Markov, Kaplan-Meier
     redis_client.py      # Redis connection pool (async + sync)
     config.py            # Pydantic Settings — prostředí, retence
     community_health.py  # Helper funkce pro Community Health
     analytics_config.py  # Výchozí váhy MII
+    net_security.py      # SSRF/DNS-rebinding validace Discourse URL
  scripts/
     discourse_sync.py    # Konektor pro Discourse fórum
  config/                  # Konfigurace a tajemství
- docker-compose.yml       # Produkční nasazení (5 kontejnerů)
+ docker-compose.yml       # Vývojové nasazení (5 kontejnerů, vč. lite bota)
+ docker-compose.prod.yml  # Produkční nasazení (4 kontejnery, bez lite bota)
  Dockerfile               # Container image (python:3.11-slim)
  start.sh                 # Lokální spouštěč
  requirements.txt         # Python závislosti
@@ -182,22 +183,22 @@ Umožňuje sledovat unikátní uživatele (DAU/MAU) s fixní paměťovou nároč
 | **Hash (HASH)** | `stats:heatmap:{gid}` | Matice aktivity (klíč "den:hodina"). |
 | **Hash (HASH)** | `stats:msglen:{gid}` | Distribuce délek zpráv do bucketů. |
 | **Hash (HASH)** | `discourse:conf:{gid}` | Konfigurace Discourse (url, api_key, api_user). |
-| **String** | `bot:heartbeat` (TTL 60s) | Timestamp posledního cyklu bota. |
+| **String** | `bot:heartbeat` (bez TTL) | Timestamp posledního cyklu bota — klíč se jen přepisuje každých 60 s, hodnota samotná nemá Redis expiraci. |
 | **Set (SET)** | `bot:guilds` | Globální seznam aktivních serverů. |
-| **String** | `presence:online:{gid}` (TTL 300s) | Počet online členů. |
+| **String** | `presence:online:{gid}` (TTL 60s) | Počet online členů. |
 
 ### Retence dat
 
 | Kategorie | Retence | Zdroj |
 | :--- | :--- | :--- |
 | Surové eventy | Konfigurovatelné (výchozí **90 dní**, `EVENT_RETENTION_DAYS`) | `shared/config.py` |
-| HLL statistiky | **90 dní** | Přetrvávají nezávisle na eventech |
-| Uživatelská cache | **7 dní** | TTL na `user:info:{uid}` |
-| Runtime status | **60–300 s** | TTL na `bot:heartbeat`, `presence:*` |
+| HLL statistiky | **bez TTL** | Klíče `hll:dau:{gid}:{YYYYMMDD}` nemají nastavenou dobu platnosti a přetrvávají neomezeně nezávisle na retenci eventů (jeden klíč na den a komunitu, ~12 KB). |
+| Uživatelská cache | **bez TTL** | `user:info:{uid}` se jen přepisuje při nové aktivitě/hydrataci, žádná expirace na klíči není nastavena. |
+| Runtime status | **60 s** | TTL na `presence:online:{gid}` a `presence:total:{gid}`; `bot:heartbeat` TTL nemá (viz výše). |
 
 ## 6. Background Workers & Kontejnery
 
-Projekt je rozdělen do 5 izolovaných kontejnerů v Docker síti `botnet`:
+Vývojové nasazení (`docker-compose.yml`) je rozdělené do 5 izolovaných kontejnerů v Docker síti `botnet`:
 
 | Kontejner | Obraz | Příkaz | Port | Funkce |
 | :--- | :--- | :--- | :--- | :--- |
@@ -206,6 +207,8 @@ Projekt je rozdělen do 5 izolovaných kontejnerů v Docker síti `botnet`:
 | `discord-bot-dashboard` | `python:3.11-slim` | `python bot/main.py` (LITE) | — | Záložní sběr dat bez slash příkazů |
 | `web-dashboard` | `python:3.11-slim` | `uvicorn web.backend.main:app` | **8093** | FastAPI backend s OAuth2 a REST API |
 | `discourse-sync` | `python:3.11-slim` | `python -m scripts.discourse_sync` | — | Periodická synchronizace Discourse fóra |
+
+Produkční nasazení (`docker-compose.prod.yml`) má odlišnou topologii — pouze 4 kontejnery (bez `discord-bot-dashboard`/lite bota). Neduplikuje se v něm také celá sada proměnných prostředí služby `web-dashboard`; před ostrým nasazením je potřeba compose soubor doplnit o proměnné potřebné pro OAuth přihlášení a konfigurovatelnou retenci (podrobnosti viz [Nasazení do produkce](/deployment)).
 
 ::: tip Optimalizace výkonu
 Náročné maticové operace pro Markovovy řetězce jsou prováděny pomocí `NumPy` v C-extension, což je o 2 řády rychlejší než čistý Python.

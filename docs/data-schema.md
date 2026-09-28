@@ -3,8 +3,13 @@
 CommunityMetrics využívá Redis jako primární in-memory úložiště pro extrémní výkon analytiky. Tento dokument slouží jako technická reference pro správu datových struktur a optimalizaci paměti.
 
 ::: tip Konvence pojmenování
-Všechny klíče definuj v centrálním souboru `shared/keys.py`. Dodržuj formát:
-`{kategorie}:{subtyp}:{guild_id}:{identifikátor}`
+Projekt zatím nemá jeden centrální modul pro celé Redis klíčové schéma. Pomocné
+funkce pro klíče HyperLogLogu (`K_DAU`, `day_key`) jsou definované v
+`bot/commands/stats_hll.py` a duplicitně také v `web/backend/utils.py`; pro
+klíče Community Health (poznámky, help požadavky, moderační eventy) existuje
+centralizovaná pomocná vrstva `shared/community_health.py`. Nové klíče držte ve
+formátu `{kategorie}:{subtyp}:{guild_id}:{identifikátor}` a pokud pro danou
+oblast už pomocná funkce existuje, použijte ji místo ručně skládaného stringu.
 :::
 
 ## Přehled datových struktur
@@ -43,8 +48,8 @@ Aby nedošlo k přeplnění operační paměti (RAM), CommunityMetrics uplatňuj
 
 | Kategorie | Retence | Odůvodnění |
 | :--- | :--- | :--- |
-| **Surové eventy** | Konfigurovatelné (výchozí 90 dní, `EVENT_RETENTION_DAYS`) | Automaticky mazáno po uplynutí retence; HLL a agregáty přetrvávají nezávisle. |
-| **HLL Statistiky** | 90 dní | Pro dlouhodobý pohled na unikátní uživatele. |
+| **Surové eventy** | Konfigurovatelné (výchozí 90 dní, `EVENT_RETENTION_DAYS`) | Automaticky mazáno po uplynutí retence; ostatní agregáty (žebříčky, hodinové statistiky) přetrvávají nezávisle. |
+| **HLL Statistiky** (`hll:dau:{gid}:{date}`) | Stejná jako u surových eventů (`EVENT_RETENTION_DAYS`) | TTL se nastaví (`NX`, tj. jen při prvním zápisu daného dne) při první zprávě nebo importovaném tématu daného dne, ať už z Discordu, nebo z Discourse. |
 | **Uživatelská cache** | 7 dní | Cachování jmen a avatarů z Discord API. |
 | **Runtime status** | 60–300 s | Kritická data pro monitorování stavu bota. |
 

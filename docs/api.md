@@ -73,5 +73,19 @@ Smaže veškerá analytická data (Redis klíče) pro aktuálně vybraný server
 
 **`POST` /api/delete-server-data**
 
+### Export dat
+Vrátí agregovaná data za zvolené období jako CSV nebo JSON ke stažení. Vyžaduje oprávnění `export_data` a není dostupné v demo režimu. Podrobný popis jednotlivých typů exportu a struktury výstupu viz [Export dat](/export).
+
+**`GET` /api/export/{export_type}**
+
+| Parametr | Typ | Povinný | Popis |
+| :--- | :--- | :--- | :--- |
+| `export_type` (path) | String | Ano | `activity`, `leaderboard`, `voice_top`, `commands_top`, `emojis_top`, `channels`/`channels_top`/`channels_full`, `users`, `traffic`, `hourly_heatmap`, `msg_lengths`. |
+| `format` | String | Ne | `csv` nebo `json` (výchozí `json`). |
+| `start_date` | String | Ne | Počáteční datum (YYYY-MM-DD), výchozí 7 dní zpět. |
+| `end_date` | String | Ne | Koncové datum (YYYY-MM-DD), výchozí dnes. |
+
+Maximální rozsah období je 365 dní; rozhraní je omezeno na 120 požadavků za minutu na uživatele a komunitu (`429` při překročení).
+
 > [!TIP]
 > Kompletní schéma API je k dispozici na `/api/docs` (Swagger UI). FastAPI automaticky generuje OpenAPI dokumentaci ze všech registrovaných routerů (`auth`, `pages`, `api`, `settings`, `community_health`).

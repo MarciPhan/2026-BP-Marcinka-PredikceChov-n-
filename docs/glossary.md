@@ -13,13 +13,12 @@ Kompletní přehled termínů a zkratek, se kterými se v dokumentaci CommunityM
 
 ### C
 - **Cenzorovaná data (Censored Data):** Informace o uživatelích, kteří jsou stále na serveru. Jsou klíčová pro přesný odhad retence (Kaplan-Meier).
-- **Neaktivita:** Stav, kdy uživatel přestal vykazovat aktivitu na serveru déle než 14–30 dní.
-- **Confidence Score (Skóre spolehlivosti):** Číslo od 0 do 1 vyjadřující, jak moc lze věřit předpovědi modelu na základě objemu dat.
+- **Neaktivita:** Stav, kdy uživatel přestal vykazovat aktivitu déle než nakonfigurovaný práh (`ACTIVITY_INACTIVITY_THRESHOLD_DAYS`, výchozí 14 dní).
 - **Cooldown:** Časový limit (typicky 60 s), během kterého uživatel po napsání zprávy nezískává další XP, aby se zabránilo spamu.
 
 ### D
 - **DAU (Daily Active Users):** Počet unikátních uživatelů, kteří byli aktivní během jednoho kalendářního dne.
-- **DQS (Data Quality Score):** Metrika kvality dat indikující úplnost vstupních dat pro analytiku. Nízké DQS (< 0,5) značí nedostatek historie.
+- **DQS (Data Quality Score):** Bodová metrika 0–100 (výchozí 100, odečítá se za jednotlivé nedostatky) indikující úplnost vstupních dat — kratší historii, málo zpráv, chybějící moderační nebo voice události. Samotná dostupnost Markovovy/Kaplan-Meierovy predikce se řídí samostatnými prahy (viz [Predikce](/predictions#omezení-modelů)), ne přímo touto hodnotou.
 
 ### E
 - **Engagement Score:** Metrika vyjadřující míru zapojení komunity, vypočítaná z poměru aktivity a velikosti serveru.
@@ -49,7 +48,7 @@ Kompletní přehled termínů a zkratek, se kterými se v dokumentaci CommunityM
 - **Střední délka setrvání (Mean Survival Time):** Průměrná doba, po kterou uživatel zůstává aktivním členem komunity.
 
 ### T
-- **TTL (Time To Live):** Doba platnosti záznamu v Redisu. Po jejím uplynutí je klíč automaty smazán.
+- **TTL (Time To Live):** Doba platnosti záznamu v Redisu. Po jejím uplynutí je klíč automaticky smazán. Ne všechny klíče v CommunityMetrics TTL mají — např. `hll:dau:*` nebo `user:info:*` přetrvávají bez expirace (viz [Architektura](/architecture#retence-dat)).
 
 ### X
 - **XP (Experience Points):** Zkušenostní body přidělované za aktivitu. Základ leveling systému.
